@@ -1,0 +1,21 @@
+{
+  "name": "@openingday/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "openingday": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@openingday/core": "workspace:*",
+    "commander": "^13.0.0",
+    "chalk": "^5.4.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0"
+  }
+}
