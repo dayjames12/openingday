@@ -1,0 +1,30 @@
+{
+  "name": "base",
+  "description": "Base quality standards applied to all projects",
+  "rules": {
+    "maintainability": [
+      "files_under_300_lines",
+      "single_responsibility",
+      "no_deep_nesting_beyond_3",
+      "clear_naming_no_abbreviations_in_public_api",
+      "error_handling_at_boundaries_only"
+    ],
+    "scalability": [
+      "no_n_plus_1_queries",
+      "pagination_on_list_endpoints",
+      "async_for_io_operations",
+      "stateless_handlers"
+    ],
+    "caching": [
+      "cache_headers_on_static_assets",
+      "ttl_on_expensive_queries",
+      "no_unbounded_in_memory_cache"
+    ],
+    "testing": [
+      "unit_tests_for_business_logic",
+      "integration_tests_at_boundaries",
+      "no_mocking_internal_modules",
+      "test_names_describe_behavior"
+    ]
+  }
+}

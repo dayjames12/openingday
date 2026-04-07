@@ -1,0 +1,20 @@
+{
+  "name": "aws-serverless",
+  "description": "AWS serverless-specific quality standards",
+  "extends": ["base"],
+  "rules": {
+    "aws_patterns": [
+      "lambda_cold_start_optimized",
+      "dynamo_single_table_design",
+      "sqs_visibility_timeout_matches_handler",
+      "cloudfront_caching_configured",
+      "reserved_concurrency_on_critical_paths"
+    ],
+    "security": [
+      "no_wildcard_iam_permissions",
+      "input_validation_at_boundaries",
+      "no_secrets_in_code",
+      "auth_on_all_non_public_routes"
+    ]
+  }
+}
