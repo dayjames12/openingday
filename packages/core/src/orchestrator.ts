@@ -1,6 +1,7 @@
 import type { Storage } from "./storage/interface.js";
 import type { SpawnResult } from "./workers/spawner.js";
 import type { ContextPackage } from "./types.js";
+import { refreshFiles } from "./scanner/incremental.js";
 import {
   createWorkerPool,
   planSpawns,
@@ -77,6 +78,7 @@ export class Orchestrator {
     let state = await this.storage.readProjectState();
     let workTree = await this.storage.readWorkTree();
     const codeTree = await this.storage.readCodeTree();
+    const repoMap = await this.storage.readRepoMap();
     const memory = await this.storage.readMemory();
 
     // 2. Check if terminal/paused state → return early
@@ -168,6 +170,7 @@ export class Orchestrator {
         task.id,
         memory,
         "", // rules
+        repoMap,
       );
       if (!context) continue;
 
@@ -224,6 +227,12 @@ export class Orchestrator {
           workTree = applyWorkerResult(workTree, task.id, result.output);
           this.pool = completeWorker(this.pool, sessionId, "completed");
           completed++;
+
+          // Incremental repo map refresh
+          if (repoMap && result.output.filesChanged.length > 0) {
+            const updatedMap = await refreshFiles(repoMap, this.options.repoDir ?? ".", result.output.filesChanged);
+            await this.storage.writeRepoMap(updatedMap);
+          }
         } else {
           // j. If failed: mark failed, complete worker as failed, append to memory
           workTree = updateTaskStatus(workTree, task.id, "failed");

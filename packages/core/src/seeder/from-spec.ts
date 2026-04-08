@@ -1,6 +1,8 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { WorkTree, CodeTree } from "../types.js";
+import type { RepoMap } from "../scanner/types.js";
+import { buildLandscape } from "../scanner/scan.js";
 
 // === Types ===
 
@@ -15,8 +17,8 @@ export interface SeederOutput {
  * Build a prompt that instructs the AI to generate a work tree and code tree
  * from a project specification.
  */
-export function buildSeederPrompt(specText: string, projectName: string): string {
-  return `You are a project planner for "${projectName}".
+export function buildSeederPrompt(specText: string, projectName: string, repoMap?: RepoMap | null): string {
+  let base = `You are a project planner for "${projectName}".
 
 Given the following specification, generate a JSON object with two keys: "workTree" and "codeTree".
 
@@ -80,6 +82,13 @@ Each module (CodeModule) must have:
 - Group files into modules by top-level directory
 
 Output ONLY a valid JSON object with "workTree" and "codeTree" keys. No markdown fences, no explanation.`;
+
+  if (repoMap) {
+    const landscape = buildLandscape(repoMap);
+    base += `\n\nEXISTING CODEBASE:\n${JSON.stringify(landscape)}\n\nGenerate tasks that integrate with existing modules. Reuse existing patterns and utilities.`;
+  }
+
+  return base;
 }
 
 // === Response Parser ===
@@ -128,8 +137,9 @@ export async function seedFromSpec(
   projectName: string,
   cwd: string,
   budgetUsd?: number,
+  repoMap?: RepoMap | null,
 ): Promise<SeederOutput | null> {
-  const prompt = buildSeederPrompt(specText, projectName);
+  const prompt = buildSeederPrompt(specText, projectName, repoMap);
 
   const stream = query({
     prompt,
