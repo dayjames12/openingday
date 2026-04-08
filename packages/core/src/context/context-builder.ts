@@ -6,8 +6,10 @@ import type {
   ContextPackage,
   ProjectConfig,
 } from "../types.js";
+import type { RepoMap } from "../scanner/types.js";
 import { getTask } from "../trees/work-tree.js";
 import { getFile, getDependents, getDependencies } from "../trees/code-tree.js";
+import { buildLandscape, findRelevantFiles } from "../scanner/scan.js";
 
 /**
  * Build a ContextPackage for a given task, pulling in relevant code files,
@@ -20,6 +22,7 @@ export function buildContext(
   taskId: string,
   memory: string,
   rules: string,
+  repoMap?: RepoMap | null,
 ): ContextPackage | null {
   const task = getTask(workTree, taskId);
   if (!task) return null;
@@ -59,6 +62,9 @@ export function buildContext(
   const softLimit = Math.floor(perTaskBudget * config.budgets.perTask.softPct / 100 * 1000);
   const hardLimit = perTaskBudget * 1000;
 
+  const landscape = repoMap ? buildLandscape(repoMap) : { mc: 0, fc: 0, modules: [] };
+  const relevant = repoMap ? findRelevantFiles(repoMap, task.touches, task.reads) : [];
+
   return {
     task: {
       name: task.name,
@@ -74,6 +80,8 @@ export function buildContext(
       softLimit,
       hardLimit,
     },
+    landscape,
+    relevant,
   };
 }
 

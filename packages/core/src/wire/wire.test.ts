@@ -35,6 +35,8 @@ describe("wire", () => {
     memory: "Use jose library for JWT",
     rules: "strict mode",
     budget: { softLimit: 50000, hardLimit: 100000 },
+    landscape: { mc: 0, fc: 0, modules: [] },
+    relevant: [],
   };
 
   describe("toWirePrompt", () => {

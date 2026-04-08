@@ -101,6 +101,8 @@ export interface ContextPackage {
   memory: string;
   rules: string;
   budget: { softLimit: number; hardLimit: number };
+  landscape: { mc: number; fc: number; modules: { p: string; fc: number; k: string[] }[] };
+  relevant: { p: string; ex: { n: string; s: string }[]; im: { f: string; n: string[] }[]; loc: number }[];
 }
 
 // === Wire Mode ===
@@ -112,6 +114,8 @@ export interface WirePrompt {
   accept: string[];
   memory: string;
   budget: number;
+  landscape: { mc: number; fc: number; modules: { p: string; fc: number; k: string[] }[] };
+  relevant: Record<string, { exports: { n: string; sig: string }[] }>;
 }
 
 export interface WireResponse {

@@ -28,6 +28,10 @@ export function toWirePrompt(ctx: ContextPackage): WirePrompt {
     accept: ctx.task.acceptanceCriteria,
     memory: ctx.memory,
     budget: ctx.budget.softLimit,
+    landscape: ctx.landscape,
+    relevant: Object.fromEntries(
+      ctx.relevant.map((f) => [f.p, { exports: f.ex.map((e) => ({ n: e.n, sig: e.s })) }])
+    ),
   };
 }
 
