@@ -12,6 +12,7 @@ import { registerKill } from "./commands/kill.js";
 import { registerDashboard } from "./commands/dashboard.js";
 import { registerWatch } from "./commands/watch.js";
 import { registerScan } from "./commands/scan.js";
+import { printBanner } from "./utils/banner.js";
 
 const program = new Command();
 
@@ -36,8 +37,9 @@ registerDashboard(program);
 registerWatch(program);
 registerScan(program);
 
-// Default to help when no command given
+// Default to banner + help when no command given
 if (process.argv.length <= 2) {
+  printBanner();
   program.outputHelp();
 } else {
   program.parse();

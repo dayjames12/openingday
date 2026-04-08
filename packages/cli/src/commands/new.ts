@@ -18,6 +18,7 @@ import type { WorkTree, CodeTree } from "@openingday/core";
 import { STACK_PRESETS } from "../presets/stacks.js";
 import type { StackPreset } from "../presets/stacks.js";
 import { formatWorkTree } from "../utils/display.js";
+import { printBanner } from "../utils/banner.js";
 
 type ScaleChoice = "small" | "medium" | "large";
 
@@ -96,9 +97,7 @@ export function registerNew(program: Command): void {
         return;
       }
 
-      console.log();
-      console.log(chalk.bold.yellow("  OpeningDay") + chalk.gray(" — project setup"));
-      console.log();
+      printBanner();
 
       // Step 1: What are you building?
       const description = await input({
