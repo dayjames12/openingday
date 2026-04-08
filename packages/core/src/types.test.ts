@@ -1,25 +1,9 @@
 import { describe, it, expect } from "vitest";
 import type {
   ProjectConfig,
-  WorkTree,
-  WorkMilestone,
-  WorkSlice,
   WorkTask,
-  TaskStatus,
-  CodeTree,
-  CodeModule,
   CodeFile,
-  CodeExport,
-  CodeImport,
   WorkerOutput,
-  GateResult,
-  GateIssue,
-  ContextPackage,
-  WirePrompt,
-  WireResponse,
-  BudgetConfig,
-  LimitsConfig,
-  CircuitBreakerConfig,
   ProjectState,
 } from "./types.js";
 
@@ -60,7 +44,7 @@ describe("types", () => {
       lastModifiedBy: null,
     };
     expect(file.exports).toHaveLength(1);
-    expect(file.exports[0].name).toBe("authMiddleware");
+    expect(file.exports[0]!.name).toBe("authMiddleware");
   });
 
   it("creates a valid WorkerOutput", () => {

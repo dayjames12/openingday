@@ -56,14 +56,14 @@ describe("linker", () => {
     const { workTree, codeTree } = buildFixture();
     const files = resolveTaskTouches(workTree, codeTree, "t1");
     expect(files).toHaveLength(1);
-    expect(files[0].path).toBe("src/auth/middleware.ts");
+    expect(files[0]!.path).toBe("src/auth/middleware.ts");
   });
 
   it("resolveTaskReads returns code files for task reads", () => {
     const { workTree, codeTree } = buildFixture();
     const files = resolveTaskReads(workTree, codeTree, "t1");
     expect(files).toHaveLength(1);
-    expect(files[0].path).toBe("src/auth/types.ts");
+    expect(files[0]!.path).toBe("src/auth/types.ts");
   });
 
   it("resolveTaskTouches returns empty for nonexistent task", () => {
@@ -75,14 +75,14 @@ describe("linker", () => {
     const { workTree } = buildFixture();
     const tasks = findTasksTouchingFile(workTree, "src/auth/middleware.ts");
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].id).toBe("t1");
+    expect(tasks[0]!.id).toBe("t1");
   });
 
   it("findTasksReadingFile returns tasks that read a file", () => {
     const { workTree } = buildFixture();
     const tasks = findTasksReadingFile(workTree, "src/auth/types.ts");
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].id).toBe("t1");
+    expect(tasks[0]!.id).toBe("t1");
   });
 
   it("detectFileConflicts finds files touched by multiple active tasks", () => {

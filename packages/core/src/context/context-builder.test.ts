@@ -66,7 +66,7 @@ describe("context-builder", () => {
     const ctx = buildContext(workTree, codeTree, config, "t1", "", "")!;
 
     expect(ctx.interfaces).toHaveLength(1);
-    expect(ctx.interfaces[0].path).toBe("src/auth/middleware.ts");
+    expect(ctx.interfaces[0]!.path).toBe("src/auth/middleware.ts");
   });
 
   it("includes dependencies and reads as above files", () => {

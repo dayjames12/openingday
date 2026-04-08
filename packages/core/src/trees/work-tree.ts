@@ -181,7 +181,9 @@ export function splitTask(
   const original = getTask(tree, taskId);
   if (!original) return tree;
 
-  const lastNewId = newTasks[newTasks.length - 1].id;
+  const lastNew = newTasks[newTasks.length - 1];
+  if (!lastNew) return tree;
+  const lastNewId = lastNew.id;
 
   // Build replacement tasks inheriting parentSliceId from original
   const replacements: WorkTask[] = newTasks.map((nt) => ({

@@ -24,8 +24,8 @@ describe("code-tree", () => {
     let tree = createCodeTree();
     tree = addModule(tree, { path: "src/auth", description: "Auth module" });
     expect(tree.modules).toHaveLength(1);
-    expect(tree.modules[0].path).toBe("src/auth");
-    expect(tree.modules[0].files).toEqual([]);
+    expect(tree.modules[0]!.path).toBe("src/auth");
+    expect(tree.modules[0]!.files).toEqual([]);
   });
 
   it("gets a module by path", () => {
@@ -44,8 +44,8 @@ describe("code-tree", () => {
       exports: [{ name: "authMiddleware", signature: "() => Middleware", description: "Auth MW" }],
       imports: [{ from: "src/auth/types", names: ["AuthOpts"] }],
     });
-    expect(tree.modules[0].files).toHaveLength(1);
-    expect(tree.modules[0].files[0].lastModifiedBy).toBeNull();
+    expect(tree.modules[0]!.files).toHaveLength(1);
+    expect(tree.modules[0]!.files[0]!.lastModifiedBy).toBeNull();
   });
 
   it("gets a file by path", () => {

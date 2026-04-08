@@ -30,9 +30,9 @@ describe("work-tree", () => {
       dependencies: [],
     });
     expect(tree.milestones).toHaveLength(1);
-    expect(tree.milestones[0].id).toBe("m1");
-    expect(tree.milestones[0].name).toBe("Auth");
-    expect(tree.milestones[0].slices).toEqual([]);
+    expect(tree.milestones[0]!.id).toBe("m1");
+    expect(tree.milestones[0]!.name).toBe("Auth");
+    expect(tree.milestones[0]!.slices).toEqual([]);
   });
 
   // 3. Adds slice to milestone
@@ -49,10 +49,10 @@ describe("work-tree", () => {
       name: "JWT",
       description: "JWT implementation",
     });
-    expect(tree.milestones[0].slices).toHaveLength(1);
-    expect(tree.milestones[0].slices[0].id).toBe("s1");
-    expect(tree.milestones[0].slices[0].parentMilestoneId).toBe("m1");
-    expect(tree.milestones[0].slices[0].tasks).toEqual([]);
+    expect(tree.milestones[0]!.slices).toHaveLength(1);
+    expect(tree.milestones[0]!.slices[0]!.id).toBe("s1");
+    expect(tree.milestones[0]!.slices[0]!.parentMilestoneId).toBe("m1");
+    expect(tree.milestones[0]!.slices[0]!.tasks).toEqual([]);
   });
 
   // 4. Adds task to slice with correct defaults
@@ -78,7 +78,7 @@ describe("work-tree", () => {
       reads: ["auth/types.ts"],
     });
 
-    const task = tree.milestones[0].slices[0].tasks[0];
+    const task = tree.milestones[0]!.slices[0]!.tasks[0]!;
     expect(task.id).toBe("t1");
     expect(task.status).toBe("pending");
     expect(task.worker).toBeNull();
@@ -207,7 +207,7 @@ describe("work-tree", () => {
 
     const ready = getReadyTasks(tree, []);
     expect(ready).toHaveLength(1);
-    expect(ready[0].id).toBe("t1");
+    expect(ready[0]!.id).toBe("t1");
   });
 
   // 10. After completing dependency, blocked task becomes ready
@@ -245,7 +245,7 @@ describe("work-tree", () => {
 
     const ready = getReadyTasks(tree, []);
     expect(ready).toHaveLength(1);
-    expect(ready[0].id).toBe("t2");
+    expect(ready[0]!.id).toBe("t2");
   });
 
   // 11. Excludes tasks with file conflicts from ready list
@@ -277,7 +277,7 @@ describe("work-tree", () => {
 
     const ready = getReadyTasks(tree, ["shared.ts"]);
     expect(ready).toHaveLength(1);
-    expect(ready[0].id).toBe("t2");
+    expect(ready[0]!.id).toBe("t2");
   });
 
   // 12. Splits task into subtasks

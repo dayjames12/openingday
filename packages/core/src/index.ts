@@ -1,2 +1,133 @@
 // @openingday/core entry point
-export {};
+
+// Types
+export type {
+  TaskStatus,
+  ProjectStatus,
+  WorkTask,
+  WorkSlice,
+  WorkMilestone,
+  WorkTree,
+  CodeExport,
+  CodeImport,
+  CodeFile,
+  CodeModule,
+  CodeTree,
+  WorkerOutput,
+  InterfaceChange,
+  ContextPackage,
+  WirePrompt,
+  WireResponse,
+  GateSeverity,
+  GateIssue,
+  GateResult,
+  BudgetConfig,
+  LimitsConfig,
+  CircuitBreakerConfig,
+  ProjectConfig,
+  ProjectState,
+} from "./types.js";
+
+// Config
+export { defaultConfig } from "./config/defaults.js";
+export { loadStandards } from "./config/standards.js";
+
+// Storage
+export { DiskStorage } from "./storage/disk.js";
+export type { Storage } from "./storage/interface.js";
+
+// Work Tree
+export {
+  createWorkTree,
+  addMilestone,
+  addSlice,
+  addTask,
+  getAllTasks,
+  getTasksInSlice,
+  getTask,
+  updateTaskStatus,
+  updateTask,
+  getReadyTasks,
+  splitTask,
+} from "./trees/work-tree.js";
+
+// Code Tree
+export {
+  createCodeTree,
+  addModule,
+  addFile,
+  getModule,
+  getFile,
+  getAllFiles,
+  updateFile,
+  setLastModifiedBy,
+  getFileExports,
+  getFileImports,
+  getDependents,
+  getDependencies,
+} from "./trees/code-tree.js";
+
+// Linker
+export {
+  resolveTaskTouches,
+  resolveTaskReads,
+  findTasksTouchingFile,
+  findTasksReadingFile,
+  detectFileConflicts,
+  getActiveFileLocks,
+  validateFileReferences,
+} from "./trees/linker.js";
+
+// Wire Mode
+export { toWirePrompt, fromWireResponse, toWireResponse } from "./wire/wire.js";
+
+// Context Builder
+export { buildContext } from "./context/context-builder.js";
+
+// State Machine
+export {
+  createProjectState,
+  canTransition,
+  getValidTransitions,
+  transition,
+  addTokenSpend,
+  incrementWorkersSpawned,
+  isTerminal,
+  isActive,
+} from "./state/state-machine.js";
+
+// Worker Pool
+export {
+  createWorkerPool,
+  getActiveSessions,
+  getSessionByTaskId,
+  getActiveCount,
+  planSpawns,
+  spawnWorker,
+  completeWorker,
+  applyWorkerResult,
+  findTimedOutSessions,
+} from "./workers/pool.js";
+export type { WorkerSession, WorkerPool, SpawnDecision } from "./workers/pool.js";
+
+// Gates
+export {
+  runGatePipeline,
+  automatedTestGate,
+  treeCheckGate,
+  securityGate,
+  allGatesPassed,
+  getHighSeverityIssues,
+  countIssuesBySeverity,
+  createDefaultPipeline,
+} from "./gates/pipeline.js";
+export type { GateLayer, GateCheck } from "./gates/pipeline.js";
+
+// Budget
+export {
+  getProjectBudgetStatus,
+  isTaskWithinBudget,
+  isTaskAtSoftLimit,
+  checkCircuitBreakers,
+} from "./budget/budget.js";
+export type { BudgetStatus, CircuitBreakerStatus } from "./budget/budget.js";

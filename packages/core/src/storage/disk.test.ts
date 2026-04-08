@@ -275,12 +275,12 @@ describe("DiskStorage", () => {
 
     const read = await storage.readGateResults("task-1");
     expect(read).toHaveLength(3);
-    expect(read[0].layer).toBe("automated");
-    expect(read[1].layer).toBe("security");
-    expect(read[2].layer).toBe("quality");
-    expect(read[1].pass).toBe(false);
-    expect(read[1].issues).toHaveLength(1);
-    expect(read[1].issues[0].severity).toBe("high");
+    expect(read[0]!.layer).toBe("automated");
+    expect(read[1]!.layer).toBe("security");
+    expect(read[2]!.layer).toBe("quality");
+    expect(read[1]!.pass).toBe(false);
+    expect(read[1]!.issues).toHaveLength(1);
+    expect(read[1]!.issues[0]!.severity).toBe("high");
   });
 
   it("returns empty array for missing gate results", async () => {

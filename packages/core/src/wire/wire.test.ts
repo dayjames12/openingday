@@ -51,7 +51,7 @@ describe("wire", () => {
       const wire = toWirePrompt(sampleContext);
 
       expect(wire.files["src/auth/middleware.ts"]).toBeDefined();
-      expect(wire.files["src/auth/middleware.ts"].exports).toEqual([
+      expect(wire.files["src/auth/middleware.ts"]!.exports).toEqual([
         { n: "authMiddleware", sig: "(opts: AuthOpts) => Middleware" },
       ]);
     });
@@ -60,7 +60,7 @@ describe("wire", () => {
       const wire = toWirePrompt(sampleContext);
 
       expect(wire.reads["src/auth/types.ts"]).toBeDefined();
-      expect(wire.reads["src/auth/types.ts"].exports).toEqual([
+      expect(wire.reads["src/auth/types.ts"]!.exports).toEqual([
         { n: "AuthOpts", sig: "interface AuthOpts" },
       ]);
     });
