@@ -9,6 +9,8 @@ export interface WorkerSession {
   taskId: string;
   startedAt: string;
   status: "active" | "completed" | "failed" | "timed_out";
+  worktreePath: string | null;
+  lastActivityAt: string;
 }
 
 // === Worker Pool State ===
@@ -87,12 +89,16 @@ export function spawnWorker(
   pool: WorkerPool,
   sessionId: string,
   taskId: string,
+  worktreePath?: string,
 ): WorkerPool {
+  const now = new Date().toISOString();
   const session: WorkerSession = {
     id: sessionId,
     taskId,
-    startedAt: new Date().toISOString(),
+    startedAt: now,
     status: "active",
+    worktreePath: worktreePath ?? null,
+    lastActivityAt: now,
   };
   return {
     sessions: [...pool.sessions, session],

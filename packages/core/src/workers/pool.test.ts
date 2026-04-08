@@ -58,6 +58,24 @@ describe("worker pool", () => {
     expect(pool.totalSpawned).toBe(1);
   });
 
+  it("spawns a worker with worktreePath and lastActivityAt defaults", () => {
+    let pool = createWorkerPool();
+    pool = spawnWorker(pool, "sess-1", "t1");
+
+    const session = pool.sessions[0]!;
+    expect(session.worktreePath).toBeNull();
+    expect(session.lastActivityAt).toBe(session.startedAt);
+  });
+
+  it("spawns a worker with explicit worktreePath", () => {
+    let pool = createWorkerPool();
+    pool = spawnWorker(pool, "sess-1", "t1", "/tmp/worktree-t1");
+
+    const session = pool.sessions[0]!;
+    expect(session.worktreePath).toBe("/tmp/worktree-t1");
+    expect(session.lastActivityAt).toBe(session.startedAt);
+  });
+
   it("getActiveSessions returns only active sessions", () => {
     let pool = createWorkerPool();
     pool = spawnWorker(pool, "sess-1", "t1");
@@ -204,8 +222,8 @@ describe("worker pool", () => {
       pool = {
         ...pool,
         sessions: [
-          { id: "s1", taskId: "t1", startedAt: past, status: "active" as const },
-          { id: "s2", taskId: "t2", startedAt: new Date().toISOString(), status: "active" as const },
+          { id: "s1", taskId: "t1", startedAt: past, status: "active" as const, worktreePath: null, lastActivityAt: past },
+          { id: "s2", taskId: "t2", startedAt: new Date().toISOString(), status: "active" as const, worktreePath: null, lastActivityAt: new Date().toISOString() },
         ],
         totalSpawned: 2,
       };
@@ -221,7 +239,7 @@ describe("worker pool", () => {
       pool = {
         ...pool,
         sessions: [
-          { id: "s1", taskId: "t1", startedAt: past, status: "completed" as const },
+          { id: "s1", taskId: "t1", startedAt: past, status: "completed" as const, worktreePath: null, lastActivityAt: past },
         ],
         totalSpawned: 1,
       };
