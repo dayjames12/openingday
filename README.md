@@ -7,56 +7,82 @@ AI agent orchestration system. Give it a spec, it builds the app — dispatching
 ```bash
 # Install
 git clone <repo> && cd openingday
-pnpm install
-pnpm build
+pnpm install && pnpm build
 
 # Create an alias (add to .zshrc for persistence)
 alias openingday="node $(pwd)/packages/cli/dist/index.js"
+
+# Set your API key
+export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-### 1. Initialize a Project
+### 1. Create a Project (Interactive)
 
 ```bash
 mkdir my-app && cd my-app && git init && git commit --allow-empty -m "init"
 
-# From a spec file (AI generates the task tree)
+openingday new
+```
+
+This walks you through it conversationally:
+
+```
+⚾ Welcome to OpeningDay.
+
+? What are you building?
+> A task management API with user auth and a React dashboard
+
+? Tech stack:
+  ❯ SST Platform — SST v3, Hono, DynamoDB, Lambda, SNS/SQS, CloudFront
+    Next.js — Next.js App Router, React, TypeScript, Tailwind
+    Express API — Express, TypeScript, PostgreSQL/DynamoDB
+    Remix — Remix, React, TypeScript, Tailwind
+    Custom — describe your own
+
+? Scale: medium (startup, ~10k users)
+
+? Any specific requirements? (optional)
+> Need Shopify webhook integration and Klaviyo for emails
+
+Generating plan... ✓
+
+  2 milestones, 6 slices, 18 tasks
+  34 files planned
+  Estimated cost: ~$14
+
+? Review the plan? Yes
+```
+
+**Or use the CLI directly** if you already have a spec:
+
+```bash
 openingday init --from spec.md --name my-app
-
-# From an existing repo (scans code, you provide spec for new work)
-openingday init --from . --spec add-billing.md --name my-app
-
-# Inspect what was generated
-openingday tree              # work tree (milestones/slices/tasks)
-openingday tree --code       # code tree (modules/files/exports)
-openingday status            # project state
-openingday status --cost     # budget breakdown
+openingday init --from . --spec add-billing.md    # existing repo + new feature
 ```
 
 ### 2. Run Agents
 
 ```bash
-# Start the orchestration loop
-openingday run
-
-# Or step through one task at a time
-openingday run --step
+openingday run             # continuous — dispatches workers until done
+openingday run --step      # one task at a time
 
 # Control
-openingday pause             # graceful stop (workers finish current task)
-openingday resume            # continue
-openingday kill              # hard stop
+openingday pause           # graceful stop (workers finish current task)
+openingday resume          # continue
+openingday kill            # hard stop
 ```
 
 ### 3. Watch Progress
 
 ```bash
-# Terminal
-openingday status
+# Live terminal dashboard (no browser needed)
+openingday watch
 
-# Web dashboard
-openingday dashboard
-# Opens http://localhost:3000 with live 4-panel view
+# Or in a browser
+openingday dashboard       # opens http://localhost:3000
 ```
+
+The terminal dashboard shows a live 4-panel view right in your terminal — work tree, active workers, gate history, and costs. Auto-refreshes every 2 seconds.
 
 ## How It Works
 
@@ -116,14 +142,16 @@ All state lives in `.openingday/` as JSON files:
 
 | Command | Description |
 |---------|-------------|
-| `openingday init --from <spec\|repo> [--spec <file>] [--name <name>]` | Initialize project, seed trees |
+| `openingday new` | Interactive project creation (recommended) |
+| `openingday init --from <spec\|repo> [--spec <file>] [--name <name>]` | CLI project init |
 | `openingday run [--step] [--dry-run]` | Start dispatching workers |
 | `openingday pause` | Graceful stop |
 | `openingday resume` | Continue execution |
 | `openingday kill` | Hard stop |
+| `openingday watch` | Live terminal dashboard |
 | `openingday status [--cost]` | Show project state |
 | `openingday tree [--code]` | Print work or code tree |
-| `openingday dashboard [--port <n>]` | Launch web dashboard |
+| `openingday dashboard [--port <n>]` | Launch web dashboard (browser) |
 
 ## Configuration
 
