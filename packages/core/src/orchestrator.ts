@@ -1,13 +1,6 @@
 import type { Storage } from "./storage/interface.js";
 import type { SpawnResult } from "./workers/spawner.js";
-import type {
-  ContextPackage,
-  WorkTree,
-  CodeTree,
-  ProjectConfig,
-  ProjectState,
-  WorkerOutput,
-} from "./types.js";
+import type { ContextPackage } from "./types.js";
 import {
   createWorkerPool,
   planSpawns,
@@ -21,7 +14,6 @@ import { buildContext } from "./context/context-builder.js";
 import {
   runGatePipeline,
   createDefaultPipeline,
-  allGatesPassed,
 } from "./gates/pipeline.js";
 import { getAllTasks, updateTaskStatus } from "./trees/work-tree.js";
 import {

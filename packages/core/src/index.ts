@@ -131,3 +131,43 @@ export {
   checkCircuitBreakers,
 } from "./budget/budget.js";
 export type { BudgetStatus, CircuitBreakerStatus } from "./budget/budget.js";
+
+// Worktree
+export {
+  createWorktree,
+  removeWorktree,
+  listWorktrees,
+  mergeWorktree,
+} from "./workers/worktree.js";
+export type { WorktreeInfo } from "./workers/worktree.js";
+
+// Spawner
+export {
+  spawnAgent,
+  buildSystemPrompt,
+  buildUserPrompt,
+  parseSpawnResult,
+} from "./workers/spawner.js";
+export type { SpawnOptions, SpawnResult } from "./workers/spawner.js";
+
+// Seeder (from spec)
+export {
+  seedFromSpec,
+  buildSeederPrompt,
+  parseSeederResponse,
+} from "./seeder/from-spec.js";
+export type { SeederOutput } from "./seeder/from-spec.js";
+
+// Seeder (from repo)
+export { scanRepo } from "./seeder/from-repo.js";
+
+// Estimator
+export {
+  estimateTaskContext,
+  findOversizedTasks,
+} from "./seeder/estimator.js";
+export type { OversizedTask } from "./seeder/estimator.js";
+
+// Orchestrator
+export { Orchestrator } from "./orchestrator.js";
+export type { CycleResult, SpawnFn } from "./orchestrator.js";

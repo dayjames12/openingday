@@ -1,5 +1,5 @@
-import { readdir, readFile, stat } from "node:fs/promises";
-import { join, relative, dirname } from "node:path";
+import { readdir, readFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 import type { CodeTree, CodeModule, CodeFile, CodeExport, CodeImport } from "../types.js";
 
 // === Constants ===
