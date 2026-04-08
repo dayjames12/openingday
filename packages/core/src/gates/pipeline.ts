@@ -6,6 +6,7 @@ import type {
   WorkTree,
   CodeTree,
 } from "../types.js";
+import { createQualityGateCheck } from "./quality.js";
 
 // === Gate Layer Definition ===
 
@@ -161,6 +162,10 @@ export function countIssuesBySeverity(results: GateResult[]): Record<GateSeverit
 /**
  * Create a default pipeline with built-in checks.
  */
-export function createDefaultPipeline(taskTouches: string[]): GateCheck[] {
-  return [automatedTestGate(), treeCheckGate(taskTouches), securityGate()];
+export function createDefaultPipeline(taskTouches: string[], standards?: string): GateCheck[] {
+  const pipeline: GateCheck[] = [automatedTestGate(), treeCheckGate(taskTouches), securityGate()];
+  if (standards) {
+    pipeline.push(createQualityGateCheck(standards));
+  }
+  return pipeline;
 }
