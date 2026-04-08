@@ -207,6 +207,10 @@ pnpm lint           # ESLint
 pnpm build          # build all packages
 ```
 
+## Multi-Developer Usage
+
+OpeningDay is designed for solo dev per branch. Multiple developers can use it on the same repo with different feature branches — coordinate via git, not OpeningDay. Multi-dev coordination is planned for a future release.
+
 ## Requirements
 
 - Node.js 22+

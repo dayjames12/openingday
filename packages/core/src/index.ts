@@ -161,6 +161,13 @@ export type { SeederOutput } from "./seeder/from-spec.js";
 // Seeder (from repo)
 export { scanRepo } from "./seeder/from-repo.js";
 
+// Scanner
+export { scanRepo as scanRepoMap, buildLandscape, findRelevantFiles } from "./scanner/scan.js";
+export { detectEnv, detectDeps } from "./scanner/detect.js";
+export { ensureGitignore } from "./scanner/gitignore.js";
+export { refreshFiles } from "./scanner/incremental.js";
+export type { RepoMap, RepoModule, RepoFile, RepoExport, RepoImport, EnvConfig, ScanDepth, Landscape, RelevantFiles } from "./scanner/types.js";
+
 // Estimator
 export {
   estimateTaskContext,
