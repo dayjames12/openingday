@@ -12,8 +12,8 @@ pnpm install && pnpm build
 # Create an alias (add to .zshrc for persistence)
 alias openingday="node $(pwd)/packages/cli/dist/index.js"
 
-# Set your API key
-export ANTHROPIC_API_KEY=sk-ant-...
+# Uses your existing Claude Code auth — no API key needed
+```
 ```
 
 ### 1. Create a Project (Interactive)
@@ -212,7 +212,7 @@ pnpm build          # build all packages
 - Node.js 22+
 - pnpm 9+
 - Git (for worktree isolation)
-- `ANTHROPIC_API_KEY` environment variable
+- Claude Code (uses your existing auth — no API key needed)
 
 ## License
 
