@@ -168,6 +168,25 @@ export {
 } from "./seeder/estimator.js";
 export type { OversizedTask } from "./seeder/estimator.js";
 
+// Supervisor
+export {
+  findStuckWorkers,
+  findDeadTasks,
+} from "./supervisor/health.js";
+export {
+  runSupervisorCheck,
+} from "./supervisor/cron.js";
+export type { SupervisorResult } from "./supervisor/cron.js";
+
+// Quality Gate
+export {
+  runQualityReview,
+  buildQualityPrompt,
+  parseQualityResponse,
+  createQualityGateCheck,
+} from "./gates/quality.js";
+export type { QualityReviewResult } from "./gates/quality.js";
+
 // Orchestrator
 export { Orchestrator } from "./orchestrator.js";
 export type { CycleResult, SpawnFn, OrchestratorOptions } from "./orchestrator.js";
