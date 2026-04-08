@@ -37,6 +37,8 @@ describe("spawner", () => {
       accept: ["Validates tokens"],
       memory: "Use jose library",
       budget: 50000,
+      landscape: { mc: 0, fc: 0, modules: [] },
+      relevant: {},
     };
 
     it("contains the task name", () => {

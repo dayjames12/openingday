@@ -11,6 +11,9 @@ import {
   getAllTasks,
   seedFromSpec,
 } from "@openingday/core";
+import { scanRepo as scanRepoMap } from "@openingday/core/scanner/scan";
+import { ensureGitignore } from "@openingday/core/scanner/gitignore";
+import type { RepoMap } from "@openingday/core/scanner/types";
 import type { WorkTree, CodeTree } from "@openingday/core";
 import { STACK_PRESETS } from "../presets/stacks.js";
 import type { StackPreset } from "../presets/stacks.js";
@@ -205,11 +208,21 @@ export function registerNew(program: Command): void {
       let workTree: WorkTree = createWorkTree();
       let codeTree: CodeTree = createCodeTree();
 
+      // Scan existing repo for landscape context
+      let repoMap: RepoMap | null = null;
+      try {
+        repoMap = await scanRepoMap(process.cwd(), "standard");
+      } catch {
+        // No existing files to scan — that's fine
+      }
+
       try {
         const result = await seedFromSpec(
           specText,
           projectName,
           process.cwd(),
+          undefined,
+          repoMap,
         );
         if (result) {
           workTree = result.workTree;
@@ -275,11 +288,13 @@ export function registerNew(program: Command): void {
 
       // Step 9: Write to .openingday/
       await storage.initialize();
+      await ensureGitignore(process.cwd());
       const config = defaultConfig(projectName, "interactive");
       await storage.writeProjectConfig(config);
       await storage.writeProjectState(createProjectState());
       await storage.writeWorkTree(workTree);
       await storage.writeCodeTree(codeTree);
+      if (repoMap) await storage.writeRepoMap(repoMap);
 
       console.log();
       console.log(

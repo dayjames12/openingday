@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { RepoMap, RepoModule, RepoFile, EnvConfig, ScanDepth } from "./types.js";
+import type { RepoMap, ScanDepth } from "./types.js";
 
 describe("scanner types", () => {
   it("creates a valid RepoMap", () => {

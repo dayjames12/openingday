@@ -12,6 +12,9 @@ import {
   seedFromSpec,
   scanRepo,
 } from "@openingday/core";
+import { scanRepo as scanRepoMap } from "@openingday/core/scanner/scan";
+import { ensureGitignore } from "@openingday/core/scanner/gitignore";
+import type { RepoMap } from "@openingday/core/scanner/types";
 import type { WorkTree, CodeTree } from "@openingday/core";
 
 export function registerInit(program: Command): void {
@@ -29,12 +32,14 @@ export function registerInit(program: Command): void {
       }
 
       await storage.initialize();
+      await ensureGitignore(process.cwd());
       const config = defaultConfig(opts.name, opts.from);
       await storage.writeProjectConfig(config);
       await storage.writeProjectState(createProjectState());
 
       let workTree: WorkTree = createWorkTree();
       let codeTree: CodeTree = createCodeTree();
+      let repoMap: RepoMap | null = null;
 
       const fromPath = resolve(opts.from);
       const fromStat = await stat(fromPath).catch(() => null);
@@ -55,13 +60,14 @@ export function registerInit(program: Command): void {
           // --from points to a directory: scan repo for code tree
           console.log(chalk.gray("Scanning repository..."));
           codeTree = await scanRepo(fromPath);
+          repoMap = await scanRepoMap(fromPath, "standard");
 
           // If --spec provided, also seed work tree from spec
           if (opts.spec) {
             const specPath = resolve(opts.spec);
             console.log(chalk.gray("Seeding from spec..."));
             const specText = await readFile(specPath, "utf-8");
-            const result = await seedFromSpec(specText, opts.name, process.cwd());
+            const result = await seedFromSpec(specText, opts.name, process.cwd(), undefined, repoMap);
             if (result) {
               workTree = result.workTree;
               // Keep the scanned code tree (more accurate than AI-generated)
@@ -80,6 +86,7 @@ export function registerInit(program: Command): void {
 
       await storage.writeWorkTree(workTree);
       await storage.writeCodeTree(codeTree);
+      if (repoMap) await storage.writeRepoMap(repoMap);
 
       console.log(
         chalk.green(`Initialized project "${opts.name}" in .openingday/`),

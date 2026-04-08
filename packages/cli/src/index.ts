@@ -11,6 +11,7 @@ import { registerResume } from "./commands/resume.js";
 import { registerKill } from "./commands/kill.js";
 import { registerDashboard } from "./commands/dashboard.js";
 import { registerWatch } from "./commands/watch.js";
+import { registerScan } from "./commands/scan.js";
 
 const program = new Command();
 
@@ -33,6 +34,7 @@ registerResume(program);
 registerKill(program);
 registerDashboard(program);
 registerWatch(program);
+registerScan(program);
 
 // Default to help when no command given
 if (process.argv.length <= 2) {

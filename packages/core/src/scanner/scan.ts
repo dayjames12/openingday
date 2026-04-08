@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import type { RepoMap, RepoModule, RepoFile, RepoExport, RepoImport, ScanDepth, EnvConfig } from "./types.js";
+import type { RepoMap, RepoModule, RepoFile, ScanDepth, EnvConfig } from "./types.js";
 import { detectEnv, detectDeps } from "./detect.js";
 import { extractExports, extractImports } from "../seeder/from-repo.js";
 
