@@ -170,4 +170,4 @@ export type { OversizedTask } from "./seeder/estimator.js";
 
 // Orchestrator
 export { Orchestrator } from "./orchestrator.js";
-export type { CycleResult, SpawnFn } from "./orchestrator.js";
+export type { CycleResult, SpawnFn, OrchestratorOptions } from "./orchestrator.js";

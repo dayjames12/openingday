@@ -26,6 +26,11 @@ import {
   getProjectBudgetStatus,
   checkCircuitBreakers,
 } from "./budget/budget.js";
+import {
+  createWorktree,
+  removeWorktree,
+  mergeWorktree,
+} from "./workers/worktree.js";
 
 // === Types ===
 
@@ -45,16 +50,25 @@ export interface CycleResult {
   error?: string;
 }
 
+// === Options ===
+
+export interface OrchestratorOptions {
+  repoDir?: string;
+}
+
 // === Orchestrator ===
 
 export class Orchestrator {
   private pool: WorkerPool;
+  private readonly options: OrchestratorOptions;
 
   constructor(
     private readonly storage: Storage,
     private readonly spawn: SpawnFn,
+    options?: OrchestratorOptions,
   ) {
     this.pool = createWorkerPool();
+    this.options = options ?? {};
   }
 
   async runOneCycle(): Promise<CycleResult> {
@@ -157,29 +171,38 @@ export class Orchestrator {
       );
       if (!context) continue;
 
-      // b. Mark task in_progress, register in pool
+      // b. Resolve worktree path
+      let worktreePath = ".";
+      let worktreeBranch: string | null = null;
+      if (this.options.repoDir) {
+        const wt = await createWorktree(this.options.repoDir, task.id);
+        worktreePath = wt.path;
+        worktreeBranch = wt.branch;
+      }
+
+      // c. Mark task in_progress, register in pool
       workTree = updateTaskStatus(workTree, task.id, "in_progress");
       const sessionId = `session-${task.id}-${Date.now()}`;
-      this.pool = spawnWorker(this.pool, sessionId, task.id);
+      this.pool = spawnWorker(this.pool, sessionId, task.id, worktreePath);
       state = incrementWorkersSpawned(state);
       dispatched++;
 
       try {
-        // c. Call spawn function
+        // d. Call spawn function
         const result = await this.spawn({
           taskId: task.id,
-          worktreePath: ".", // placeholder — real worktree path from git worktree manager
+          worktreePath,
           context,
           budgetUsd: config.budgets.perTask.usd,
         });
 
-        // d. Record token spend
+        // e. Record token spend
         state = addTokenSpend(state, result.output.tokensUsed);
 
-        // e. Store worker output
+        // f. Store worker output
         await this.storage.writeWorkerOutput(task.id, result.output);
 
-        // f. Run gate pipeline
+        // g. Run gate pipeline
         const pipeline = createDefaultPipeline(task.touches);
         const gateResults = runGatePipeline(
           pipeline,
@@ -188,18 +211,21 @@ export class Orchestrator {
           codeTree,
         );
 
-        // g. Store gate results
+        // h. Store gate results
         for (const gr of gateResults.results) {
           await this.storage.writeGateResult(task.id, gr);
         }
 
-        // h. If passed: apply worker result, complete worker
+        // i. If passed: apply worker result, merge worktree, complete worker
         if (gateResults.passed) {
+          if (this.options.repoDir && worktreeBranch) {
+            await mergeWorktree(this.options.repoDir, worktreeBranch);
+          }
           workTree = applyWorkerResult(workTree, task.id, result.output);
           this.pool = completeWorker(this.pool, sessionId, "completed");
           completed++;
         } else {
-          // i. If failed: mark failed, complete worker as failed, append to memory
+          // j. If failed: mark failed, complete worker as failed, append to memory
           workTree = updateTaskStatus(workTree, task.id, "failed");
           this.pool = completeWorker(this.pool, sessionId, "failed");
           failed++;
@@ -216,6 +242,15 @@ export class Orchestrator {
         await this.storage.appendMemory(
           `Task ${task.id} spawn error: ${message}`,
         );
+      } finally {
+        // k. Always cleanup worktree
+        if (this.options.repoDir && worktreePath !== ".") {
+          try {
+            await removeWorktree(this.options.repoDir, worktreePath);
+          } catch {
+            // Cleanup failure is non-fatal
+          }
+        }
       }
     }
 
