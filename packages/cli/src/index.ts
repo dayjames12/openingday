@@ -8,6 +8,7 @@ import { registerRun } from "./commands/run.js";
 import { registerPause } from "./commands/pause.js";
 import { registerResume } from "./commands/resume.js";
 import { registerKill } from "./commands/kill.js";
+import { registerDashboard } from "./commands/dashboard.js";
 
 const program = new Command();
 
@@ -23,5 +24,6 @@ registerRun(program);
 registerPause(program);
 registerResume(program);
 registerKill(program);
+registerDashboard(program);
 
 program.parse();
