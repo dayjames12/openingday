@@ -1,6 +1,27 @@
-# OpeningDay
+```
+      ⚾
+   ___                 _           ___
+  / _ \ _ __  ___ _ _ (_)_ _  __ _|   \ __ _ _  _
+ | (_) | '_ \/ -_) ' \| | ' \/ _` | |) / _` | || |
+  \___/| .__/\___|_||_|_|_||_\__, |___/\__,_|\_, |
+       |_|                   |___/           |__/
+```
 
-AI agent orchestration system. Give it a spec, it builds the app — dispatching Claude Code workers through a tree of tasks with gate-based quality checks and a supervisor for safety.
+**AI agent orchestration. Spec in. Code out.**
+
+OpeningDay dispatches a roster of Claude Code workers through a tree of tasks — with gate-based quality checks, budget guardrails, and a supervisor keeping the game on track. Hand it a spec, watch it build.
+
+---
+
+## The Lineup
+
+- **Spec-to-deploy lifecycle** — describe what you want, get a buildable codebase
+- **Dual-tree architecture** — work tree (what to do) + code tree (what to build), linked at the file level
+- **Parallel worker pool** — isolated git worktrees, compressed context, no idle token burn
+- **Five-layer gate system** — typecheck, security, AI review, tree validation, optional human approval
+- **Cascading budgets** — project, milestone, slice, and task-level spend limits with circuit breakers
+- **Live terminal dashboard** — 4-panel TUI with work tree, workers, gates, and cost tracking
+- **Zero config auth** — uses your existing Claude Code credentials
 
 ## Quick Start
 
@@ -11,130 +32,141 @@ pnpm install && pnpm build
 
 # Create an alias (add to .zshrc for persistence)
 alias openingday="node $(pwd)/packages/cli/dist/index.js"
-
-# Uses your existing Claude Code auth — no API key needed
 ```
-```
-
-### 1. Create a Project (Interactive)
 
 ```bash
+# Start a new project
 mkdir my-app && cd my-app && git init && git commit --allow-empty -m "init"
-
 openingday new
 ```
 
-This walks you through it conversationally:
+The interactive flow walks you through it:
 
 ```
-⚾ Welcome to OpeningDay.
+      ⚾
+   ___                 _           ___
+  / _ \ _ __  ___ _ _ (_)_ _  __ _|   \ __ _ _  _
+ | (_) | '_ \/ -_) ' \| | ' \/ _` | |) / _` | || |
+  \___/| .__/\___|_||_|_|_||_\__, |___/\__,_|\_, |
+       |_|                   |___/           |__/
+
+  Spec in. Code out.  v0.1.0
 
 ? What are you building?
 > A task management API with user auth and a React dashboard
 
-? Tech stack:
-  ❯ SST Platform — SST v3, Hono, DynamoDB, Lambda, SNS/SQS, CloudFront
-    Next.js — Next.js App Router, React, TypeScript, Tailwind
-    Express API — Express, TypeScript, PostgreSQL/DynamoDB
-    Remix — Remix, React, TypeScript, Tailwind
-    Custom — describe your own
-
-? Scale: medium (startup, ~10k users)
-
-? Any specific requirements? (optional)
-> Need Shopify webhook integration and Klaviyo for emails
+? Tech stack?  SST Platform — SST v3, Hono, DynamoDB, Lambda
+? Scale?       Medium — startup, ~10k users
+? Requirements? Shopify webhook integration, Klaviyo for emails
 
 Generating plan... ✓
 
-  2 milestones, 6 slices, 18 tasks
-  34 files planned
-  Estimated cost: ~$14
+Plan Summary
+  Milestones: 2
+  Tasks:      18
+  Files:      34
 
 ? Review the plan? Yes
 ```
 
-**Or use the CLI directly** if you already have a spec:
+Or go direct with a spec file:
 
 ```bash
 openingday init --from spec.md --name my-app
 openingday init --from . --spec add-billing.md    # existing repo + new feature
 ```
 
-### 2. Run Agents
+## The Innings
 
 ```bash
-openingday run             # continuous — dispatches workers until done
+# First pitch — start dispatching the roster
+openingday run             # continuous until done
 openingday run --step      # one task at a time
+openingday run --dry-run   # preview without executing
 
-# Control
+# Mid-game management
 openingday pause           # graceful stop (workers finish current task)
-openingday resume          # continue
-openingday kill            # hard stop
+openingday resume          # continue from where you left off
+openingday kill            # pull the starter
 ```
 
-### 3. Watch Progress
+## The Scoreboard
 
 ```bash
-# Live terminal dashboard (no browser needed)
-openingday watch
-
-# Or in a browser
-openingday dashboard       # opens http://localhost:3000
+openingday watch           # live terminal dashboard
+openingday dashboard       # web UI at localhost:3000
 ```
 
-The terminal dashboard shows a live 4-panel view right in your terminal — work tree, active workers, gate history, and costs. Auto-refreshes every 2 seconds.
+```
+┌─ Work Tree ──────────────────┬─ Active Workers ──────────────┐
+│ M1: Core API                 │ W-1  task:auth-middleware  12s │
+│   Auth [2/4]                 │ W-2  task:db-schema       8s  │
+│     ✓ user-model             │ W-3  task:api-routes      3s  │
+│     ✓ auth-middleware        │                               │
+│     ⟳ session-handler        │                               │
+│     ○ auth-tests             ├─ Gate History ────────────────┤
+│   Database [1/3]             │ ✓ user-model     auto  0.2s  │
+│     ✓ db-schema              │ ✓ auth-middleware gate  1.4s  │
+│     ⟳ migrations             │ ✗ db-seed (retry 1)    0.8s  │
+│     ○ seed-data              │                               │
+│                              ├─ Budget ──────────────────────┤
+│                              │ Spent: $4.20 / $50.00  (8%)  │
+│                              │ Tasks: 6/18 complete          │
+└──────────────────────────────┴───────────────────────────────┘
+```
 
-## How It Works
+## The Dugout (Architecture)
 
 ```
-SPEC → Seed Trees → Dispatch Workers → Gate Review → Advance → Done
+SPEC ──▶ Seed Trees ──▶ Dispatch Roster ──▶ Gate Review ──▶ Advance ──▶ Ship
 ```
 
-**The Dual Tree** — Two JSON trees drive the system:
+**Dual Tree** — Two JSON trees drive the system:
 - **Work Tree**: milestones → slices → tasks. Each task fits in one context window.
 - **Code Tree**: modules → files → exports. Defines what code should exist.
-- **The Link**: Every task declares which files it `touches` (writes) and `reads`. This enables conflict detection, gate review, and impact analysis.
+- **The Link**: every task declares which files it `touches` and `reads`, enabling conflict detection and impact analysis.
 
-**Workers** — Each task gets a fresh Claude Code session in an isolated git worktree. The worker receives a compressed context package (wire mode) with the task, relevant interfaces, and institutional memory. No idle token burn — workers die when done.
+**The Roster** (workers) — Each task gets a fresh Claude Code session in an isolated git worktree. Workers receive a compressed context package (wire mode) with the task spec, relevant interfaces, and institutional memory. No idle token burn — workers exit when done.
 
-**Gates** — Five-layer quality pipeline runs after each worker:
-1. **Automated** — typecheck, lint, tests (no AI, no tokens)
-2. **Security** — dangerous pattern detection
-3. **Quality** — AI-powered review against configurable standards
-4. **Tree Check** — verifies changes match declared interfaces
-5. **Human** — optional approval for critical milestones
+**The Gates** — Five-layer quality pipeline after each worker:
 
-**Supervisor** — Wakes on schedule. Detects stuck workers, resets dead tasks, checks budgets, trips circuit breakers. One-way authority — supervisor controls workers, never reverse.
+| Layer | What | Tokens |
+|-------|------|--------|
+| Automated | typecheck, lint, tests | 0 |
+| Security | dangerous pattern detection | 0 |
+| Quality | AI review against standards | yes |
+| Tree Check | changes match declared interfaces | yes |
+| Human | optional approval for milestones | 0 |
 
-**Billing Guardrails** — Cascading budgets (project → milestone → slice → task), rate limiting, circuit breakers, hard kill on overspend.
+**The Skipper** (supervisor) — Wakes on schedule. Detects stuck workers, resets dead tasks, checks budgets, trips circuit breakers. One-way authority — supervisor controls workers, never reverse.
+
+**Bullpen Budget** — Cascading limits: project → milestone → slice → task. Rate limiting, circuit breakers, hard kill on overspend.
 
 ## Project Structure
 
 ```
 openingday/
 ├── packages/
-│   ├── core/           # Brain — types, trees, linker, state machine,
-│   │                   #   workers, gates, budget, orchestrator, seeder
-│   ├── cli/            # CLI — init, run, pause, resume, kill, status, tree, dashboard
-│   └── dashboard/      # Web UI — Vite + React + Tailwind, 4-panel live view
-├── standards/          # Quality rule sets (base.json, aws-serverless.json)
+│   ├── core/           # Types, trees, linker, state machine, workers,
+│   │                   # gates, budget, orchestrator, seeder
+│   ├── cli/            # Commander CLI — all commands
+│   └── dashboard/      # Vite + React + Tailwind web UI
+├── standards/          # Quality rule sets (base, aws-serverless)
 ├── tests/              # Integration tests
-└── docs/               # Specs and plans
+└── docs/               # Specs and design docs
 ```
 
-## State on Disk
-
-All state lives in `.openingday/` as JSON files:
+State lives in `.openingday/` as JSON — no database, fully portable:
 
 ```
 .openingday/
 ├── project.json        # config, budgets, limits
-├── state.json          # project status, token spend
+├── state.json          # status, token spend
 ├── work-tree.json      # milestones/slices/tasks
 ├── code-tree.json      # modules/files/interfaces
 ├── memory.md           # institutional knowledge
 ├── workers/            # per-task output logs
-├── gates/              # review results per task
+├── gates/              # review results
 └── supervisor/         # health check logs
 ```
 
@@ -142,16 +174,16 @@ All state lives in `.openingday/` as JSON files:
 
 | Command | Description |
 |---------|-------------|
-| `openingday new` | Interactive project creation (recommended) |
-| `openingday init --from <spec\|repo> [--spec <file>] [--name <name>]` | CLI project init |
-| `openingday run [--step] [--dry-run]` | Start dispatching workers |
+| `openingday new` | Interactive project creation |
+| `openingday init --from <spec\|repo>` | CLI project init from spec or repo |
+| `openingday run [--step] [--dry-run]` | Dispatch the roster |
 | `openingday pause` | Graceful stop |
 | `openingday resume` | Continue execution |
 | `openingday kill` | Hard stop |
 | `openingday watch` | Live terminal dashboard |
-| `openingday status [--cost]` | Show project state |
+| `openingday status [--cost]` | Project state and spend |
 | `openingday tree [--code]` | Print work or code tree |
-| `openingday dashboard [--port <n>]` | Launch web dashboard (browser) |
+| `openingday dashboard [--port <n>]` | Web dashboard |
 
 ## Configuration
 
@@ -169,54 +201,44 @@ Edit `.openingday/project.json`:
     "maxConcurrentWorkers": 3,
     "maxTotalWorkers": 50,
     "maxRetries": 3,
-    "maxTaskDepth": 4,
-    "sessionTimeoutMin": 15,
-    "spawnRatePerMin": 5
+    "sessionTimeoutMin": 15
   },
   "circuitBreakers": {
     "consecutiveFailuresSlice": 3,
-    "consecutiveFailuresProject": 5,
-    "budgetEfficiencyThreshold": 0.5
+    "consecutiveFailuresProject": 5
   }
 }
 ```
 
 ## Quality Standards
 
-Standards are JSON rule sets in `standards/`. Projects can extend and compose them:
+Standards are composable JSON rule sets in `standards/`:
 
 ```json
 {
-  "name": "my-project",
   "extends": ["base", "aws-serverless"],
-  "rules": {
-    "custom": ["my_rule_1", "my_rule_2"]
-  }
+  "rules": { "custom": ["my_rule_1"] }
 }
 ```
 
-Built-in: `base.json` (maintainability, scalability, caching, testing), `aws-serverless.json` (Lambda, DynamoDB, IAM patterns).
+Built-in: `base.json` (maintainability, testing, caching) and `aws-serverless.json` (Lambda, DynamoDB, IAM patterns).
 
 ## Development
 
 ```bash
 pnpm install        # install deps
-pnpm test           # run all tests (229)
+pnpm build          # build all packages
+pnpm test           # run all tests (251)
 pnpm typecheck      # TypeScript checks
 pnpm lint           # ESLint
-pnpm build          # build all packages
 ```
-
-## Multi-Developer Usage
-
-OpeningDay is designed for solo dev per branch. Multiple developers can use it on the same repo with different feature branches — coordinate via git, not OpeningDay. Multi-dev coordination is planned for a future release.
 
 ## Requirements
 
 - Node.js 22+
 - pnpm 9+
-- Git (for worktree isolation)
-- Claude Code (uses your existing auth — no API key needed)
+- Git (worktree isolation)
+- Claude Code (uses your existing auth)
 
 ## License
 
