@@ -6,6 +6,7 @@ import type {
   WorkerOutput,
   GateResult,
 } from "../types.js";
+import type { RepoMap } from "../scanner/types.js";
 
 export interface Storage {
   readProjectConfig(): Promise<ProjectConfig>;
@@ -26,6 +27,8 @@ export interface Storage {
   appendMemory(entry: string): Promise<void>;
   writeSupervisorLog(entry: string): Promise<void>;
   readSupervisorLogs(): Promise<string[]>;
+  readRepoMap(): Promise<RepoMap | null>;
+  writeRepoMap(map: RepoMap): Promise<void>;
   exists(): Promise<boolean>;
   initialize(): Promise<void>;
 }

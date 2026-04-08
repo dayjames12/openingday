@@ -288,6 +288,25 @@ describe("DiskStorage", () => {
     expect(read).toEqual([]);
   });
 
+  // --- Repo Map ---
+
+  it("reads and writes repo map", async () => {
+    const map = {
+      v: 1, scannedAt: "2026-04-08T10:00:00Z", depth: "standard" as const,
+      env: { pm: "pnpm" as const, test: "vitest" as const, lint: "eslint" as const, ts: true, monorepo: false, workspaces: [], infra: "none" as const },
+      deps: ["hono"], modules: [],
+    };
+    await storage.writeRepoMap(map);
+    const read = await storage.readRepoMap();
+    expect(read).not.toBeNull();
+    expect(read!.env.pm).toBe("pnpm");
+  });
+
+  it("returns null for missing repo map", async () => {
+    const read = await storage.readRepoMap();
+    expect(read).toBeNull();
+  });
+
   // --- Memory ---
 
   it("reads empty memory after initialize", async () => {

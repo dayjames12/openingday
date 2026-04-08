@@ -41,7 +41,9 @@ describe("incremental refresh", () => {
 
   it("updates scannedAt timestamp", async () => {
     const map = await scanRepo(dir, "lite");
-    const updated = await refreshFiles(map, dir, ["src/auth.ts"]);
-    expect(updated.scannedAt).not.toBe(map.scannedAt);
+    // Force a different timestamp by backdating the original
+    const oldMap = { ...map, scannedAt: "2020-01-01T00:00:00Z" };
+    const updated = await refreshFiles(oldMap, dir, ["src/auth.ts"]);
+    expect(updated.scannedAt).not.toBe(oldMap.scannedAt);
   });
 });

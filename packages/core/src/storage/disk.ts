@@ -8,6 +8,7 @@ import type {
   WorkerOutput,
   GateResult,
 } from "../types.js";
+import type { RepoMap } from "../scanner/types.js";
 import type { Storage } from "./interface.js";
 
 export class DiskStorage implements Storage {
@@ -118,6 +119,18 @@ export class DiskStorage implements Storage {
     } catch {
       return [];
     }
+  }
+
+  async readRepoMap(): Promise<RepoMap | null> {
+    try {
+      return await this.readJson(this.path("repo-map.json"));
+    } catch {
+      return null;
+    }
+  }
+
+  async writeRepoMap(map: RepoMap): Promise<void> {
+    await this.writeJson(this.path("repo-map.json"), map);
   }
 
   async readMemory(): Promise<string> {
