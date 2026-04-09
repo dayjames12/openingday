@@ -219,10 +219,19 @@ export class Orchestrator {
           await this.storage.writeGateResult(task.id, gr);
         }
 
-        // i. If passed: apply worker result, merge worktree, complete worker
+        // i. If passed: merge worktree first, then apply result
         if (gateResults.passed) {
           if (this.options.repoDir && worktreeBranch) {
-            await mergeWorktree(this.options.repoDir, worktreeBranch);
+            const mergeResult = await mergeWorktree(this.options.repoDir, worktreeBranch);
+            if (!mergeResult.success) {
+              workTree = updateTaskStatus(workTree, task.id, "failed");
+              this.pool = completeWorker(this.pool, sessionId, "failed");
+              failed++;
+              await this.storage.appendMemory(
+                `Task ${task.id} merge conflict: ${mergeResult.error}`,
+              );
+              continue;
+            }
           }
           workTree = applyWorkerResult(workTree, task.id, result.output);
           this.pool = completeWorker(this.pool, sessionId, "completed");
