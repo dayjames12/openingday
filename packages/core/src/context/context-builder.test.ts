@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { buildContext } from "./context-builder.js";
+import { buildContext, buildEnrichedContext } from "./context-builder.js";
 import { createWorkTree, addMilestone, addSlice, addTask } from "../trees/work-tree.js";
 import { createCodeTree, addModule, addFile } from "../trees/code-tree.js";
 import { defaultConfig } from "../config/defaults.js";
-import type { WorkTree, CodeTree, ProjectConfig } from "../types.js";
+import type { WorkTree, CodeTree, ProjectConfig, TaskDigest } from "../types.js";
 
 function buildFixture(): { workTree: WorkTree; codeTree: CodeTree; config: ProjectConfig } {
   let codeTree = createCodeTree();
@@ -114,5 +114,89 @@ describe("context-builder", () => {
 
     expect(ctx.task.acceptanceCriteria.length).toBeGreaterThan(0);
     expect(ctx.task.acceptanceCriteria[0]).toContain("JWT middleware");
+  });
+});
+
+describe("buildEnrichedContext", () => {
+  const config: ProjectConfig = {
+    name: "test",
+    specPath: "spec.md",
+    budgets: { project: { usd: 50, warnPct: 70 }, perTask: { usd: 2, softPct: 75 }, supervisor: { usd: 3 }, planning: { usd: 5 } },
+    limits: { maxConcurrentWorkers: 3, maxTotalWorkers: 50, maxRetries: 3, maxTaskDepth: 4, sessionTimeoutMin: 15, spawnRatePerMin: 5 },
+    circuitBreakers: { consecutiveFailuresSlice: 3, consecutiveFailuresProject: 5, budgetEfficiencyThreshold: 0.5 },
+  };
+
+  it("returns null for nonexistent task", () => {
+    const wt: WorkTree = { milestones: [] };
+    const ct: CodeTree = { modules: [] };
+    const result = buildEnrichedContext(wt, ct, config, "nonexistent", "", "");
+    expect(result).toBeNull();
+  });
+
+  it("includes contracts and digests in enriched context", () => {
+    const wt: WorkTree = {
+      milestones: [{
+        id: "m1", name: "m1", description: "test", dependencies: [],
+        slices: [{
+          id: "s1", name: "s1", description: "test", parentMilestoneId: "m1",
+          tasks: [{
+            id: "t1", name: "Create route", description: "Create route in src/a.ts",
+            status: "pending", dependencies: [], touches: ["src/a.ts"], reads: [],
+            worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "s1",
+          }],
+        }],
+      }],
+    };
+    const ct: CodeTree = {
+      modules: [{
+        path: "src", description: "source",
+        files: [{ path: "src/a.ts", description: "file a", exports: [], imports: [], lastModifiedBy: null }],
+      }],
+    };
+    const digests: TaskDigest[] = [
+      { task: "t0", did: "set up project", ex: ["app"], im: [], pattern: "scaffolding" },
+    ];
+    const contracts = "export interface Player { name: string; }";
+
+    const result = buildEnrichedContext(
+      wt, ct, config, "t1", "", "", undefined,
+      contracts, digests, "Build a players API",
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.contracts).toBe(contracts);
+    expect(result!.digests).toEqual(digests);
+    expect(result!.specExcerpt).toBe("Build a players API");
+  });
+
+  it("includes fileContents when provided", () => {
+    const wt: WorkTree = {
+      milestones: [{
+        id: "m1", name: "m1", description: "test", dependencies: [],
+        slices: [{
+          id: "s1", name: "s1", description: "test", parentMilestoneId: "m1",
+          tasks: [{
+            id: "t1", name: "Create route", description: "Create route in src/a.ts",
+            status: "pending", dependencies: [], touches: ["src/a.ts"], reads: [],
+            worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "s1",
+          }],
+        }],
+      }],
+    };
+    const ct: CodeTree = {
+      modules: [{
+        path: "src", description: "source",
+        files: [{ path: "src/a.ts", description: "file a", exports: [], imports: [], lastModifiedBy: null }],
+      }],
+    };
+    const fileContents = { "src/a.ts": "export const x = 1;" };
+
+    const result = buildEnrichedContext(
+      wt, ct, config, "t1", "", "", undefined,
+      "", [], "", fileContents,
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.fileContents).toEqual(fileContents);
   });
 });

@@ -5,6 +5,8 @@ import type {
   CodeFile,
   ContextPackage,
   ProjectConfig,
+  EnrichedContextPackage,
+  TaskDigest,
 } from "../types.js";
 import type { RepoMap } from "../scanner/types.js";
 import { getTask } from "../trees/work-tree.js";
@@ -82,6 +84,35 @@ export function buildContext(
     },
     landscape,
     relevant,
+  };
+}
+
+/**
+ * Build an EnrichedContextPackage with full file contents, contracts, digests, and spec excerpt.
+ * Falls back to regular context building, then layers on enriched fields.
+ */
+export function buildEnrichedContext(
+  workTree: WorkTree,
+  codeTree: CodeTree,
+  config: ProjectConfig,
+  taskId: string,
+  memory: string,
+  rules: string,
+  repoMap?: RepoMap | null,
+  contracts?: string,
+  digests?: TaskDigest[],
+  specExcerpt?: string,
+  fileContents?: Record<string, string>,
+): EnrichedContextPackage | null {
+  const base = buildContext(workTree, codeTree, config, taskId, memory, rules, repoMap);
+  if (!base) return null;
+
+  return {
+    ...base,
+    fileContents: fileContents ?? {},
+    contracts: contracts ?? "",
+    digests: digests ?? [],
+    specExcerpt: specExcerpt ?? "",
   };
 }
 
