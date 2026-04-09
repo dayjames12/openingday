@@ -156,7 +156,7 @@ export {
   buildSeederPrompt,
   parseSeederResponse,
 } from "./seeder/from-spec.js";
-export type { SeederOutput } from "./seeder/from-spec.js";
+export type { SeederOutput, SeederWarning } from "./seeder/from-spec.js";
 
 // Seeder (from repo)
 export { scanRepo } from "./seeder/from-repo.js";

@@ -26,6 +26,29 @@ Given the following specification, generate a JSON object with two keys: "workTr
 
 ${specText}
 
+## Task Description Format
+
+Each task description MUST follow: "[Action] [what] in [file path] — [specific outputs]"
+Keep descriptions under 200 chars. Workers receive compressed wire-mode prompts.
+
+### Examples
+
+GOOD: "Add GET /players endpoint in src/routes/players.ts — exports listPlayers(): Player[]"
+GOOD: "Create JWT validation middleware in src/auth/jwt.ts — exports validateToken(token: string): Claims"
+GOOD: "Add error boundary component in src/components/ErrorBoundary.tsx — catches render errors, shows fallback UI"
+
+BAD: "Implement the API"
+BAD: "Set up authentication"
+BAD: "Handle errors"
+
+## Acceptance Criteria
+
+Each task MUST have 3+ concrete, testable acceptance criteria as part of its description. These should be verifiable without human judgment.
+
+## Context Window Rule
+
+Each task must fit in 150k tokens of context. If uncertain, split.
+
 ## WorkTree Structure
 
 The workTree should have milestones, each containing slices, each containing tasks.
@@ -33,7 +56,7 @@ The workTree should have milestones, each containing slices, each containing tas
 Each task (WorkTask) must have:
 - id: descriptive ID like "m1-s1-t1"
 - name: short name
-- description: what to implement
+- description: what to implement (follow format above)
 - status: "pending"
 - dependencies: array of task IDs this depends on
 - touches: array of file paths this task writes to (must exist in codeTree)
@@ -77,9 +100,11 @@ Each module (CodeModule) must have:
 ## Rules
 
 - Every file path in task.touches and task.reads MUST exist in the codeTree
-- Each task should be small enough to fit in one LLM context window
+- Each task must fit in 150k tokens of context. If uncertain, split.
 - Use descriptive IDs: m1, m1-s1, m1-s1-t1
 - Group files into modules by top-level directory
+- Tasks touching the same file should have dependency relationships
+- Keep descriptions under 200 chars — workers receive compressed wire-mode prompts
 
 Output ONLY a valid JSON object with "workTree" and "codeTree" keys. No markdown fences, no explanation.`;
 
@@ -97,7 +122,14 @@ Output ONLY a valid JSON object with "workTree" and "codeTree" keys. No markdown
  * Parse the AI response text, extracting a SeederOutput with workTree and codeTree.
  * Returns null if the response is invalid or missing required trees.
  */
-export function parseSeederResponse(text: string): SeederOutput | null {
+export interface SeederWarning {
+  taskId: string;
+  message: string;
+}
+
+export function parseSeederResponse(text: string): { output: SeederOutput | null; warnings: SeederWarning[] } {
+  const warnings: SeederWarning[] = [];
+
   try {
     // Try to find JSON in the text — the AI may wrap it in markdown fences
     let jsonStr = text.trim();
@@ -110,19 +142,73 @@ export function parseSeederResponse(text: string): SeederOutput | null {
 
     const parsed = JSON.parse(jsonStr) as Record<string, unknown>;
 
-    if (!parsed || typeof parsed !== "object") return null;
-    if (!("workTree" in parsed) || !("codeTree" in parsed)) return null;
+    if (!parsed || typeof parsed !== "object") return { output: null, warnings };
+    if (!("workTree" in parsed) || !("codeTree" in parsed)) return { output: null, warnings };
 
     const workTree = parsed.workTree as WorkTree;
     const codeTree = parsed.codeTree as CodeTree;
 
     // Basic structural validation
-    if (!workTree || !Array.isArray(workTree.milestones)) return null;
-    if (!codeTree || !Array.isArray(codeTree.modules)) return null;
+    if (!workTree || !Array.isArray(workTree.milestones)) return { output: null, warnings };
+    if (!codeTree || !Array.isArray(codeTree.modules)) return { output: null, warnings };
 
-    return { workTree, codeTree };
+    // Validate tasks
+    const allTasks: { id: string; description: string; touches: string[] }[] = [];
+    for (const m of workTree.milestones) {
+      for (const s of m.slices) {
+        for (const t of s.tasks) {
+          allTasks.push({ id: t.id, description: t.description, touches: t.touches });
+        }
+      }
+    }
+
+    // Build file-to-task map for conflict detection
+    const fileTaskMap = new Map<string, string[]>();
+    for (const task of allTasks) {
+      if (task.description.length < 10) {
+        warnings.push({ taskId: task.id, message: `Description too short (${task.description.length} chars)` });
+      }
+      if (task.touches.length === 0) {
+        warnings.push({ taskId: task.id, message: "No files in touches" });
+      }
+      for (const f of task.touches) {
+        const existing = fileTaskMap.get(f) ?? [];
+        existing.push(task.id);
+        fileTaskMap.set(f, existing);
+      }
+    }
+
+    // Check for independent tasks touching the same file (no dependency between them)
+    const taskDeps = new Map<string, Set<string>>();
+    for (const m of workTree.milestones) {
+      for (const s of m.slices) {
+        for (const t of s.tasks) {
+          taskDeps.set(t.id, new Set(t.dependencies));
+        }
+      }
+    }
+
+    for (const [file, taskIds] of fileTaskMap) {
+      if (taskIds.length < 2) continue;
+      for (let i = 0; i < taskIds.length; i++) {
+        for (let j = i + 1; j < taskIds.length; j++) {
+          const a = taskIds[i]!;
+          const b = taskIds[j]!;
+          const aDeps = taskDeps.get(a);
+          const bDeps = taskDeps.get(b);
+          if (!aDeps?.has(b) && !bDeps?.has(a)) {
+            warnings.push({
+              taskId: a,
+              message: `Tasks ${a} and ${b} both touch ${file} with no dependency between them`,
+            });
+          }
+        }
+      }
+    }
+
+    return { output: { workTree, codeTree }, warnings };
   } catch {
-    return null;
+    return { output: null, warnings };
   }
 }
 
@@ -164,5 +250,6 @@ export async function seedFromSpec(
   if (!resultMsg) return null;
   if (resultMsg.subtype !== "success") return null;
 
-  return parseSeederResponse(resultMsg.result);
+  const { output } = parseSeederResponse(resultMsg.result);
+  return output;
 }
