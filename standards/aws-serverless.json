@@ -4,17 +4,47 @@
   "extends": ["base"],
   "rules": {
     "aws_patterns": [
-      "lambda_cold_start_optimized",
-      "dynamo_single_table_design",
-      "sqs_visibility_timeout_matches_handler",
-      "cloudfront_caching_configured",
-      "reserved_concurrency_on_critical_paths"
+      "lambda_cold_start_optimized_top_level_imports",
+      "dynamo_single_table_design_with_gsi",
+      "sqs_visibility_timeout_matches_handler_duration",
+      "cloudfront_caching_configured_with_invalidation",
+      "reserved_concurrency_on_critical_paths",
+      "lambda_powertools_for_logging_metrics_tracing",
+      "step_functions_for_long_running_workflows",
+      "sns_fan_out_to_sqs_for_async_processing",
+      "s3_versioning_for_audit_trail",
+      "event_bridge_for_cross_service_events"
     ],
-    "security": [
+    "iam_security": [
       "no_wildcard_iam_permissions",
-      "input_validation_at_boundaries",
-      "no_secrets_in_code",
-      "auth_on_all_non_public_routes"
+      "least_privilege_per_lambda",
+      "resource_based_policies_over_identity",
+      "no_hardcoded_account_ids",
+      "secrets_manager_not_env_vars_for_credentials"
+    ],
+    "dynamo_patterns": [
+      "electro_db_for_type_safe_queries",
+      "pk_sk_design_for_access_patterns",
+      "gsi_overloading_for_query_flexibility",
+      "ttl_for_auto_expiration",
+      "point_in_time_recovery_in_production",
+      "deletion_protection_in_production",
+      "batch_operations_for_bulk_writes"
+    ],
+    "lambda_patterns": [
+      "handler_under_50_lines_delegate_to_service",
+      "middy_or_powertools_middleware",
+      "structured_json_logging",
+      "cold_start_under_500ms",
+      "bundle_size_under_5mb",
+      "no_synchronous_sdk_calls_in_handler"
+    ],
+    "sst_patterns": [
+      "profile_based_deployment_dev_staging_prod",
+      "feature_based_infra_modules",
+      "resource_retention_in_production",
+      "stage_aware_configuration",
+      "hono_for_api_routes_on_lambda"
     ]
   }
 }

@@ -4,27 +4,85 @@
   "rules": {
     "maintainability": [
       "files_under_300_lines",
-      "single_responsibility",
+      "single_responsibility_per_file",
       "no_deep_nesting_beyond_3",
       "clear_naming_no_abbreviations_in_public_api",
-      "error_handling_at_boundaries_only"
+      "error_handling_at_boundaries_only",
+      "no_dead_code_or_unused_exports",
+      "prefer_composition_over_inheritance",
+      "extract_shared_logic_only_when_used_3_plus_times",
+      "no_god_objects_or_god_functions",
+      "keep_function_args_under_4_or_use_options_object"
+    ],
+    "design_patterns": [
+      "singleton_for_shared_resources_db_cache_logger",
+      "factory_for_complex_object_creation",
+      "strategy_for_interchangeable_algorithms",
+      "observer_for_event_driven_decoupling",
+      "adapter_for_third_party_integrations",
+      "repository_for_data_access_abstraction",
+      "dependency_injection_over_hard_imports",
+      "interface_segregation_small_focused_interfaces",
+      "open_closed_extend_not_modify"
     ],
     "scalability": [
       "no_n_plus_1_queries",
       "pagination_on_list_endpoints",
       "async_for_io_operations",
-      "stateless_handlers"
+      "stateless_handlers",
+      "connection_pooling_for_databases",
+      "idempotent_api_operations",
+      "rate_limiting_on_public_endpoints",
+      "horizontal_scale_no_local_state_between_requests"
     ],
     "caching": [
       "cache_headers_on_static_assets",
       "ttl_on_expensive_queries",
-      "no_unbounded_in_memory_cache"
+      "no_unbounded_in_memory_cache",
+      "cache_invalidation_strategy_documented",
+      "stale_while_revalidate_where_applicable"
+    ],
+    "security": [
+      "validate_all_user_input_at_boundary",
+      "sanitize_output_to_prevent_xss",
+      "parameterized_queries_no_string_concat_sql",
+      "no_secrets_in_code_use_env_vars",
+      "auth_on_all_non_public_routes",
+      "least_privilege_for_service_accounts",
+      "no_eval_or_dynamic_code_execution",
+      "https_only_no_mixed_content",
+      "csrf_protection_on_mutations"
+    ],
+    "error_handling": [
+      "custom_error_types_with_codes",
+      "never_swallow_errors_silently",
+      "structured_error_responses_consistent_shape",
+      "graceful_degradation_over_hard_failure",
+      "retry_with_backoff_for_transient_failures",
+      "circuit_breaker_for_external_dependencies"
     ],
     "testing": [
       "unit_tests_for_business_logic",
       "integration_tests_at_boundaries",
       "no_mocking_internal_modules",
-      "test_names_describe_behavior"
+      "test_names_describe_behavior",
+      "test_edge_cases_not_just_happy_path",
+      "no_test_interdependence_each_test_isolated",
+      "assert_behavior_not_implementation"
+    ],
+    "api_design": [
+      "consistent_response_envelope",
+      "semantic_http_status_codes",
+      "version_breaking_changes",
+      "document_public_endpoints",
+      "use_dto_not_raw_db_entities_in_responses"
+    ],
+    "rendering": [
+      "ssr_for_seo_critical_pages",
+      "client_only_for_dashboards_and_internal_tools",
+      "no_blocking_data_fetches_in_render_path",
+      "lazy_load_below_fold_components",
+      "skeleton_loaders_over_spinners"
     ]
   }
 }
