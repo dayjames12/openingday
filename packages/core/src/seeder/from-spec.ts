@@ -40,6 +40,7 @@ GOOD: "Add error boundary component in src/components/ErrorBoundary.tsx — catc
 BAD: "Implement the API"
 BAD: "Set up authentication"
 BAD: "Handle errors"
+BAD: Task generates types with fields not mentioned in the spec (adding email when spec says battingAvg)
 
 ## Acceptance Criteria
 
@@ -98,6 +99,19 @@ Each module (CodeModule) must have:
 - files: array of CodeFile
 
 ## Rules
+
+DOMAIN FIDELITY:
+- Types and interfaces MUST match the spec's domain language exactly
+- If spec says "player with name, team, battingAvg" → generate EXACTLY those fields, not generic alternatives
+- Do NOT substitute domain-specific fields with generic ones (no "email" when spec says "team")
+- File names, function names, and variable names should use domain terminology from the spec
+- Example: baseball spec → Player { name, team, battingAvg }, NOT Player { name, email, avatar }
+
+MIDDLEWARE ORDER:
+- Express middleware executes in registration order
+- Static file serving MUST come before 404 catch-all handlers
+- Route-specific handlers MUST come before generic error handlers
+- If the project serves both an API and static files, plan the server entry point to register: static → API routes → SPA fallback → 404 → error handler
 
 - Every file path in task.touches and task.reads MUST exist in the codeTree
 - Each task must fit in 150k tokens of context. If uncertain, split.

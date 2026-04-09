@@ -50,7 +50,16 @@ Rules:
 - Read-only files in "reads" are for context only
 - Meet all acceptance criteria listed in "accept"
 - Stay within the token budget
-- Output valid JSON only -- no markdown fences, no explanation`;
+- Output valid JSON only -- no markdown fences, no explanation
+
+COMMON PITFALLS — avoid these:
+- Express 5: use "/{*path}" not "/*" for catch-all routes
+- ESM: use import.meta.url + fileURLToPath instead of __dirname
+- ESM: include .js extensions in relative imports
+- Vite: add src/vite-env.d.ts with /// <reference types="vite/client" />
+- TypeScript: handle potentially undefined array access with ! or null checks
+- Middleware: register static file serving BEFORE 404 handlers
+- Types: match the spec's domain language exactly — don't substitute generic fields`;
 }
 
 /**

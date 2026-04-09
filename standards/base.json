@@ -83,6 +83,17 @@
       "no_blocking_data_fetches_in_render_path",
       "lazy_load_below_fold_components",
       "skeleton_loaders_over_spinners"
+    ],
+    "framework_gotchas": [
+      "express5_path_to_regexp_no_wildcard_star_use_named_param",
+      "express5_middleware_order_static_before_404_handler",
+      "vite_requires_vite_env_dts_for_import_meta_env",
+      "esm_no_dirname_use_import_meta_url",
+      "esm_file_extensions_required_in_imports",
+      "react19_use_client_directive_for_client_components",
+      "typescript_strict_null_checks_handle_undefined_array_access",
+      "cors_use_package_not_manual_headers",
+      "env_vars_use_dotenv_or_framework_native_not_hardcoded"
     ]
   }
 }

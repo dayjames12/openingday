@@ -44,7 +44,9 @@
       "feature_based_infra_modules",
       "resource_retention_in_production",
       "stage_aware_configuration",
-      "hono_for_api_routes_on_lambda"
+      "hono_for_api_routes_on_lambda",
+      "sst_v3_ion_syntax_not_v2_constructs",
+      "express_static_serve_from_process_cwd_not_dirname_in_esm"
     ]
   }
 }
