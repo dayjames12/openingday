@@ -205,4 +205,34 @@ describe("from-spec", () => {
       expect(warnings.some((w) => w.message.includes("both touch") && w.message.includes("no dependency"))).toBe(true);
     });
   });
+
+  describe("seeder rules enforcement", () => {
+    describe("buildSeederPrompt rules", () => {
+      it("includes one-owner-per-file rule", () => {
+        const prompt = buildSeederPrompt("Build a project", "test");
+        expect(prompt).toContain("one task");
+        expect(prompt.toLowerCase()).toContain("owner");
+      });
+
+      it("includes tests-with-implementation rule", () => {
+        const prompt = buildSeederPrompt("Build a project", "test");
+        expect(prompt).toContain("test file");
+      });
+
+      it("includes contracts-first rule", () => {
+        const prompt = buildSeederPrompt("Build a project", "test");
+        expect(prompt).toContain("contract");
+      });
+
+      it("includes integration tasks rule", () => {
+        const prompt = buildSeederPrompt("Build a project", "test");
+        expect(prompt.toLowerCase()).toContain("integration");
+      });
+
+      it("includes detailed descriptions rule", () => {
+        const prompt = buildSeederPrompt("Build a project", "test");
+        expect(prompt).toContain("specific");
+      });
+    });
+  });
 });
