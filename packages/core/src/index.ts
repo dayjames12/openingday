@@ -26,6 +26,14 @@ export type {
   CircuitBreakerConfig,
   ProjectConfig,
   ProjectState,
+  StageType,
+  StageFeedback,
+  StageResult,
+  TaskDigest,
+  SpringTrainingResult,
+  EnrichedContextPackage,
+  WatchdogState,
+  LoopTracker,
 } from "./types.js";
 
 // Config
@@ -79,10 +87,10 @@ export {
 } from "./trees/linker.js";
 
 // Wire Mode
-export { toWirePrompt, fromWireResponse, toWireResponse } from "./wire/wire.js";
+export { toWirePrompt, fromWireResponse, toWireResponse, toEnrichedWirePrompt } from "./wire/wire.js";
 
 // Context Builder
-export { buildContext } from "./context/context-builder.js";
+export { buildContext, buildEnrichedContext } from "./context/context-builder.js";
 
 // State Machine
 export {
@@ -211,3 +219,28 @@ export type { PreflightResult } from "./preflight/check.js";
 // Orchestrator
 export { Orchestrator } from "./orchestrator.js";
 export type { CycleResult, SpawnFn, OrchestratorOptions } from "./orchestrator.js";
+
+// Spring Training
+export { validateStructure } from "./spring-training/validate.js";
+export type { ValidationResult } from "./spring-training/validate.js";
+export { generateContracts, buildContractPrompt, parseContractResponse } from "./spring-training/contracts.js";
+export { simulateExecution } from "./spring-training/simulate.js";
+export type { SimulationResult } from "./spring-training/simulate.js";
+export { runSpringTraining } from "./spring-training/runner.js";
+
+// Stages
+export { runCompileStage, runTsc } from "./stages/compile.js";
+export type { TscResult } from "./stages/compile.js";
+export { runTestStage, runTests } from "./stages/test.js";
+export type { TestRunResult } from "./stages/test.js";
+export { runReviewStage, buildReviewPrompt, parseReviewResponse } from "./stages/review.js";
+export { digestCompileErrors, digestTestFailures, digestReviewIssues, parseFeedbackResponse } from "./stages/feedback.js";
+
+// Digests
+export { generateDigest } from "./digests/generator.js";
+
+// Safety
+export { createWatchdog, createWatchdogState } from "./safety/watchdog.js";
+export type { WatchdogAction, Watchdog } from "./safety/watchdog.js";
+export { createLoopTracker, recordLoop, shouldBreak } from "./safety/loops.js";
+export type { BreakDecision } from "./safety/loops.js";
