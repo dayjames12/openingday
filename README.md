@@ -9,16 +9,18 @@
 
 **AI agent orchestration. Spec in. Code out.**
 
-OpeningDay dispatches a roster of Claude Code workers through a tree of tasks — with gate-based quality checks, budget guardrails, and a supervisor keeping the game on track. Hand it a spec, watch it build.
+OpeningDay dispatches a roster of Claude Code workers through a tree of tasks — with staged quality loops, budget guardrails, and a supervisor keeping the game on track. Hand it a spec, watch it build.
 
 ---
 
 ## The Lineup
 
 - **Spec-to-deploy lifecycle** — describe what you want, get a buildable codebase
+- **Spring training** — plan validation before any code runs (structural check, contracts, simulation)
+- **Staged quality pipeline** — compile → test → review loops with AI-digested feedback
 - **Dual-tree architecture** — work tree (what to do) + code tree (what to build), linked at the file level
 - **Parallel worker pool** — isolated git worktrees, compressed context, no idle token burn
-- **Five-layer gate system** — typecheck, security, AI review, tree validation, optional human approval
+- **Contracts file** — shared interface definitions generated at plan time, wired into every worker context
 - **Cascading budgets** — project, milestone, slice, and task-level spend limits with circuit breakers
 - **Live terminal dashboard** — 4-panel TUI with work tree, workers, gates, and cost tracking
 - **Zero config auth** — uses your existing Claude Code credentials
@@ -43,28 +45,20 @@ openingday new
 The interactive flow walks you through it:
 
 ```
-      ⚾
-   ___                 _           ___
-  / _ \ _ __  ___ _ _ (_)_ _  __ _|   \ __ _ _  _
- | (_) | '_ \/ -_) ' \| | ' \/ _` | |) / _` | || |
-  \___/| .__/\___|_||_|_|_||_\__, |___/\__,_|\_, |
-       |_|                   |___/           |__/
-
-  Spec in. Code out.  v0.1.0
-
 ? What are you building?
 > A task management API with user auth and a React dashboard
 
 ? Tech stack?  SST Platform — SST v3, Hono, DynamoDB, Lambda
 ? Scale?       Medium — startup, ~10k users
-? Requirements? Shopify webhook integration, Klaviyo for emails
 
 Generating plan... ✓
+Running spring training... ✓
 
 Plan Summary
   Milestones: 2
   Tasks:      18
   Files:      34
+  Contracts:  12
 
 ? Review the plan? Yes
 ```
@@ -76,6 +70,21 @@ openingday init --from spec.md --name my-app
 openingday init --from . --spec add-billing.md    # existing repo + new feature
 ```
 
+## Spring Training
+
+Validates the plan before any code runs. Three phases:
+
+1. **Structural check** — every task has files, every file has an owner, no orphans, no circular deps
+2. **Contracts generation** — extracts shared interfaces, types, and API boundaries into a contracts file. Workers reference this instead of guessing at each other's signatures.
+3. **Simulation** — dry-runs the dependency graph. Detects impossible orderings, resource conflicts, budget shortfalls.
+
+```bash
+openingday spring-training              # validate current plan
+openingday spring-training --fix        # auto-fix structural issues
+```
+
+Spring training runs automatically during `new` and `init`. Run it manually after editing work/code trees.
+
 ## The Innings
 
 ```bash
@@ -84,18 +93,44 @@ openingday run             # continuous until done
 openingday run --step      # one task at a time
 openingday run --dry-run   # preview without executing
 
+# Spring training — validate before running
+openingday spring-training
+
 # Mid-game management
 openingday pause           # graceful stop (workers finish current task)
 openingday resume          # continue from where you left off
 openingday kill            # pull the starter
 ```
 
+## Quality Pipeline
+
+Staged execution with feedback loops. Each stage retries up to 5 times with AI-digested error context before failing.
+
+```
+Worker implements → tsc check (loop) → test run (loop) → AI review (loop) → merge
+```
+
+**How it works:**
+
+- **Compile stage** — runs `tsc`. On failure, AI digests the errors into actionable fixes, worker retries.
+- **Test stage** — runs relevant tests. Failures get digested with context (which assertion, what expected vs actual).
+- **Review stage** — AI reviews against project standards. Feedback digested into specific change requests.
+- **Merge** — only after all three stages pass. Clean fast-forward into main worktree.
+
+**Safety nets:**
+- Max 5 loops per stage — circuit breaker trips on the 6th
+- Watchdog timer per task — kills stuck workers
+- Task completion digests — compressed learnings fed to subsequent workers
+- Each retry gets the prior digest, not raw logs — keeps context windows tight
+
 ## The Scoreboard
 
 ```bash
 openingday watch           # live terminal dashboard
-openingday dashboard       # web UI at localhost:3000
+openingday dashboard       # web UI at localhost:5173 (Vite dev), API at :3001
 ```
+
+Note: generated apps may use port 3000 — no conflict with the dashboard.
 
 ```
 ┌─ Work Tree ──────────────────┬─ Active Workers ──────────────┐
@@ -118,25 +153,19 @@ openingday dashboard       # web UI at localhost:3000
 ## The Dugout (Architecture)
 
 ```
-SPEC ──▶ Seed Trees ──▶ Dispatch Roster ──▶ Gate Review ──▶ Advance ──▶ Ship
+SPEC → Spring Training → Seed Trees → Staged Dispatch → Quality Loops → Merge → Ship
 ```
 
 **Dual Tree** — Two JSON trees drive the system:
 - **Work Tree**: milestones → slices → tasks. Each task fits in one context window.
 - **Code Tree**: modules → files → exports. Defines what code should exist.
-- **The Link**: every task declares which files it `touches` and `reads`, enabling conflict detection and impact analysis.
+- **The Link**: every task declares which files it `touches` and `reads`, enabling conflict detection.
 
-**The Roster** (workers) — Each task gets a fresh Claude Code session in an isolated git worktree. Workers receive a compressed context package (wire mode) with the task spec, relevant interfaces, and institutional memory. No idle token burn — workers exit when done.
+**Contracts** — Shared interfaces extracted during spring training. Every worker gets the contracts file in its context package so cross-task boundaries stay consistent.
 
-**The Gates** — Five-layer quality pipeline after each worker:
+**Staged Execution** — compile → test → review, each with retry loops and AI-digested feedback. Workers never see raw error logs — digesters compress failures into actionable context that fits the window.
 
-| Layer | What | Tokens |
-|-------|------|--------|
-| Automated | typecheck, lint, tests | 0 |
-| Security | dangerous pattern detection | 0 |
-| Quality | AI review against standards | yes |
-| Tree Check | changes match declared interfaces | yes |
-| Human | optional approval for milestones | 0 |
+**The Roster** (workers) — Each task gets a fresh Claude Code session in an isolated git worktree. Workers receive compressed context (wire mode): task spec, contracts, relevant file contents, task digests from predecessors.
 
 **The Skipper** (supervisor) — Wakes on schedule. Detects stuck workers, resets dead tasks, checks budgets, trips circuit breakers. One-way authority — supervisor controls workers, never reverse.
 
@@ -148,7 +177,8 @@ SPEC ──▶ Seed Trees ──▶ Dispatch Roster ──▶ Gate Review ──
 openingday/
 ├── packages/
 │   ├── core/           # Types, trees, linker, state machine, workers,
-│   │                   # gates, budget, orchestrator, seeder
+│   │                   # gates, budget, orchestrator, spring training,
+│   │                   # contracts, digesters, watchdog
 │   ├── cli/            # Commander CLI — all commands
 │   └── dashboard/      # Vite + React + Tailwind web UI
 ├── standards/          # Quality rule sets (base, aws-serverless)
@@ -164,8 +194,9 @@ State lives in `.openingday/` as JSON — no database, fully portable:
 ├── state.json          # status, token spend
 ├── work-tree.json      # milestones/slices/tasks
 ├── code-tree.json      # modules/files/interfaces
+├── contracts.json      # shared interfaces from spring training
 ├── memory.md           # institutional knowledge
-├── workers/            # per-task output logs
+├── workers/            # per-task output logs + digests
 ├── gates/              # review results
 └── supervisor/         # health check logs
 ```
@@ -176,14 +207,15 @@ State lives in `.openingday/` as JSON — no database, fully portable:
 |---------|-------------|
 | `openingday new` | Interactive project creation |
 | `openingday init --from <spec\|repo>` | CLI project init from spec or repo |
-| `openingday run [--step] [--dry-run]` | Dispatch the roster |
+| `openingday spring-training [--fix]` | Validate plan: structure, contracts, simulation |
+| `openingday run [--step] [--dry-run]` | Dispatch the roster (staged pipeline) |
 | `openingday pause` | Graceful stop |
 | `openingday resume` | Continue execution |
 | `openingday kill` | Hard stop |
 | `openingday watch` | Live terminal dashboard |
 | `openingday status [--cost]` | Project state and spend |
 | `openingday tree [--code]` | Print work or code tree |
-| `openingday dashboard [--port <n>]` | Web dashboard |
+| `openingday dashboard [--port <n>]` | Web dashboard (default: 5173) |
 
 ## Configuration
 
@@ -201,6 +233,7 @@ Edit `.openingday/project.json`:
     "maxConcurrentWorkers": 3,
     "maxTotalWorkers": 50,
     "maxRetries": 3,
+    "maxLoopsPerStage": 5,
     "sessionTimeoutMin": 15
   },
   "circuitBreakers": {
@@ -228,7 +261,7 @@ Built-in: `base.json` (maintainability, testing, caching) and `aws-serverless.js
 ```bash
 pnpm install        # install deps
 pnpm build          # build all packages
-pnpm test           # run all tests (251)
+pnpm test           # run all tests (382)
 pnpm typecheck      # TypeScript checks
 pnpm lint           # ESLint
 ```
