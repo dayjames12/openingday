@@ -146,6 +146,7 @@ export async function spawnAgent(options: SpawnOptions): Promise<SpawnResult> {
       maxBudgetUsd: budgetUsd,
       persistSession: false,
       cwd: worktreePath,
+      settingSources: ["project"],
       outputFormat: {
         type: "json_schema" as const,
         schema: {
