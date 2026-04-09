@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { GateResult, GateIssue, WorkerOutput, WorkTree, CodeTree } from "../types.js";
+import type { GateIssue } from "../types.js";
 import type { EnvConfig } from "../scanner/types.js";
 import type { VerificationGateCheck } from "./pipeline.js";
 
