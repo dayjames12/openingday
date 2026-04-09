@@ -10,6 +10,8 @@ import type {
   CodeTree,
   WorkerOutput,
   GateResult,
+  TaskDigest,
+  StageResult,
 } from "../types.js";
 
 describe("DiskStorage", () => {
@@ -352,6 +354,76 @@ describe("DiskStorage", () => {
   it("returns empty array when no supervisor logs exist", async () => {
     const logs = await storage.readSupervisorLogs();
     expect(logs).toEqual([]);
+  });
+
+  // --- Digests ---
+
+  describe("digests", () => {
+    it("writes and reads a digest", async () => {
+      const digest: TaskDigest = {
+        task: "m1-s1-t1",
+        did: "created players route",
+        ex: ["playersRouter"],
+        im: ["Player"],
+        pattern: "express router",
+      };
+      await storage.writeDigest("m1-s1-t1", digest);
+      const digests = await storage.readDigests();
+      expect(digests).toHaveLength(1);
+      expect(digests[0]!.task).toBe("m1-s1-t1");
+    });
+
+    it("reads empty digests when none exist", async () => {
+      const digests = await storage.readDigests();
+      expect(digests).toEqual([]);
+    });
+  });
+
+  // --- Contracts ---
+
+  describe("contracts", () => {
+    it("writes and reads contracts", async () => {
+      const content = "export interface Player { name: string; }";
+      await storage.writeContracts(content);
+      const result = await storage.readContracts();
+      expect(result).toBe(content);
+    });
+
+    it("returns empty string when no contracts exist", async () => {
+      const result = await storage.readContracts();
+      expect(result).toBe("");
+    });
+  });
+
+  // --- Stage Results ---
+
+  describe("stage results", () => {
+    it("writes and reads stage results", async () => {
+      const result: StageResult = {
+        stage: "compile",
+        passed: true,
+        loops: 1,
+        feedback: [],
+      };
+      await storage.writeStageResult("m1-s1-t1", result);
+      const results = await storage.readStageResults("m1-s1-t1");
+      expect(results).toHaveLength(1);
+      expect(results[0]!.stage).toBe("compile");
+    });
+
+    it("appends stage results", async () => {
+      const r1: StageResult = { stage: "compile", passed: true, loops: 1, feedback: [] };
+      const r2: StageResult = { stage: "test", passed: false, loops: 3, feedback: [] };
+      await storage.writeStageResult("m1-s1-t1", r1);
+      await storage.writeStageResult("m1-s1-t1", r2);
+      const results = await storage.readStageResults("m1-s1-t1");
+      expect(results).toHaveLength(2);
+    });
+
+    it("returns empty array when no stage results exist", async () => {
+      const results = await storage.readStageResults("nonexistent");
+      expect(results).toEqual([]);
+    });
   });
 
   // --- Atomic Write Safety ---

@@ -8,6 +8,8 @@ import type {
   CodeTree,
   WorkerOutput,
   GateResult,
+  TaskDigest,
+  StageResult,
 } from "../types.js";
 import type { RepoMap } from "../scanner/types.js";
 import type { Storage } from "./interface.js";
@@ -59,6 +61,8 @@ export class DiskStorage implements Storage {
     await mkdir(this.path("workers"), { recursive: true });
     await mkdir(this.path("gates"), { recursive: true });
     await mkdir(this.path("supervisor"), { recursive: true });
+    await mkdir(this.path("digests"), { recursive: true });
+    await mkdir(this.path("stages"), { recursive: true });
     try {
       await access(this.path("project.json"));
     } catch {
@@ -185,6 +189,58 @@ export class DiskStorage implements Storage {
   async readSupervisorLogs(): Promise<string[]> {
     try {
       return await this.readJson(this.path("supervisor", "logs.json"));
+    } catch {
+      return [];
+    }
+  }
+
+  async writeDigest(taskId: string, digest: TaskDigest): Promise<void> {
+    await this.writeJson(this.path("digests", `${taskId}.json`), digest);
+  }
+
+  async readDigests(): Promise<TaskDigest[]> {
+    try {
+      const files = await readdir(this.path("digests"));
+      const digests: TaskDigest[] = [];
+      for (const f of files) {
+        if (f.endsWith(".json")) {
+          const digest = await this.readJson<TaskDigest>(this.path("digests", f));
+          digests.push(digest);
+        }
+      }
+      return digests;
+    } catch {
+      return [];
+    }
+  }
+
+  async writeContracts(content: string): Promise<void> {
+    await this.writeText(this.path("contracts.ts"), content);
+  }
+
+  async readContracts(): Promise<string> {
+    try {
+      return await readFile(this.path("contracts.ts"), "utf-8");
+    } catch {
+      return "";
+    }
+  }
+
+  async writeStageResult(taskId: string, result: StageResult): Promise<void> {
+    const filePath = this.path("stages", `${taskId}.json`);
+    let existing: StageResult[] = [];
+    try {
+      existing = await this.readJson(filePath);
+    } catch {
+      // File doesn't exist yet
+    }
+    existing.push(result);
+    await this.writeJson(filePath, existing);
+  }
+
+  async readStageResults(taskId: string): Promise<StageResult[]> {
+    try {
+      return await this.readJson(this.path("stages", `${taskId}.json`));
     } catch {
       return [];
     }

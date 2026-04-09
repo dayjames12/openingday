@@ -5,6 +5,8 @@ import type {
   CodeTree,
   WorkerOutput,
   GateResult,
+  TaskDigest,
+  StageResult,
 } from "../types.js";
 import type { RepoMap } from "../scanner/types.js";
 
@@ -29,6 +31,18 @@ export interface Storage {
   readSupervisorLogs(): Promise<string[]>;
   readRepoMap(): Promise<RepoMap | null>;
   writeRepoMap(map: RepoMap): Promise<void>;
+  // Digests
+  writeDigest(taskId: string, digest: TaskDigest): Promise<void>;
+  readDigests(): Promise<TaskDigest[]>;
+
+  // Contracts
+  writeContracts(content: string): Promise<void>;
+  readContracts(): Promise<string>;
+
+  // Stage Results
+  writeStageResult(taskId: string, result: StageResult): Promise<void>;
+  readStageResults(taskId: string): Promise<StageResult[]>;
+
   exists(): Promise<boolean>;
   initialize(): Promise<void>;
 }
