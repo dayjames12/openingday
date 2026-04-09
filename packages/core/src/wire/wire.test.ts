@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { toWirePrompt, fromWireResponse, toWireResponse } from "./wire.js";
-import type { ContextPackage, WireResponse, WorkerOutput } from "../types.js";
+import { toWirePrompt, fromWireResponse, toWireResponse, toEnrichedWirePrompt } from "./wire.js";
+import type { ContextPackage, WireResponse, WorkerOutput, EnrichedContextPackage, TaskDigest } from "../types.js";
 
 describe("wire", () => {
   const sampleContext: ContextPackage = {
@@ -172,6 +172,37 @@ describe("wire", () => {
       expect(restored.testResults).toEqual(original.testResults);
       expect(restored.tokensUsed).toBe(original.tokensUsed);
       expect(restored.notes).toBe(original.notes);
+    });
+  });
+
+  describe("toEnrichedWirePrompt", () => {
+    it("includes contents, contracts, and digests", () => {
+      const ctx: EnrichedContextPackage = {
+        task: { name: "test", description: "test task", acceptanceCriteria: ["pass tests"] },
+        interfaces: [
+          { path: "src/a.ts", description: "file a", exports: [{ name: "fn", signature: "() => void", description: "" }], imports: [], lastModifiedBy: null },
+        ],
+        above: [],
+        below: [],
+        memory: "some memory",
+        rules: "",
+        budget: { softLimit: 1500, hardLimit: 2000 },
+        landscape: { mc: 1, fc: 2, modules: [] },
+        relevant: [],
+        fileContents: { "src/a.ts": "export function fn() {}" },
+        contracts: "export interface Player { name: string; }",
+        digests: [{ task: "t0", did: "scaffolding", ex: ["app"], im: [], pattern: "init" }],
+        specExcerpt: "Build a players API",
+      };
+
+      const wire = toEnrichedWirePrompt(ctx);
+      expect(wire.contents).toEqual({ "src/a.ts": "export function fn() {}" });
+      expect(wire.contracts).toBe("export interface Player { name: string; }");
+      expect(wire.digests).toHaveLength(1);
+      expect(wire.digests![0]!.task).toBe("t0");
+      // Base fields still present
+      expect(wire.task).toContain("test");
+      expect(wire.files).toHaveProperty("src/a.ts");
     });
   });
 });

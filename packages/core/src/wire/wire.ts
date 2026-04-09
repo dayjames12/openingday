@@ -4,6 +4,7 @@ import type {
   WirePrompt,
   WireResponse,
   WorkerOutput,
+  EnrichedContextPackage,
 } from "../types.js";
 
 /**
@@ -32,6 +33,20 @@ export function toWirePrompt(ctx: ContextPackage): WirePrompt {
     relevant: Object.fromEntries(
       ctx.relevant.map((f) => [f.p, { exports: f.ex.map((e) => ({ n: e.n, sig: e.s })) }])
     ),
+  };
+}
+
+/**
+ * Convert an EnrichedContextPackage into a WirePrompt with full file contents,
+ * contracts, and digests. Used for the new staged pipeline.
+ */
+export function toEnrichedWirePrompt(ctx: EnrichedContextPackage): WirePrompt {
+  const base = toWirePrompt(ctx);
+  return {
+    ...base,
+    contents: ctx.fileContents,
+    contracts: ctx.contracts,
+    digests: ctx.digests,
   };
 }
 
