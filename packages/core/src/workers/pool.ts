@@ -1,6 +1,7 @@
 import type { WorkTree, WorkTask, ProjectConfig, ProjectState, WorkerOutput } from "../types.js";
 import { getReadyTasks, updateTaskStatus, updateTask } from "../trees/work-tree.js";
 import { getActiveFileLocks } from "../trees/linker.js";
+import { getCachedReadyTasks, setCachedReadyTasks } from "../cache/readiness-cache.js";
 
 // === Worker Session ===
 
@@ -69,7 +70,12 @@ export function planSpawns(
   }
 
   const fileLocks = getActiveFileLocks(workTree);
-  const readyTasks = getReadyTasks(workTree, fileLocks);
+  const cached = getCachedReadyTasks(workTree, fileLocks);
+  const readyTasks = cached ?? (() => {
+    const tasks = getReadyTasks(workTree, fileLocks);
+    setCachedReadyTasks(tasks, workTree, fileLocks);
+    return tasks;
+  })();
 
   if (readyTasks.length === 0) {
     return { canSpawn: false, reason: "No ready tasks", tasksToSpawn: [] };

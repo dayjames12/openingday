@@ -102,10 +102,10 @@ describe("context-builder", () => {
     const { workTree, codeTree, config } = buildFixture();
     const ctx = buildContext(workTree, codeTree, config, "t1", "", "")!;
 
-    // perTask: $2, softPct: 75%, so softLimit = 2 * 0.75 * 1000 = 1500
-    expect(ctx.budget.softLimit).toBe(1500);
-    // hardLimit = 2 * 1000 = 2000
-    expect(ctx.budget.hardLimit).toBe(2000);
+    // perTask: $5, softPct: 75%, so softLimit = 5 * 0.75 * 1000 = 3750
+    expect(ctx.budget.softLimit).toBe(3750);
+    // hardLimit = 5 * 1000 = 5000
+    expect(ctx.budget.hardLimit).toBe(5000);
   });
 
   it("builds acceptance criteria from task", () => {

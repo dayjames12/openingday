@@ -170,8 +170,11 @@ export class DiskStorage implements Storage {
 
   async appendMemory(entry: string): Promise<void> {
     const existing = await this.readMemory();
-    const updated = existing ? `${existing}\n${entry}` : entry;
-    await this.writeMemory(updated);
+    const lines = existing.split("\n").filter(Boolean);
+    lines.push(entry);
+    // Keep last 50 entries to prevent unbounded growth
+    const trimmed = lines.slice(-50);
+    await this.writeMemory(trimmed.join("\n"));
   }
 
   async writeSupervisorLog(entry: string): Promise<void> {

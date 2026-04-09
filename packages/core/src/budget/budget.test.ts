@@ -48,12 +48,12 @@ describe("budget", () => {
   describe("getProjectBudgetStatus", () => {
     it("calculates percentage spent", () => {
       const config = defaultConfig("test", "spec.md");
-      // Project budget: $50 * 1000 = 50000
-      const state = makeState({ totalTokenSpend: 25000 });
+      // Project budget: $100 * 1000 = 100000
+      const state = makeState({ totalTokenSpend: 50000 });
       const status = getProjectBudgetStatus(state, config);
 
-      expect(status.totalSpent).toBe(25000);
-      expect(status.projectBudget).toBe(50000);
+      expect(status.totalSpent).toBe(50000);
+      expect(status.projectBudget).toBe(100000);
       expect(status.percentage).toBe(50);
       expect(status.atWarning).toBe(false); // 70% threshold
       expect(status.atLimit).toBe(false);
@@ -61,8 +61,8 @@ describe("budget", () => {
 
     it("triggers warning at threshold", () => {
       const config = defaultConfig("test", "spec.md");
-      // 70% of 50000 = 35000
-      const state = makeState({ totalTokenSpend: 35000 });
+      // 70% of 100000 = 70000
+      const state = makeState({ totalTokenSpend: 70000 });
       const status = getProjectBudgetStatus(state, config);
 
       expect(status.atWarning).toBe(true);
@@ -71,7 +71,7 @@ describe("budget", () => {
 
     it("triggers limit at 100%", () => {
       const config = defaultConfig("test", "spec.md");
-      const state = makeState({ totalTokenSpend: 50000 });
+      const state = makeState({ totalTokenSpend: 100000 });
       const status = getProjectBudgetStatus(state, config);
 
       expect(status.atLimit).toBe(true);
@@ -87,8 +87,8 @@ describe("budget", () => {
 
     it("returns false when at or over budget", () => {
       const config = defaultConfig("test", "spec.md");
-      // perTask: $2 * 1000 = 2000
-      const task = makeTask({ tokenSpend: 2000 });
+      // perTask: $5 * 1000 = 5000
+      const task = makeTask({ tokenSpend: 5000 });
       expect(isTaskWithinBudget(task, config)).toBe(false);
     });
   });
@@ -102,8 +102,8 @@ describe("budget", () => {
 
     it("returns true when at soft limit", () => {
       const config = defaultConfig("test", "spec.md");
-      // perTask: $2, softPct: 75%, so softLimit = 2000 * 0.75 = 1500
-      const task = makeTask({ tokenSpend: 1500 });
+      // perTask: $5, softPct: 75%, so softLimit = 5000 * 0.75 = 3750
+      const task = makeTask({ tokenSpend: 3750 });
       expect(isTaskAtSoftLimit(task, config)).toBe(true);
     });
   });

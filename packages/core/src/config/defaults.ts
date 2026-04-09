@@ -5,8 +5,8 @@ export function defaultConfig(name: string, specPath: string): ProjectConfig {
     name,
     specPath,
     budgets: {
-      project: { usd: 50, warnPct: 70 },
-      perTask: { usd: 2, softPct: 75 },
+      project: { usd: 100, warnPct: 70 },
+      perTask: { usd: 5, softPct: 75 },
       supervisor: { usd: 3 },
       planning: { usd: 5 },
     },

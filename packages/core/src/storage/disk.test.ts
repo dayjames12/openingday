@@ -337,6 +337,18 @@ describe("DiskStorage", () => {
     expect(read).toBe("First entry");
   });
 
+  it("rotates memory to keep last 50 entries", async () => {
+    // Write 55 entries
+    for (let i = 0; i < 55; i++) {
+      await storage.appendMemory(`entry-${i}`);
+    }
+    const read = await storage.readMemory();
+    const lines = read.split("\n");
+    expect(lines).toHaveLength(50);
+    expect(lines[0]).toBe("entry-5");
+    expect(lines[49]).toBe("entry-54");
+  });
+
   // --- Supervisor Logs ---
 
   it("writes and reads supervisor logs", async () => {

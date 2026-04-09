@@ -48,6 +48,7 @@ import { generateDigest } from "./digests/generator.js";
 import { createWatchdog, createWatchdogState } from "./safety/watchdog.js";
 import type { Watchdog } from "./safety/watchdog.js";
 import { createLoopTracker, recordLoop, shouldBreak } from "./safety/loops.js";
+import { getCachedContext, setCachedContext, invalidateContext } from "./cache/context-cache.js";
 import { runSpringTraining } from "./spring-training/runner.js";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -205,13 +206,17 @@ export class Orchestrator {
         await this.storage.appendMemory(`Task ${task.id} preflight warnings: ${preflight.warnings.join("; ")}`);
       }
 
-      // Build enriched context
-      const fileContents = await this.readFileContents(task.touches, task.reads);
-      const context = buildEnrichedContext(
-        workTree, codeTree, config, task.id, memory, "",
-        repoMap, contracts, digests, this.options.specText ?? "", fileContents,
-      );
-      if (!context) continue;
+      // Build enriched context (check cache first for retry loops)
+      let context = getCachedContext(task.id);
+      if (!context) {
+        const fileContents = await this.readFileContents(task.touches, task.reads);
+        context = buildEnrichedContext(
+          workTree, codeTree, config, task.id, memory, "",
+          repoMap, contracts, digests, this.options.specText ?? "", fileContents,
+        );
+        if (!context) continue;
+        setCachedContext(task.id, context);
+      }
 
       // Create worktree
       let worktreePath = ".";
@@ -382,6 +387,9 @@ export class Orchestrator {
           // Generate and store digest
           const digest = generateDigest(task.id, workerOutput, workTree, codeTree);
           await this.storage.writeDigest(task.id, digest);
+
+          // Invalidate context cache for completed task
+          invalidateContext(task.id);
 
           // Incremental repo map refresh
           if (repoMap && workerOutput.filesChanged.length > 0) {

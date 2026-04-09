@@ -248,3 +248,7 @@ export type { BreakDecision } from "./safety/loops.js";
 // Retry
 export { withRetry, DEFAULT_RETRY } from "./utils/retry.js";
 export type { RetryConfig } from "./utils/retry.js";
+
+// Cache
+export { getCachedContext, setCachedContext, invalidateContext, clearContextCache } from "./cache/context-cache.js";
+export { getCachedReadyTasks, setCachedReadyTasks, invalidateReadinessCache } from "./cache/readiness-cache.js";

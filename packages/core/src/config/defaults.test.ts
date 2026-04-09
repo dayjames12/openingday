@@ -8,15 +8,15 @@ describe("defaultConfig", () => {
     expect(config.specPath).toBe("specs/api.md");
   });
 
-  it("sets project budget to $50 with 70% warning", () => {
+  it("sets project budget to $100 with 70% warning", () => {
     const config = defaultConfig("test", "spec.md");
-    expect(config.budgets.project.usd).toBe(50);
+    expect(config.budgets.project.usd).toBe(100);
     expect(config.budgets.project.warnPct).toBe(70);
   });
 
-  it("sets per-task budget to $2 with 75% soft limit", () => {
+  it("sets per-task budget to $5 with 75% soft limit", () => {
     const config = defaultConfig("test", "spec.md");
-    expect(config.budgets.perTask.usd).toBe(2);
+    expect(config.budgets.perTask.usd).toBe(5);
     expect(config.budgets.perTask.softPct).toBe(75);
   });
 
