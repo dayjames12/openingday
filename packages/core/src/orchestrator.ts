@@ -32,6 +32,7 @@ import {
   removeWorktree,
   mergeWorktree,
 } from "./workers/worktree.js";
+import { preflightCheck } from "./preflight/check.js";
 
 // === Types ===
 
@@ -162,6 +163,22 @@ export class Orchestrator {
     let failed = 0;
 
     for (const task of spawnDecision.tasksToSpawn) {
+      // pre-flight: check task readiness
+      const preflight = preflightCheck(workTree, codeTree, repoMap, config, task.id);
+      if (!preflight.canProceed) {
+        workTree = updateTaskStatus(workTree, task.id, "failed");
+        failed++;
+        await this.storage.appendMemory(
+          `Task ${task.id} blocked by preflight: ${preflight.blockers.join("; ")}`,
+        );
+        continue;
+      }
+      if (preflight.warnings.length > 0) {
+        await this.storage.appendMemory(
+          `Task ${task.id} preflight warnings: ${preflight.warnings.join("; ")}`,
+        );
+      }
+
       // a. Build context
       const context = buildContext(
         workTree,

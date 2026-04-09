@@ -68,7 +68,7 @@ function makeWorkTreeWithOneTask(): WorkTree {
               {
                 id: "t1",
                 name: "Task 1",
-                description: "Implement feature",
+                description: "Implement feature handler in src/feature.ts — exports doStuff()",
                 status: "pending",
                 dependencies: [],
                 touches: ["src/feature.ts"],

@@ -201,6 +201,10 @@ export {
 } from "./gates/quality.js";
 export type { QualityReviewResult } from "./gates/quality.js";
 
+// Preflight
+export { preflightCheck } from "./preflight/check.js";
+export type { PreflightResult } from "./preflight/check.js";
+
 // Orchestrator
 export { Orchestrator } from "./orchestrator.js";
 export type { CycleResult, SpawnFn, OrchestratorOptions } from "./orchestrator.js";
