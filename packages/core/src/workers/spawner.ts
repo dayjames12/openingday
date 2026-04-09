@@ -2,6 +2,7 @@ import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { ContextPackage, WirePrompt, WireResponse, WorkerOutput } from "../types.js";
 import { toWirePrompt, fromWireResponse } from "../wire/wire.js";
+import { withRetry } from "../utils/retry.js";
 
 // === Types ===
 
@@ -142,73 +143,75 @@ export function parseSpawnResult(resultMsg: SDKResultMessage): SpawnResult {
  * Converts context into wire-mode prompts, calls the SDK, and parses the result.
  */
 export async function spawnAgent(options: SpawnOptions): Promise<SpawnResult> {
-  const { worktreePath, context, budgetUsd, model } = options;
+  return withRetry(async () => {
+    const { worktreePath, context, budgetUsd, model } = options;
 
-  const wire = toWirePrompt(context);
-  const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(wire);
+    const wire = toWirePrompt(context);
+    const systemPrompt = buildSystemPrompt();
+    const userPrompt = buildUserPrompt(wire);
 
-  const stream = query({
-    prompt: userPrompt,
-    options: {
-      systemPrompt,
-      model: model ?? "claude-opus-4-20250514",
-      permissionMode: "bypassPermissions",
-      allowDangerouslySkipPermissions: true,
-      maxBudgetUsd: budgetUsd,
-      persistSession: false,
-      cwd: worktreePath,
-      settingSources: ["project"],
-      outputFormat: {
-        type: "json_schema" as const,
-        schema: {
-          type: "object",
-          properties: {
-            s: { type: "string", enum: ["ok", "partial", "fail"] },
-            changed: { type: "array", items: { type: "string" } },
-            iface: { type: "array", items: {
-              type: "object",
-              properties: {
-                f: { type: "string" },
-                e: { type: "string" },
-                b: { type: "string" },
-                a: { type: "string" },
-              },
-              required: ["f", "e", "b", "a"],
-            }},
-            tests: { type: "object", properties: { p: { type: "number" }, f: { type: "number" } }, required: ["p", "f"] },
-            t: { type: "number" },
-            n: { type: "string" },
+    const stream = query({
+      prompt: userPrompt,
+      options: {
+        systemPrompt,
+        model: model ?? "claude-opus-4-20250514",
+        permissionMode: "bypassPermissions",
+        allowDangerouslySkipPermissions: true,
+        maxBudgetUsd: budgetUsd,
+        persistSession: false,
+        cwd: worktreePath,
+        settingSources: ["project"],
+        outputFormat: {
+          type: "json_schema" as const,
+          schema: {
+            type: "object",
+            properties: {
+              s: { type: "string", enum: ["ok", "partial", "fail"] },
+              changed: { type: "array", items: { type: "string" } },
+              iface: { type: "array", items: {
+                type: "object",
+                properties: {
+                  f: { type: "string" },
+                  e: { type: "string" },
+                  b: { type: "string" },
+                  a: { type: "string" },
+                },
+                required: ["f", "e", "b", "a"],
+              }},
+              tests: { type: "object", properties: { p: { type: "number" }, f: { type: "number" } }, required: ["p", "f"] },
+              t: { type: "number" },
+              n: { type: "string" },
+            },
+            required: ["s", "changed", "iface", "tests", "t", "n"],
           },
-          required: ["s", "changed", "iface", "tests", "t", "n"],
         },
       },
-    },
-  });
+    });
 
-  let resultMsg: SDKResultMessage | null = null;
-  for await (const msg of stream) {
-    if (msg.type === "result") {
-      resultMsg = msg;
+    let resultMsg: SDKResultMessage | null = null;
+    for await (const msg of stream) {
+      if (msg.type === "result") {
+        resultMsg = msg;
+      }
     }
-  }
 
-  if (!resultMsg) {
-    return {
-      output: {
-        status: "failed",
-        filesChanged: [],
-        interfacesModified: [],
-        testsAdded: [],
-        testResults: { pass: 0, fail: 0 },
-        notes: "Agent SDK stream ended without a result message",
-        tokensUsed: 0,
-      },
-      costUsd: 0,
-      sessionId: "",
-      needsInspection: false,
-    };
-  }
+    if (!resultMsg) {
+      return {
+        output: {
+          status: "failed",
+          filesChanged: [],
+          interfacesModified: [],
+          testsAdded: [],
+          testResults: { pass: 0, fail: 0 },
+          notes: "Agent SDK stream ended without a result message",
+          tokensUsed: 0,
+        },
+        costUsd: 0,
+        sessionId: "",
+        needsInspection: false,
+      };
+    }
 
-  return parseSpawnResult(resultMsg);
+    return parseSpawnResult(resultMsg);
+  }, { maxAttempts: 2, baseDelayMs: 2000, maxDelayMs: 5000 });
 }

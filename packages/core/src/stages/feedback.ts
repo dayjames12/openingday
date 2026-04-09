@@ -41,7 +41,8 @@ export async function digestCompileErrors(
   cwd: string,
   budget: number,
 ): Promise<StageFeedback> {
-  const prompt = `Digest these TypeScript compilation errors into structured JSON.
+  try {
+    const prompt = `Digest these TypeScript compilation errors into structured JSON.
 
 ## Raw tsc output
 
@@ -54,34 +55,40 @@ Output ONLY a JSON object:
 
 Be specific about fixes. Reference actual types and imports. No markdown fences, no explanation.`;
 
-  const stream = query({
-    prompt,
-    options: {
-      model: "claude-opus-4-20250514",
-      permissionMode: "bypassPermissions",
-      allowDangerouslySkipPermissions: true,
-      maxBudgetUsd: budget,
-      persistSession: false,
-      cwd,
-      allowedTools: [],
-    },
-  });
+    const stream = query({
+      prompt,
+      options: {
+        model: "claude-opus-4-20250514",
+        permissionMode: "bypassPermissions",
+        allowDangerouslySkipPermissions: true,
+        maxBudgetUsd: budget,
+        persistSession: false,
+        cwd,
+        allowedTools: [],
+      },
+    });
 
-  let resultMsg: SDKResultMessage | null = null;
-  for await (const msg of stream) {
-    if (msg.type === "result") {
-      resultMsg = msg;
+    let resultMsg: SDKResultMessage | null = null;
+    for await (const msg of stream) {
+      if (msg.type === "result") {
+        resultMsg = msg;
+      }
     }
-  }
 
-  if (!resultMsg || resultMsg.subtype !== "success") {
+    if (!resultMsg || resultMsg.subtype !== "success") {
+      return {
+        stage: "compile",
+        errors: [{ f: "unknown", l: 0, e: rawOutput.slice(0, 500), fix: "Fix TypeScript compilation errors" }],
+      };
+    }
+
+    return parseFeedbackResponse(resultMsg.result, "compile");
+  } catch {
     return {
       stage: "compile",
-      errors: [{ f: "unknown", l: 0, e: rawOutput.slice(0, 500), fix: "Fix TypeScript compilation errors" }],
+      errors: [{ f: "", l: 0, e: `Digest failed: ${rawOutput.slice(0, 500)}`, fix: "" }],
     };
   }
-
-  return parseFeedbackResponse(resultMsg.result, "compile");
 }
 
 /**
@@ -93,7 +100,8 @@ export async function digestTestFailures(
   cwd: string,
   budget: number,
 ): Promise<StageFeedback> {
-  const prompt = `Digest these test failures into structured JSON.
+  try {
+    const prompt = `Digest these test failures into structured JSON.
 
 ## Raw test output
 
@@ -106,34 +114,40 @@ Output ONLY a JSON object:
 
 Be specific about root causes and fixes. No markdown fences, no explanation.`;
 
-  const stream = query({
-    prompt,
-    options: {
-      model: "claude-opus-4-20250514",
-      permissionMode: "bypassPermissions",
-      allowDangerouslySkipPermissions: true,
-      maxBudgetUsd: budget,
-      persistSession: false,
-      cwd,
-      allowedTools: [],
-    },
-  });
+    const stream = query({
+      prompt,
+      options: {
+        model: "claude-opus-4-20250514",
+        permissionMode: "bypassPermissions",
+        allowDangerouslySkipPermissions: true,
+        maxBudgetUsd: budget,
+        persistSession: false,
+        cwd,
+        allowedTools: [],
+      },
+    });
 
-  let resultMsg: SDKResultMessage | null = null;
-  for await (const msg of stream) {
-    if (msg.type === "result") {
-      resultMsg = msg;
+    let resultMsg: SDKResultMessage | null = null;
+    for await (const msg of stream) {
+      if (msg.type === "result") {
+        resultMsg = msg;
+      }
     }
-  }
 
-  if (!resultMsg || resultMsg.subtype !== "success") {
+    if (!resultMsg || resultMsg.subtype !== "success") {
+      return {
+        stage: "test",
+        errors: [{ f: "unknown", l: 0, e: rawOutput.slice(0, 500), fix: "Fix failing tests" }],
+      };
+    }
+
+    return parseFeedbackResponse(resultMsg.result, "test");
+  } catch {
     return {
       stage: "test",
-      errors: [{ f: "unknown", l: 0, e: rawOutput.slice(0, 500), fix: "Fix failing tests" }],
+      errors: [{ f: "", l: 0, e: `Digest failed: ${rawOutput.slice(0, 500)}`, fix: "" }],
     };
   }
-
-  return parseFeedbackResponse(resultMsg.result, "test");
 }
 
 /**

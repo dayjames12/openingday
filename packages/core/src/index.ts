@@ -244,3 +244,7 @@ export { createWatchdog, createWatchdogState } from "./safety/watchdog.js";
 export type { WatchdogAction, Watchdog } from "./safety/watchdog.js";
 export { createLoopTracker, recordLoop, shouldBreak } from "./safety/loops.js";
 export type { BreakDecision } from "./safety/loops.js";
+
+// Retry
+export { withRetry, DEFAULT_RETRY } from "./utils/retry.js";
+export type { RetryConfig } from "./utils/retry.js";

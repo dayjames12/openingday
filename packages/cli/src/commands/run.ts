@@ -81,26 +81,45 @@ export function registerRun(program: Command): void {
         }
 
         // Continuous loop
+        let consecutiveErrors = 0;
         while (!shuttingDown) {
-          const result = await orchestrator.runOneCycle();
-          console.log(
-            chalk.cyan(
-              `Cycle: dispatched=${result.dispatched} completed=${result.completed} failed=${result.failed}`,
-            ),
-          );
+          try {
+            const result = await orchestrator.runOneCycle();
+            consecutiveErrors = 0;
+            console.log(
+              chalk.cyan(
+                `Cycle: dispatched=${result.dispatched} completed=${result.completed} failed=${result.failed}`,
+              ),
+            );
 
-          if (result.isComplete) {
-            console.log(chalk.green("Project complete!"));
-            break;
-          }
-          if (result.isPaused) {
-            console.log(chalk.yellow(`Paused. ${result.error ?? ""}`));
-            break;
-          }
+            if (result.isComplete) {
+              console.log(chalk.green("Project complete!"));
+              break;
+            }
+            if (result.isPaused) {
+              console.log(chalk.yellow(`Paused. ${result.error ?? ""}`));
+              break;
+            }
 
-          // Pause between cycles when nothing was dispatched
-          if (result.dispatched === 0) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            // Pause between cycles when nothing was dispatched
+            if (result.dispatched === 0) {
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
+          } catch (err) {
+            consecutiveErrors++;
+            console.error(
+              chalk.red(`Cycle error (${consecutiveErrors}/3): ${err}`),
+            );
+            if (consecutiveErrors >= 3) {
+              console.error(chalk.red("3 consecutive cycle errors. Pausing."));
+              const currentState = await storage.readProjectState();
+              if (currentState.status === "running") {
+                const paused = transition(currentState, "paused");
+                await storage.writeProjectState(paused);
+              }
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 5000));
           }
         }
       } finally {

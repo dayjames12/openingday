@@ -6,8 +6,15 @@ async function exists(path: string): Promise<boolean> {
   try { await access(path); return true; } catch { return false; }
 }
 
-async function readJson(path: string): Promise<any> {
-  try { return JSON.parse(await readFile(path, "utf-8")); } catch { return null; }
+async function readJson(path: string): Promise<Record<string, unknown> | null> {
+  try {
+    const content = await readFile(path, "utf-8");
+    const parsed: unknown = JSON.parse(content);
+    if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return null;
+  } catch { return null; }
 }
 
 export async function detectEnv(dir: string): Promise<EnvConfig> {
@@ -24,8 +31,10 @@ export async function detectEnv(dir: string): Promise<EnvConfig> {
   else if (await exists(join(dir, ".mocharc.yml")) || await exists(join(dir, ".mocharc.json"))) test = "mocha";
   else {
     const pkg = await readJson(join(dir, "package.json"));
-    if (pkg?.devDependencies?.vitest || pkg?.dependencies?.vitest) test = "vitest";
-    else if (pkg?.devDependencies?.jest || pkg?.dependencies?.jest) test = "jest";
+    const devDeps = pkg?.devDependencies as Record<string, unknown> | undefined;
+    const prodDeps = pkg?.dependencies as Record<string, unknown> | undefined;
+    if (devDeps?.vitest || prodDeps?.vitest) test = "vitest";
+    else if (devDeps?.jest || prodDeps?.jest) test = "jest";
   }
 
   // Linter
@@ -52,7 +61,12 @@ export async function detectEnv(dir: string): Promise<EnvConfig> {
     const pkg = await readJson(join(dir, "package.json"));
     if (pkg?.workspaces) {
       monorepo = true;
-      workspaces = Array.isArray(pkg.workspaces) ? pkg.workspaces : pkg.workspaces.packages ?? [];
+      if (Array.isArray(pkg.workspaces)) {
+        workspaces = pkg.workspaces as string[];
+      } else {
+        const ws = pkg.workspaces as Record<string, unknown>;
+        workspaces = (ws.packages as string[]) ?? [];
+      }
     }
   }
   if (await exists(join(dir, "turbo.json")) || await exists(join(dir, "lerna.json"))) monorepo = true;
@@ -71,8 +85,8 @@ export async function detectEnv(dir: string): Promise<EnvConfig> {
 export async function detectDeps(dir: string): Promise<string[]> {
   const deps: string[] = [];
   const pkg = await readJson(join(dir, "package.json"));
-  if (pkg?.dependencies) {
-    deps.push(...Object.keys(pkg.dependencies));
+  if (pkg?.dependencies && typeof pkg.dependencies === "object") {
+    deps.push(...Object.keys(pkg.dependencies as Record<string, unknown>));
   }
   return deps;
 }
