@@ -68,6 +68,13 @@ export function parseSpawnResult(resultMsg: SDKResultMessage): SpawnResult {
   const sessionId = resultMsg.session_id;
 
   if (resultMsg.subtype === "success") {
+    // Check structured_output first (available when outputFormat is set)
+    if ("structured_output" in resultMsg && resultMsg.structured_output) {
+      const wire = resultMsg.structured_output as WireResponse;
+      return { output: fromWireResponse(wire), costUsd, sessionId };
+    }
+
+    // Fallback: direct JSON.parse
     try {
       const wire = JSON.parse(resultMsg.result) as WireResponse;
       const output = fromWireResponse(wire);
@@ -81,7 +88,7 @@ export function parseSpawnResult(resultMsg: SDKResultMessage): SpawnResult {
           interfacesModified: [],
           testsAdded: [],
           testResults: { pass: 0, fail: 0 },
-          notes: `Failed to parse wire response: ${resultMsg.result}`,
+          notes: `Failed to parse wire response: ${resultMsg.result}`.slice(0, 500),
           tokensUsed: 0,
         },
         costUsd,
@@ -130,6 +137,30 @@ export async function spawnAgent(options: SpawnOptions): Promise<SpawnResult> {
       maxBudgetUsd: budgetUsd,
       persistSession: false,
       cwd: worktreePath,
+      outputFormat: {
+        type: "json_schema" as const,
+        schema: {
+          type: "object",
+          properties: {
+            s: { type: "string", enum: ["ok", "partial", "fail"] },
+            changed: { type: "array", items: { type: "string" } },
+            iface: { type: "array", items: {
+              type: "object",
+              properties: {
+                f: { type: "string" },
+                e: { type: "string" },
+                b: { type: "string" },
+                a: { type: "string" },
+              },
+              required: ["f", "e", "b", "a"],
+            }},
+            tests: { type: "object", properties: { p: { type: "number" }, f: { type: "number" } }, required: ["p", "f"] },
+            t: { type: "number" },
+            n: { type: "string" },
+          },
+          required: ["s", "changed", "iface", "tests", "t", "n"],
+        },
+      },
     },
   });
 
