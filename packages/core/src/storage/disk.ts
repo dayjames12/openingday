@@ -1,5 +1,6 @@
-import { readFile, writeFile, mkdir, readdir, access } from "node:fs/promises";
+import { readFile, writeFile, rename, unlink, mkdir, readdir, access } from "node:fs/promises";
 import { join } from "node:path";
+import { randomBytes } from "node:crypto";
 import type {
   ProjectConfig,
   ProjectState,
@@ -24,7 +25,25 @@ export class DiskStorage implements Storage {
   }
 
   private async writeJson<T>(filePath: string, data: T): Promise<void> {
-    await writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
+    const tmpFile = `${filePath}.${randomBytes(8).toString("hex")}.tmp`;
+    try {
+      await writeFile(tmpFile, JSON.stringify(data, null, 2), "utf-8");
+      await rename(tmpFile, filePath);
+    } catch (err) {
+      try { await unlink(tmpFile); } catch {}
+      throw err;
+    }
+  }
+
+  private async writeText(filePath: string, content: string): Promise<void> {
+    const tmpFile = `${filePath}.${randomBytes(8).toString("hex")}.tmp`;
+    try {
+      await writeFile(tmpFile, content, "utf-8");
+      await rename(tmpFile, filePath);
+    } catch (err) {
+      try { await unlink(tmpFile); } catch {}
+      throw err;
+    }
   }
 
   async exists(): Promise<boolean> {
@@ -48,7 +67,7 @@ export class DiskStorage implements Storage {
     try {
       await access(this.path("memory.md"));
     } catch {
-      await writeFile(this.path("memory.md"), "", "utf-8");
+      await this.writeText(this.path("memory.md"), "");
     }
   }
 
@@ -142,7 +161,7 @@ export class DiskStorage implements Storage {
   }
 
   async writeMemory(content: string): Promise<void> {
-    await writeFile(this.path("memory.md"), content, "utf-8");
+    await this.writeText(this.path("memory.md"), content);
   }
 
   async appendMemory(entry: string): Promise<void> {

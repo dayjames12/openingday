@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { DiskStorage } from "./disk.js";
@@ -352,5 +352,85 @@ describe("DiskStorage", () => {
   it("returns empty array when no supervisor logs exist", async () => {
     const logs = await storage.readSupervisorLogs();
     expect(logs).toEqual([]);
+  });
+
+  // --- Atomic Write Safety ---
+
+  describe("atomic writes", () => {
+    it("survives 100 concurrent writeJson calls without corruption", async () => {
+      const writes = Array.from({ length: 100 }, (_, i) =>
+        storage.writeProjectConfig({
+          name: `project-${i}`,
+          specPath: "spec.md",
+          budgets: {
+            project: { usd: 50, warnPct: 70 },
+            perTask: { usd: 2, softPct: 75 },
+            supervisor: { usd: 3 },
+            planning: { usd: 5 },
+          },
+          limits: {
+            maxConcurrentWorkers: 3,
+            maxTotalWorkers: 50,
+            maxRetries: 3,
+            maxTaskDepth: 4,
+            sessionTimeoutMin: 15,
+            spawnRatePerMin: 5,
+          },
+          circuitBreakers: {
+            consecutiveFailuresSlice: 3,
+            consecutiveFailuresProject: 5,
+            budgetEfficiencyThreshold: 0.5,
+          },
+        }),
+      );
+
+      await Promise.all(writes);
+
+      // File must be valid JSON — no corruption from interleaved writes
+      const raw = await readFile(join(tmpDir, "project.json"), "utf-8");
+      const parsed = JSON.parse(raw);
+      expect(parsed.name).toMatch(/^project-\d+$/);
+    });
+
+    it("survives 100 concurrent writeMemory calls without corruption", async () => {
+      const writes = Array.from({ length: 100 }, (_, i) =>
+        storage.writeMemory(`memory entry ${i}\nline two of ${i}`),
+      );
+
+      await Promise.all(writes);
+
+      const content = await storage.readMemory();
+      expect(content).toMatch(/^memory entry \d+\nline two of \d+$/);
+    });
+
+    it("leaves no temp files after successful writes", async () => {
+      await storage.writeProjectConfig({
+        name: "test",
+        specPath: "spec.md",
+        budgets: {
+          project: { usd: 50, warnPct: 70 },
+          perTask: { usd: 2, softPct: 75 },
+          supervisor: { usd: 3 },
+          planning: { usd: 5 },
+        },
+        limits: {
+          maxConcurrentWorkers: 3,
+          maxTotalWorkers: 50,
+          maxRetries: 3,
+          maxTaskDepth: 4,
+          sessionTimeoutMin: 15,
+          spawnRatePerMin: 5,
+        },
+        circuitBreakers: {
+          consecutiveFailuresSlice: 3,
+          consecutiveFailuresProject: 5,
+          budgetEfficiencyThreshold: 0.5,
+        },
+      });
+
+      const files = await readdir(tmpDir);
+      const tmpFiles = files.filter((f) => f.endsWith(".tmp"));
+      expect(tmpFiles).toHaveLength(0);
+    });
   });
 });
