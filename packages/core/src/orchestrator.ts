@@ -1,6 +1,7 @@
 import type { Storage } from "./storage/interface.js";
 import type { SpawnResult } from "./workers/spawner.js";
 import type { ContextPackage } from "./types.js";
+import { inspectWorktreeOutput } from "./workers/inspect.js";
 import { refreshFiles } from "./scanner/incremental.js";
 import {
   createWorkerPool,
@@ -216,11 +217,21 @@ export class Orchestrator {
           budgetUsd: config.budgets.perTask.usd,
         });
 
+        // d2. If wire parsing failed, inspect the worktree directly
+        let workerOutput = result.output;
+        if (result.needsInspection && worktreePath !== ".") {
+          workerOutput = await inspectWorktreeOutput(
+            worktreePath,
+            task.touches,
+            repoMap?.env ?? null,
+          );
+        }
+
         // e. Record token spend
-        state = addTokenSpend(state, result.output.tokensUsed);
+        state = addTokenSpend(state, workerOutput.tokensUsed);
 
         // f. Store worker output
-        await this.storage.writeWorkerOutput(task.id, result.output);
+        await this.storage.writeWorkerOutput(task.id, workerOutput);
 
         // g. Run gate pipeline
         const pipeline = createDefaultPipeline(task.touches, undefined, {
@@ -228,7 +239,7 @@ export class Orchestrator {
         });
         const gateResults = await runGatePipeline(
           pipeline,
-          result.output,
+          workerOutput,
           workTree,
           codeTree,
           worktreePath !== "." ? worktreePath : undefined,
@@ -253,13 +264,13 @@ export class Orchestrator {
               continue;
             }
           }
-          workTree = applyWorkerResult(workTree, task.id, result.output);
+          workTree = applyWorkerResult(workTree, task.id, workerOutput);
           this.pool = completeWorker(this.pool, sessionId, "completed");
           completed++;
 
           // Incremental repo map refresh
-          if (repoMap && result.output.filesChanged.length > 0) {
-            const updatedMap = await refreshFiles(repoMap, this.options.repoDir ?? ".", result.output.filesChanged);
+          if (repoMap && workerOutput.filesChanged.length > 0) {
+            const updatedMap = await refreshFiles(repoMap, this.options.repoDir ?? ".", workerOutput.filesChanged);
             await this.storage.writeRepoMap(updatedMap);
           }
         } else {

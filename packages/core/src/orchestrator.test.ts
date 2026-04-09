@@ -147,6 +147,7 @@ describe("Orchestrator", () => {
         output,
         costUsd: 0.15,
         sessionId: "mock-session-1",
+        needsInspection: false,
       } satisfies SpawnResult;
     };
 

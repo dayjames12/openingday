@@ -157,6 +157,9 @@ export {
 } from "./workers/spawner.js";
 export type { SpawnOptions, SpawnResult } from "./workers/spawner.js";
 
+// Worktree Inspection
+export { inspectWorktreeOutput } from "./workers/inspect.js";
+
 // Seeder (from spec)
 export {
   seedFromSpec,

@@ -17,6 +17,7 @@ export interface SpawnResult {
   output: WorkerOutput;
   costUsd: number;
   sessionId: string;
+  needsInspection: boolean;
 }
 
 // === Pure Functions ===
@@ -71,14 +72,14 @@ export function parseSpawnResult(resultMsg: SDKResultMessage): SpawnResult {
     // Check structured_output first (available when outputFormat is set)
     if ("structured_output" in resultMsg && resultMsg.structured_output) {
       const wire = resultMsg.structured_output as WireResponse;
-      return { output: fromWireResponse(wire), costUsd, sessionId };
+      return { output: fromWireResponse(wire), costUsd, sessionId, needsInspection: false };
     }
 
     // Fallback: direct JSON.parse
     try {
       const wire = JSON.parse(resultMsg.result) as WireResponse;
       const output = fromWireResponse(wire);
-      return { output, costUsd, sessionId };
+      return { output, costUsd, sessionId, needsInspection: false };
     } catch {}
 
     // Regex fallback — extract JSON from markdown/prose
@@ -86,23 +87,24 @@ export function parseSpawnResult(resultMsg: SDKResultMessage): SpawnResult {
     if (jsonMatch) {
       try {
         const wire = JSON.parse(jsonMatch[0]) as WireResponse;
-        return { output: fromWireResponse(wire), costUsd, sessionId };
+        return { output: fromWireResponse(wire), costUsd, sessionId, needsInspection: false };
       } catch {}
     }
 
-    // Total failure
+    // All parse attempts failed — flag for worktree inspection
     return {
       output: {
-        status: "failed",
+        status: "complete",
         filesChanged: [],
         interfacesModified: [],
         testsAdded: [],
         testResults: { pass: 0, fail: 0 },
-        notes: `Failed to parse wire response: ${resultMsg.result}`.slice(0, 500),
+        notes: "Wire parse failed, needs worktree inspection",
         tokensUsed: 0,
       },
       costUsd,
       sessionId,
+      needsInspection: true,
     };
   }
 
@@ -120,6 +122,7 @@ export function parseSpawnResult(resultMsg: SDKResultMessage): SpawnResult {
     },
     costUsd,
     sessionId,
+    needsInspection: false,
   };
 }
 
@@ -194,6 +197,7 @@ export async function spawnAgent(options: SpawnOptions): Promise<SpawnResult> {
       },
       costUsd: 0,
       sessionId: "",
+      needsInspection: false,
     };
   }
 

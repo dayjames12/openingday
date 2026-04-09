@@ -191,6 +191,7 @@ describe("multi-cycle orchestration with mock spawner", () => {
         output,
         costUsd: 0.10,
         sessionId: `mock-${opts.taskId}`,
+        needsInspection: false,
       } satisfies SpawnResult;
     };
 

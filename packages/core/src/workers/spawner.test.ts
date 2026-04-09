@@ -102,6 +102,7 @@ describe("spawner", () => {
       expect(result.output.notes).toBe("Implemented JWT middleware");
       expect(result.costUsd).toBe(0.12);
       expect(result.sessionId).toBe("sess-123");
+      expect(result.needsInspection).toBe(false);
     });
 
     it("handles partial status in wire response", () => {
@@ -157,9 +158,10 @@ describe("spawner", () => {
       expect(result.output.notes).toContain("Budget exceeded");
       expect(result.costUsd).toBe(2.0);
       expect(result.sessionId).toBe("sess-789");
+      expect(result.needsInspection).toBe(false);
     });
 
-    it("returns failed status when result text is invalid JSON", () => {
+    it("flags needsInspection when result text is invalid JSON", () => {
       const msg: SDKResultMessage = {
         type: "result",
         subtype: "success",
@@ -177,8 +179,9 @@ describe("spawner", () => {
       };
 
       const result = parseSpawnResult(msg);
-      expect(result.output.status).toBe("failed");
-      expect(result.output.notes).toContain("Failed to parse wire response");
+      expect(result.output.status).toBe("complete");
+      expect(result.needsInspection).toBe(true);
+      expect(result.output.notes).toContain("needs worktree inspection");
       expect(result.costUsd).toBe(0.05);
     });
 
@@ -278,7 +281,7 @@ describe("spawner", () => {
       expect(result.output.notes).toBe("Partial from prose");
     });
 
-    it("fails gracefully on malformed JSON", () => {
+    it("flags needsInspection on malformed JSON", () => {
       const msg: SDKResultMessage = {
         type: "result",
         subtype: "success",
@@ -296,8 +299,8 @@ describe("spawner", () => {
       };
 
       const result = parseSpawnResult(msg);
-      expect(result.output.status).toBe("failed");
-      expect(result.output.notes.length).toBeLessThanOrEqual(500);
+      expect(result.needsInspection).toBe(true);
+      expect(result.output.status).toBe("complete");
     });
 
     it("truncates long error notes to 500 chars", () => {
