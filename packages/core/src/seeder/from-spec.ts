@@ -150,6 +150,24 @@ Output ONLY a valid JSON object with "workTree" and "codeTree" keys. No markdown
   if (repoMap) {
     const landscape = buildLandscape(repoMap);
     base += `\n\nEXISTING CODEBASE:\n${JSON.stringify(landscape)}\n\nGenerate tasks that integrate with existing modules. Reuse existing patterns and utilities.`;
+
+    base += `
+
+BROWNFIELD RULES:
+- When referencing EXISTING files, use EXACT paths from the repo map. Do not invent paths.
+- The repo map paths are the ground truth. Use them verbatim.
+- For NEW files, place them in existing directories that match their purpose.
+- Do NOT create new directory structures when existing ones serve the same purpose.
+- Example: if repo map has "packages/core/src/scanner/detect.ts", reference EXACTLY that path.
+  Do NOT use "packages/core/src/env/detect.ts".
+
+For each task's "touches" array:
+- If the file EXISTS in the repo map → you are MODIFYING it. Use the exact existing path.
+- If the file does NOT exist → you are CREATING it. Place it in an existing directory.
+- Never create directories that duplicate existing module structure.`;
+
+    const filePaths = repoMap.modules.flatMap(m => m.files.map(f => f.p)).join("\n");
+    base += `\n\nEXISTING FILE PATHS (use these exactly):\n${filePaths}\n`;
   }
 
   return base;

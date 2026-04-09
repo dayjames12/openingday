@@ -206,6 +206,52 @@ describe("from-spec", () => {
     });
   });
 
+  describe("brownfield seeder", () => {
+    const repoMap = {
+      v: 1,
+      scannedAt: "2026-04-08T00:00:00Z",
+      depth: "standard" as const,
+      env: { pm: "pnpm" as const, test: "vitest" as const, lint: "eslint" as const, ts: true, monorepo: false, workspaces: [], infra: "none" as const },
+      deps: [],
+      modules: [
+        {
+          p: "packages/core/src/scanner",
+          d: "Scanner module",
+          fc: 2,
+          k: ["scanner"],
+          files: [
+            { p: "packages/core/src/scanner/detect.ts", ex: [{ n: "detectEnv", s: "(dir: string) => Promise<EnvConfig>" }], im: [], loc: 50 },
+            { p: "packages/core/src/scanner/scan.ts", ex: [{ n: "scanRepo", s: "(dir: string) => Promise<RepoMap>" }], im: [], loc: 80 },
+          ],
+        },
+      ],
+    };
+
+    it("includes brownfield rules when repoMap is provided", () => {
+      const prompt = buildSeederPrompt("Build a feature", "test", repoMap);
+      expect(prompt).toContain("BROWNFIELD RULES");
+      expect(prompt).toContain("EXACT paths from the repo map");
+    });
+
+    it("includes exact file paths listing from repoMap", () => {
+      const prompt = buildSeederPrompt("Build a feature", "test", repoMap);
+      expect(prompt).toContain("EXISTING FILE PATHS");
+      expect(prompt).toContain("packages/core/src/scanner/detect.ts");
+      expect(prompt).toContain("packages/core/src/scanner/scan.ts");
+    });
+
+    it("includes modify vs create guidance", () => {
+      const prompt = buildSeederPrompt("Build a feature", "test", repoMap);
+      expect(prompt).toContain("MODIFYING");
+      expect(prompt).toContain("CREATING");
+    });
+
+    it("does not include brownfield rules without repoMap", () => {
+      const prompt = buildSeederPrompt("Build a feature", "test");
+      expect(prompt).not.toContain("BROWNFIELD RULES");
+    });
+  });
+
   describe("seeder rules enforcement", () => {
     describe("buildSeederPrompt rules", () => {
       it("includes one-owner-per-file rule", () => {

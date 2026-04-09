@@ -54,7 +54,13 @@ export function preflightCheck(
   }
   for (const touchPath of task.touches) {
     if (!codeFiles.has(touchPath) && !repoFiles.has(touchPath)) {
-      warnings.push(`Touch file "${touchPath}" not found in code tree or repo map`);
+      if (repoMap) {
+        // Brownfield: missing touch file is a blocker — paths must match existing repo
+        blockers.push(`Touch file "${touchPath}" not found in code tree or repo map (brownfield mode)`);
+      } else {
+        // Greenfield: missing touch file is a warning — files will be created
+        warnings.push(`Touch file "${touchPath}" not found in code tree or repo map`);
+      }
     }
   }
 
