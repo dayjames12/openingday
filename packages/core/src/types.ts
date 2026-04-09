@@ -141,7 +141,7 @@ export interface GateIssue {
 }
 
 export interface GateResult {
-  layer: "automated" | "security" | "quality" | "tree-check" | "human";
+  layer: "automated" | "security" | "quality" | "tree-check" | "verification" | "human";
   pass: boolean;
   issues: GateIssue[];
   timestamp: string;

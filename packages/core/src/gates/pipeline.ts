@@ -7,32 +7,60 @@ import type {
   CodeTree,
 } from "../types.js";
 import { createQualityGateCheck } from "./quality.js";
+import {
+  realTestGate,
+  realDiffGate,
+  realSecurityGate,
+} from "./verification.js";
+import type { EnvConfig } from "../scanner/types.js";
 
 // === Gate Layer Definition ===
 
-export type GateLayer = "automated" | "security" | "quality" | "tree-check" | "human";
+export type GateLayer = "automated" | "security" | "quality" | "tree-check" | "verification" | "human";
 
 export interface GateCheck {
   layer: GateLayer;
   run: (output: WorkerOutput, workTree: WorkTree, codeTree: CodeTree) => GateResult;
 }
 
+export interface VerificationGateCheck {
+  layer: GateLayer;
+  run: (output: WorkerOutput, workTree: WorkTree, codeTree: CodeTree, worktreePath: string) => Promise<GateResult>;
+}
+
+export type AnyGateCheck = GateCheck | VerificationGateCheck;
+
+function isVerificationGate(check: AnyGateCheck): check is VerificationGateCheck {
+  // Verification gates have async run that takes 4 args
+  return check.run.length === 4;
+}
+
 // === Pipeline ===
 
 /**
  * Run all gate checks in order. Returns results array and an overall pass/fail.
+ * Supports both sync GateCheck and async VerificationGateCheck.
  */
-export function runGatePipeline(
-  checks: GateCheck[],
+export async function runGatePipeline(
+  checks: AnyGateCheck[],
   output: WorkerOutput,
   workTree: WorkTree,
   codeTree: CodeTree,
-): { results: GateResult[]; passed: boolean } {
+  worktreePath?: string,
+): Promise<{ results: GateResult[]; passed: boolean }> {
   const results: GateResult[] = [];
   let passed = true;
 
   for (const check of checks) {
-    const result = check.run(output, workTree, codeTree);
+    let result: GateResult;
+    if (isVerificationGate(check) && worktreePath) {
+      result = await check.run(output, workTree, codeTree, worktreePath);
+    } else if (!isVerificationGate(check)) {
+      result = check.run(output, workTree, codeTree);
+    } else {
+      // Skip verification gate if no worktreePath
+      continue;
+    }
     results.push(result);
     if (!result.pass) {
       passed = false;
@@ -161,11 +189,23 @@ export function countIssuesBySeverity(results: GateResult[]): Record<GateSeverit
 
 /**
  * Create a default pipeline with built-in checks.
+ * When worktreePath is provided, adds real verification gates.
  */
-export function createDefaultPipeline(taskTouches: string[], standards?: string): GateCheck[] {
-  const pipeline: GateCheck[] = [automatedTestGate(), treeCheckGate(taskTouches), securityGate()];
+export function createDefaultPipeline(
+  taskTouches: string[],
+  standards?: string,
+  opts?: { worktreePath?: string; env?: EnvConfig },
+): AnyGateCheck[] {
+  const pipeline: AnyGateCheck[] = [automatedTestGate(), treeCheckGate(taskTouches), securityGate()];
   if (standards) {
     pipeline.push(createQualityGateCheck(standards));
+  }
+  if (opts?.worktreePath) {
+    if (opts.env) {
+      pipeline.push(realTestGate(opts.env));
+    }
+    pipeline.push(realDiffGate(taskTouches));
+    pipeline.push(realSecurityGate());
   }
   return pipeline;
 }

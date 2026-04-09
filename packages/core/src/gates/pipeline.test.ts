@@ -93,9 +93,9 @@ describe("gate pipeline", () => {
   });
 
   describe("runGatePipeline", () => {
-    it("runs all checks and returns overall pass", () => {
+    it("runs all checks and returns overall pass", async () => {
       const checks = [automatedTestGate(), treeCheckGate(["a.ts"])];
-      const { results, passed } = runGatePipeline(
+      const { results, passed } = await runGatePipeline(
         checks,
         makeOutput(),
         emptyWorkTree,
@@ -105,12 +105,12 @@ describe("gate pipeline", () => {
       expect(passed).toBe(true);
     });
 
-    it("returns overall fail if any check fails", () => {
+    it("returns overall fail if any check fails", async () => {
       const checks = [
         automatedTestGate(),
         treeCheckGate(["b.ts"]), // a.ts not declared
       ];
-      const { results, passed } = runGatePipeline(
+      const { results, passed } = await runGatePipeline(
         checks,
         makeOutput({ filesChanged: ["a.ts"] }),
         emptyWorkTree,

@@ -121,7 +121,14 @@ export {
   countIssuesBySeverity,
   createDefaultPipeline,
 } from "./gates/pipeline.js";
-export type { GateLayer, GateCheck } from "./gates/pipeline.js";
+export type { GateLayer, GateCheck, VerificationGateCheck, AnyGateCheck } from "./gates/pipeline.js";
+
+// Verification Gates
+export {
+  realTestGate,
+  realDiffGate,
+  realSecurityGate,
+} from "./gates/verification.js";
 
 // Budget
 export {

@@ -206,12 +206,15 @@ export class Orchestrator {
         await this.storage.writeWorkerOutput(task.id, result.output);
 
         // g. Run gate pipeline
-        const pipeline = createDefaultPipeline(task.touches);
-        const gateResults = runGatePipeline(
+        const pipeline = createDefaultPipeline(task.touches, undefined, {
+          worktreePath: worktreePath !== "." ? worktreePath : undefined,
+        });
+        const gateResults = await runGatePipeline(
           pipeline,
           result.output,
           workTree,
           codeTree,
+          worktreePath !== "." ? worktreePath : undefined,
         );
 
         // h. Store gate results

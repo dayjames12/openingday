@@ -218,7 +218,7 @@ describe("integration: full project lifecycle", () => {
 
       // Run gate pipeline
       const pipeline = createDefaultPipeline(["src/auth/types.ts"]);
-      const { results, passed } = runGatePipeline(pipeline, workerOutput, workTree, codeTree);
+      const { results, passed } = await runGatePipeline(pipeline, workerOutput, workTree, codeTree);
       expect(passed).toBe(true);
       expect(allGatesPassed(results)).toBe(true);
 
@@ -265,7 +265,7 @@ describe("integration: full project lifecycle", () => {
         n: "Implemented JWT middleware",
       });
 
-      const { passed } = runGatePipeline(
+      const { passed } = await runGatePipeline(
         createDefaultPipeline(["src/auth/middleware.ts"]),
         workerOutput,
         workTree,
@@ -303,7 +303,7 @@ describe("integration: full project lifecycle", () => {
         n: "Implemented auth routes",
       });
 
-      const { passed } = runGatePipeline(
+      const { passed } = await runGatePipeline(
         createDefaultPipeline(["src/auth/routes.ts"]),
         workerOutput,
         workTree,
@@ -429,7 +429,7 @@ describe("integration: full project lifecycle", () => {
     });
 
     const pipeline = createDefaultPipeline(["a.ts"]);
-    const { results, passed } = runGatePipeline(pipeline, badOutput, workTree, codeTree);
+    const { results, passed } = await runGatePipeline(pipeline, badOutput, workTree, codeTree);
     expect(passed).toBe(false);
 
     // Tree-check gate should have failed

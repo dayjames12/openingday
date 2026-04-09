@@ -272,7 +272,7 @@ describe("orchestration loop: seed -> dispatch -> execute -> gate -> advance", (
 
     const t1Task = getTask(workTree, "t1")!;
     const pipeline = createDefaultPipeline(t1Task.touches);
-    const gateResult = runGatePipeline(pipeline, workerOutput, workTree, codeTree);
+    const gateResult = await runGatePipeline(pipeline, workerOutput, workTree, codeTree);
 
     expect(gateResult.passed).toBe(true);
     expect(gateResult.results).toHaveLength(3); // automated, tree-check, security
