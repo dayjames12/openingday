@@ -52,11 +52,30 @@ export function preflightCheck(
       }
     }
   }
+  // Collect existing directories from repo map for new-file validation
+  const repoDirs = new Set<string>();
+  if (repoMap) {
+    for (const mod of repoMap.modules) {
+      repoDirs.add(mod.p);
+      for (const file of mod.files) {
+        const dir = file.p.split("/").slice(0, -1).join("/");
+        if (dir) repoDirs.add(dir);
+      }
+    }
+  }
+
   for (const touchPath of task.touches) {
     if (!codeFiles.has(touchPath) && !repoFiles.has(touchPath)) {
       if (repoMap) {
-        // Brownfield: missing touch file is a blocker — paths must match existing repo
-        blockers.push(`Touch file "${touchPath}" not found in code tree or repo map (brownfield mode)`);
+        // Brownfield: check if parent directory exists (new file in existing dir = OK)
+        const parentDir = touchPath.split("/").slice(0, -1).join("/");
+        if (parentDir && repoDirs.has(parentDir)) {
+          // New file in existing directory — allowed, just warn
+          warnings.push(`New file "${touchPath}" will be created in existing directory`);
+        } else {
+          // File not in repo AND parent dir doesn't exist — likely wrong path
+          blockers.push(`Touch file "${touchPath}" not found in repo map and parent directory doesn't exist (brownfield mode)`);
+        }
       } else {
         // Greenfield: missing touch file is a warning — files will be created
         warnings.push(`Touch file "${touchPath}" not found in code tree or repo map`);

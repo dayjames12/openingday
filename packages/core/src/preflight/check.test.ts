@@ -238,7 +238,7 @@ describe("preflightCheck", () => {
     };
 
     const result = preflightCheck(
-      makeWorkTree({ touches: ["src/nonexistent.ts"] }),
+      makeWorkTree({ touches: ["totally/wrong/path.ts"] }),
       makeCodeTree(),
       repoMap,
       makeConfig(),
