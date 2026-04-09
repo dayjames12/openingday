@@ -79,22 +79,31 @@ export function parseSpawnResult(resultMsg: SDKResultMessage): SpawnResult {
       const wire = JSON.parse(resultMsg.result) as WireResponse;
       const output = fromWireResponse(wire);
       return { output, costUsd, sessionId };
-    } catch {
-      // Result text was not valid JSON -- treat as failure
-      return {
-        output: {
-          status: "failed",
-          filesChanged: [],
-          interfacesModified: [],
-          testsAdded: [],
-          testResults: { pass: 0, fail: 0 },
-          notes: `Failed to parse wire response: ${resultMsg.result}`.slice(0, 500),
-          tokensUsed: 0,
-        },
-        costUsd,
-        sessionId,
-      };
+    } catch {}
+
+    // Regex fallback — extract JSON from markdown/prose
+    const jsonMatch = resultMsg.result.match(/\{[\s\S]*"s"\s*:\s*"(?:ok|partial|fail)"[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const wire = JSON.parse(jsonMatch[0]) as WireResponse;
+        return { output: fromWireResponse(wire), costUsd, sessionId };
+      } catch {}
     }
+
+    // Total failure
+    return {
+      output: {
+        status: "failed",
+        filesChanged: [],
+        interfacesModified: [],
+        testsAdded: [],
+        testResults: { pass: 0, fail: 0 },
+        notes: `Failed to parse wire response: ${resultMsg.result}`.slice(0, 500),
+        tokensUsed: 0,
+      },
+      costUsd,
+      sessionId,
+    };
   }
 
   // Error subtypes: error_during_execution, error_max_turns, error_max_budget_usd, etc.
@@ -106,7 +115,7 @@ export function parseSpawnResult(resultMsg: SDKResultMessage): SpawnResult {
       interfacesModified: [],
       testsAdded: [],
       testResults: { pass: 0, fail: 0 },
-      notes: `Agent error (${resultMsg.subtype}): ${errors.join("; ")}`,
+      notes: `Agent error (${resultMsg.subtype}): ${errors.join("; ")}`.slice(0, 500),
       tokensUsed: 0,
     },
     costUsd,

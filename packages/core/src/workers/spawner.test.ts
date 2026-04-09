@@ -181,5 +181,144 @@ describe("spawner", () => {
       expect(result.output.notes).toContain("Failed to parse wire response");
       expect(result.costUsd).toBe(0.05);
     });
+
+    it("uses structured_output when available", () => {
+      const wireObj = {
+        s: "ok" as const,
+        changed: ["src/a.ts"],
+        iface: [],
+        tests: { p: 2, f: 0 },
+        t: 5000,
+        n: "Done via structured output",
+      };
+
+      const msg = {
+        type: "result" as const,
+        subtype: "success" as const,
+        result: "some raw text",
+        structured_output: wireObj,
+        total_cost_usd: 0.10,
+        num_turns: 3,
+        is_error: false,
+        duration_ms: 15000,
+        duration_api_ms: 12000,
+        usage: baseUsage,
+        modelUsage: {},
+        permission_denials: [],
+        uuid: "test" as `${string}-${string}-${string}-${string}-${string}`,
+        session_id: "sess-structured",
+      } as SDKResultMessage;
+
+      const result = parseSpawnResult(msg);
+      expect(result.output.status).toBe("complete");
+      expect(result.output.notes).toBe("Done via structured output");
+    });
+
+    it("extracts JSON from markdown-wrapped response", () => {
+      const wireJson = JSON.stringify({
+        s: "ok",
+        changed: ["src/b.ts"],
+        iface: [],
+        tests: { p: 1, f: 0 },
+        t: 3000,
+        n: "Extracted from markdown",
+      });
+      const wrapped = `Here is my response:\n\`\`\`json\n${wireJson}\n\`\`\`\nDone!`;
+
+      const msg: SDKResultMessage = {
+        type: "result",
+        subtype: "success",
+        result: wrapped,
+        total_cost_usd: 0.06,
+        num_turns: 2,
+        is_error: false,
+        duration_ms: 10000,
+        duration_api_ms: 8000,
+        usage: baseUsage,
+        modelUsage: {},
+        permission_denials: [],
+        uuid: "test" as `${string}-${string}-${string}-${string}-${string}`,
+        session_id: "sess-md",
+      };
+
+      const result = parseSpawnResult(msg);
+      expect(result.output.status).toBe("complete");
+      expect(result.output.notes).toBe("Extracted from markdown");
+    });
+
+    it("extracts JSON from surrounding prose", () => {
+      const wireJson = JSON.stringify({
+        s: "partial",
+        changed: ["src/c.ts"],
+        iface: [],
+        tests: { p: 0, f: 1 },
+        t: 2000,
+        n: "Partial from prose",
+      });
+      const wrapped = `I completed the task partially. ${wireJson} That is all.`;
+
+      const msg: SDKResultMessage = {
+        type: "result",
+        subtype: "success",
+        result: wrapped,
+        total_cost_usd: 0.04,
+        num_turns: 1,
+        is_error: false,
+        duration_ms: 5000,
+        duration_api_ms: 4000,
+        usage: baseUsage,
+        modelUsage: {},
+        permission_denials: [],
+        uuid: "test" as `${string}-${string}-${string}-${string}-${string}`,
+        session_id: "sess-prose",
+      };
+
+      const result = parseSpawnResult(msg);
+      expect(result.output.status).toBe("partial");
+      expect(result.output.notes).toBe("Partial from prose");
+    });
+
+    it("fails gracefully on malformed JSON", () => {
+      const msg: SDKResultMessage = {
+        type: "result",
+        subtype: "success",
+        result: '{ "s": "ok", broken json here }}}',
+        total_cost_usd: 0.03,
+        num_turns: 1,
+        is_error: false,
+        duration_ms: 5000,
+        duration_api_ms: 4000,
+        usage: baseUsage,
+        modelUsage: {},
+        permission_denials: [],
+        uuid: "test" as `${string}-${string}-${string}-${string}-${string}`,
+        session_id: "sess-malformed",
+      };
+
+      const result = parseSpawnResult(msg);
+      expect(result.output.status).toBe("failed");
+      expect(result.output.notes.length).toBeLessThanOrEqual(500);
+    });
+
+    it("truncates long error notes to 500 chars", () => {
+      const msg: SDKResultMessage = {
+        type: "result",
+        subtype: "error_during_execution",
+        total_cost_usd: 0.01,
+        num_turns: 1,
+        is_error: true,
+        duration_ms: 1000,
+        duration_api_ms: 800,
+        usage: baseUsage,
+        modelUsage: {},
+        permission_denials: [],
+        errors: ["x".repeat(1000)],
+        uuid: "test" as `${string}-${string}-${string}-${string}-${string}`,
+        session_id: "sess-long",
+      };
+
+      const result = parseSpawnResult(msg);
+      expect(result.output.notes.length).toBeLessThanOrEqual(500);
+    });
   });
 });
