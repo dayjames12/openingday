@@ -116,6 +116,9 @@ export interface WirePrompt {
   budget: number;
   landscape: { mc: number; fc: number; modules: { p: string; fc: number; k: string[] }[] };
   relevant: Record<string, { exports: { n: string; sig: string }[] }>;
+  contents?: Record<string, string>;
+  contracts?: string;
+  digests?: TaskDigest[];
 }
 
 export interface WireResponse {
@@ -145,6 +148,65 @@ export interface GateResult {
   pass: boolean;
   issues: GateIssue[];
   timestamp: string;
+}
+
+// === Stages ===
+
+export type StageType = "compile" | "test" | "review";
+
+export interface StageFeedback {
+  stage: StageType;
+  errors: { f: string; l: number; e: string; fix: string }[];
+}
+
+export interface StageResult {
+  stage: StageType;
+  passed: boolean;
+  loops: number;
+  feedback: StageFeedback[];
+}
+
+// === Task Digests ===
+
+export interface TaskDigest {
+  task: string;
+  did: string;
+  ex: string[];
+  im: string[];
+  pattern: string;
+}
+
+// === Spring Training ===
+
+export interface SpringTrainingResult {
+  valid: boolean;
+  blockers: string[];
+  warnings: string[];
+  contracts: string;
+  executionOrder: string[];
+  addedDependencies: string[][];
+}
+
+// === Enriched Context ===
+
+export interface EnrichedContextPackage extends ContextPackage {
+  fileContents: Record<string, string>;
+  contracts: string;
+  digests: TaskDigest[];
+  specExcerpt: string;
+}
+
+// === Safety ===
+
+export interface WatchdogState {
+  lastTaskCompletedAt: string;
+  warningIssued: boolean;
+}
+
+export interface LoopTracker {
+  taskId: string;
+  stageLoopIds: string[];
+  totalLoops: number;
 }
 
 // === Config ===
