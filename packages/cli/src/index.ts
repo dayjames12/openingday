@@ -12,6 +12,7 @@ import { registerKill } from "./commands/kill.js";
 import { registerDashboard } from "./commands/dashboard.js";
 import { registerWatch } from "./commands/watch.js";
 import { registerScan } from "./commands/scan.js";
+import { registerSpringTraining } from "./commands/spring-training.js";
 import { registerMarinSpecial } from "./commands/marin-special.js";
 import { printBanner } from "./utils/banner.js";
 
@@ -37,6 +38,7 @@ registerKill(program);
 registerDashboard(program);
 registerWatch(program);
 registerScan(program);
+registerSpringTraining(program);
 registerMarinSpecial(program);
 
 // Default to banner + help when no command given

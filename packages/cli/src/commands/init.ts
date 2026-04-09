@@ -14,6 +14,7 @@ import {
 } from "@openingday/core";
 import { scanRepo as scanRepoMap } from "@openingday/core/scanner/scan";
 import { ensureGitignore } from "@openingday/core/scanner/gitignore";
+import { runSpringTraining } from "@openingday/core/spring-training/runner";
 import type { RepoMap } from "@openingday/core/scanner/types";
 import type { WorkTree, CodeTree } from "@openingday/core";
 
@@ -87,6 +88,35 @@ export function registerInit(program: Command): void {
       await storage.writeWorkTree(workTree);
       await storage.writeCodeTree(codeTree);
       if (repoMap) await storage.writeRepoMap(repoMap);
+
+      // Run spring training
+      if (workTree.milestones.length > 0) {
+        console.log(chalk.gray("Running spring training..."));
+        try {
+          let specText = "";
+          if (fromStat?.isFile() && fromPath.endsWith(".md")) {
+            specText = await readFile(fromPath, "utf-8");
+          } else if (opts.spec) {
+            specText = await readFile(resolve(opts.spec), "utf-8");
+          }
+          const stResult = await runSpringTraining(storage, specText, repoMap, process.cwd());
+          if (stResult.blockers.length > 0) {
+            console.log(chalk.yellow(`  Spring training blockers: ${stResult.blockers.length}`));
+            for (const b of stResult.blockers) {
+              console.log(chalk.yellow(`    - ${b}`));
+            }
+          }
+          if (stResult.warnings.length > 0) {
+            console.log(chalk.gray(`  Spring training warnings: ${stResult.warnings.length}`));
+          }
+          if (stResult.contracts) {
+            console.log(chalk.gray("  Contracts generated."));
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.log(chalk.yellow(`  Spring training failed: ${msg}`));
+        }
+      }
 
       console.log(
         chalk.green(`Initialized project "${opts.name}" in .openingday/`),

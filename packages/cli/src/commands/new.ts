@@ -13,6 +13,7 @@ import {
 } from "@openingday/core";
 import { scanRepo as scanRepoMap } from "@openingday/core/scanner/scan";
 import { ensureGitignore } from "@openingday/core/scanner/gitignore";
+import { runSpringTraining } from "@openingday/core/spring-training/runner";
 import type { RepoMap } from "@openingday/core/scanner/types";
 import type { WorkTree, CodeTree } from "@openingday/core";
 import { STACK_PRESETS } from "../presets/stacks.js";
@@ -294,6 +295,29 @@ export function registerNew(program: Command): void {
       await storage.writeWorkTree(workTree);
       await storage.writeCodeTree(codeTree);
       if (repoMap) await storage.writeRepoMap(repoMap);
+
+      // Run spring training
+      if (workTree.milestones.length > 0) {
+        console.log(chalk.gray("Running spring training..."));
+        try {
+          const stResult = await runSpringTraining(storage, specText, repoMap, process.cwd());
+          if (stResult.blockers.length > 0) {
+            console.log(chalk.yellow(`  Blockers: ${stResult.blockers.length}`));
+            for (const b of stResult.blockers) {
+              console.log(chalk.yellow(`    - ${b}`));
+            }
+          }
+          if (stResult.warnings.length > 0) {
+            console.log(chalk.gray(`  Warnings: ${stResult.warnings.length}`));
+          }
+          if (stResult.contracts) {
+            console.log(chalk.gray("  Contracts generated."));
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.log(chalk.yellow(`  Spring training failed: ${msg}`));
+        }
+      }
 
       console.log();
       console.log(
