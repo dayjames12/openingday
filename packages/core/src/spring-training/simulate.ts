@@ -22,7 +22,6 @@ export function simulateExecution(
   const addedDependencies: string[][] = [];
 
   // Build maps
-  const taskMap = new Map(allTasks.map((t) => [t.id, t]));
   const taskDeps = new Map(allTasks.map((t) => [t.id, new Set(t.dependencies)]));
 
   // Detect missing dependency links:

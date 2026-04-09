@@ -1,6 +1,6 @@
 // packages/core/src/stages/compile.test.ts
 import { describe, it, expect, vi } from "vitest";
-import { runCompileStage, runTsc } from "./compile.js";
+import { runTsc } from "./compile.js";
 import type { StageResult } from "../types.js";
 
 vi.mock("node:child_process", () => {

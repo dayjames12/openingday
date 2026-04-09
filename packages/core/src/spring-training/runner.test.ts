@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { runSpringTraining } from "./runner.js";
 import type { Storage } from "../storage/interface.js";
-import type { WorkTree, CodeTree, SpringTrainingResult } from "../types.js";
+import type { WorkTree, CodeTree } from "../types.js";
 
 function makeMinimalWorkTree(): WorkTree {
   return {

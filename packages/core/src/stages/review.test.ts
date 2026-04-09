@@ -1,7 +1,6 @@
 // packages/core/src/stages/review.test.ts
 import { describe, it, expect } from "vitest";
 import { buildReviewPrompt, parseReviewResponse } from "./review.js";
-import type { StageResult } from "../types.js";
 
 describe("review stage", () => {
   describe("buildReviewPrompt", () => {

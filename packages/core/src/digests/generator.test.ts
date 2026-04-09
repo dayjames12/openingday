@@ -1,7 +1,7 @@
 // packages/core/src/digests/generator.test.ts
 import { describe, it, expect } from "vitest";
 import { generateDigest } from "./generator.js";
-import type { WorkerOutput, WorkTree, CodeTree, TaskDigest } from "../types.js";
+import type { WorkerOutput, WorkTree, CodeTree } from "../types.js";
 
 describe("generateDigest", () => {
   const defaultOutput: WorkerOutput = {

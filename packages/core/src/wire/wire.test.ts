@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { toWirePrompt, fromWireResponse, toWireResponse, toEnrichedWirePrompt } from "./wire.js";
-import type { ContextPackage, WireResponse, WorkerOutput, EnrichedContextPackage, TaskDigest } from "../types.js";
+import type { ContextPackage, WireResponse, WorkerOutput, EnrichedContextPackage } from "../types.js";
 
 describe("wire", () => {
   const sampleContext: ContextPackage = {

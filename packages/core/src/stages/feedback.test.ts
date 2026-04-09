@@ -1,7 +1,6 @@
 // packages/core/src/stages/feedback.test.ts
 import { describe, it, expect } from "vitest";
 import { digestReviewIssues, parseFeedbackResponse } from "./feedback.js";
-import type { StageFeedback } from "../types.js";
 
 describe("feedback digester", () => {
   describe("digestReviewIssues", () => {

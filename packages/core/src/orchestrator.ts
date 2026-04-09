@@ -19,7 +19,6 @@ import {
   getActiveCount,
 } from "./workers/pool.js";
 import type { WorkerPool } from "./workers/pool.js";
-import { buildContext } from "./context/context-builder.js";
 import { buildEnrichedContext } from "./context/context-builder.js";
 import {
   runGatePipeline,
