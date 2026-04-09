@@ -17,7 +17,7 @@ import {
   runGatePipeline,
   createDefaultPipeline,
 } from "./gates/pipeline.js";
-import { getAllTasks, updateTaskStatus } from "./trees/work-tree.js";
+import { getAllTasks, getTask, updateTaskStatus, updateTask } from "./trees/work-tree.js";
 import {
   transition,
   addTokenSpend,
@@ -132,6 +132,14 @@ export class Orchestrator {
         isPaused: true,
         error: "Budget limit reached",
       };
+    }
+
+    // 5a. Auto-retry failed tasks under retry limit
+    const retryCheck = getAllTasks(workTree);
+    for (const task of retryCheck) {
+      if (task.status === "failed" && task.attemptCount < config.limits.maxRetries) {
+        workTree = updateTaskStatus(workTree, task.id, "pending");
+      }
     }
 
     // 5. Call planSpawns() to find ready tasks
@@ -256,6 +264,10 @@ export class Orchestrator {
             const mergeResult = await mergeWorktree(this.options.repoDir, worktreeBranch);
             if (!mergeResult.success) {
               workTree = updateTaskStatus(workTree, task.id, "failed");
+              const mergeTask = getTask(workTree, task.id);
+              workTree = updateTask(workTree, task.id, {
+                attemptCount: (mergeTask?.attemptCount ?? 0) + 1,
+              });
               this.pool = completeWorker(this.pool, sessionId, "failed");
               failed++;
               await this.storage.appendMemory(
@@ -274,8 +286,12 @@ export class Orchestrator {
             await this.storage.writeRepoMap(updatedMap);
           }
         } else {
-          // j. If failed: mark failed, complete worker as failed, append to memory
+          // j. If failed: mark failed, increment attempt, complete worker as failed, append to memory
           workTree = updateTaskStatus(workTree, task.id, "failed");
+          const gateTask = getTask(workTree, task.id);
+          workTree = updateTask(workTree, task.id, {
+            attemptCount: (gateTask?.attemptCount ?? 0) + 1,
+          });
           this.pool = completeWorker(this.pool, sessionId, "failed");
           failed++;
           await this.storage.appendMemory(
@@ -283,8 +299,12 @@ export class Orchestrator {
           );
         }
       } catch (err) {
-        // Spawn function threw — mark as failed
+        // Spawn function threw — mark as failed and increment attempt
         workTree = updateTaskStatus(workTree, task.id, "failed");
+        const errTask = getTask(workTree, task.id);
+        workTree = updateTask(workTree, task.id, {
+          attemptCount: (errTask?.attemptCount ?? 0) + 1,
+        });
         this.pool = completeWorker(this.pool, sessionId, "failed");
         failed++;
         const message = err instanceof Error ? err.message : String(err);

@@ -167,6 +167,99 @@ describe("Orchestrator", () => {
     expect(task.status).toBe("complete");
   });
 
+  it("retries failed task with attemptCount below maxRetries", async () => {
+    const workTree = makeWorkTreeWithOneTask();
+    // Pre-set task as failed with 1 attempt (under maxRetries=3)
+    workTree.milestones[0]!.slices[0]!.tasks[0]!.status = "failed";
+    workTree.milestones[0]!.slices[0]!.tasks[0]!.attemptCount = 1;
+
+    await storage.writeProjectConfig(makeConfig());
+    await storage.writeProjectState(makeRunningState());
+    await storage.writeWorkTree(workTree);
+    await storage.writeCodeTree(makeCodeTree());
+
+    const mockSpawn: SpawnFn = async () => {
+      const output: WorkerOutput = {
+        status: "complete",
+        filesChanged: ["src/feature.ts"],
+        interfacesModified: [],
+        testsAdded: [],
+        testResults: { pass: 1, fail: 0 },
+        notes: "Fixed on retry",
+        tokensUsed: 8000,
+      };
+      return { output, costUsd: 0.08, sessionId: "retry-session", needsInspection: false };
+    };
+
+    const orchestrator = new Orchestrator(storage, mockSpawn);
+    const result = await orchestrator.runOneCycle();
+
+    expect(result.dispatched).toBe(1);
+    expect(result.completed).toBe(1);
+    expect(result.failed).toBe(0);
+
+    const persisted = await storage.readWorkTree();
+    const task = persisted.milestones[0]!.slices[0]!.tasks[0]!;
+    expect(task.status).toBe("complete");
+    expect(task.attemptCount).toBe(2); // was 1, incremented by applyWorkerResult
+  });
+
+  it("does not retry failed task at maxRetries limit", async () => {
+    const workTree = makeWorkTreeWithOneTask();
+    // Pre-set task as failed with 3 attempts (at maxRetries=3)
+    workTree.milestones[0]!.slices[0]!.tasks[0]!.status = "failed";
+    workTree.milestones[0]!.slices[0]!.tasks[0]!.attemptCount = 3;
+
+    await storage.writeProjectConfig(makeConfig());
+    await storage.writeProjectState(makeRunningState());
+    await storage.writeWorkTree(workTree);
+    await storage.writeCodeTree(makeCodeTree());
+
+    const mockSpawn: SpawnFn = async () => {
+      throw new Error("Spawner should not have been called");
+    };
+
+    const orchestrator = new Orchestrator(storage, mockSpawn);
+    const result = await orchestrator.runOneCycle();
+
+    // Task stays failed, project completes (all tasks terminal)
+    expect(result.dispatched).toBe(0);
+    expect(result.isComplete).toBe(true);
+
+    const persisted = await storage.readWorkTree();
+    const task = persisted.milestones[0]!.slices[0]!.tasks[0]!;
+    expect(task.status).toBe("failed");
+    expect(task.attemptCount).toBe(3);
+  });
+
+  it("retried task that fails again increments attemptCount", async () => {
+    const workTree = makeWorkTreeWithOneTask();
+    workTree.milestones[0]!.slices[0]!.tasks[0]!.status = "failed";
+    workTree.milestones[0]!.slices[0]!.tasks[0]!.attemptCount = 1;
+
+    await storage.writeProjectConfig(makeConfig());
+    await storage.writeProjectState(makeRunningState());
+    await storage.writeWorkTree(workTree);
+    await storage.writeCodeTree(makeCodeTree());
+
+    // Spawn throws to simulate another failure
+    const mockSpawn: SpawnFn = async () => {
+      throw new Error("Worker crashed again");
+    };
+
+    const orchestrator = new Orchestrator(storage, mockSpawn);
+    const result = await orchestrator.runOneCycle();
+
+    expect(result.dispatched).toBe(1);
+    expect(result.failed).toBe(1);
+    expect(result.completed).toBe(0);
+
+    const persisted = await storage.readWorkTree();
+    const task = persisted.milestones[0]!.slices[0]!.tasks[0]!;
+    expect(task.status).toBe("failed");
+    expect(task.attemptCount).toBe(2); // was 1, incremented on failure
+  });
+
   it("detects project completion", async () => {
     // Set up storage with empty work tree (no tasks)
     await storage.writeProjectConfig(makeConfig());

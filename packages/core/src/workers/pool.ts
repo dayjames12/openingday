@@ -132,8 +132,13 @@ export function applyWorkerResult(
 ): WorkTree {
   const newStatus = output.status === "complete" ? "complete" as const : "failed" as const;
   let tree = updateTaskStatus(workTree, taskId, newStatus);
+  const existing = workTree.milestones
+    .flatMap((m) => m.slices.flatMap((s) => s.tasks))
+    .find((t) => t.id === taskId);
+  const newAttemptCount = (existing?.attemptCount ?? 0) + 1;
   tree = updateTask(tree, taskId, {
     tokenSpend: output.tokensUsed,
+    attemptCount: newAttemptCount,
   });
   return tree;
 }
