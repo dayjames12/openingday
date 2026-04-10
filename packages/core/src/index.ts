@@ -87,7 +87,12 @@ export {
 } from "./trees/linker.js";
 
 // Wire Mode
-export { toWirePrompt, fromWireResponse, toWireResponse, toEnrichedWirePrompt } from "./wire/wire.js";
+export {
+  toWirePrompt,
+  fromWireResponse,
+  toWireResponse,
+  toEnrichedWirePrompt,
+} from "./wire/wire.js";
 
 // Context Builder
 export { buildContext, buildEnrichedContext } from "./context/context-builder.js";
@@ -129,14 +134,15 @@ export {
   countIssuesBySeverity,
   createDefaultPipeline,
 } from "./gates/pipeline.js";
-export type { GateLayer, GateCheck, VerificationGateCheck, AnyGateCheck } from "./gates/pipeline.js";
+export type {
+  GateLayer,
+  GateCheck,
+  VerificationGateCheck,
+  AnyGateCheck,
+} from "./gates/pipeline.js";
 
 // Verification Gates
-export {
-  realTestGate,
-  realDiffGate,
-  realSecurityGate,
-} from "./gates/verification.js";
+export { realTestGate, realDiffGate, realSecurityGate } from "./gates/verification.js";
 
 // Budget
 export {
@@ -169,11 +175,7 @@ export type { SpawnOptions, SpawnResult } from "./workers/spawner.js";
 export { inspectWorktreeOutput } from "./workers/inspect.js";
 
 // Seeder (from spec)
-export {
-  seedFromSpec,
-  buildSeederPrompt,
-  parseSeederResponse,
-} from "./seeder/from-spec.js";
+export { seedFromSpec, buildSeederPrompt, parseSeederResponse } from "./seeder/from-spec.js";
 export type { SeederOutput, SeederWarning } from "./seeder/from-spec.js";
 
 // Seeder (from repo)
@@ -184,23 +186,25 @@ export { scanRepo as scanRepoMap, buildLandscape, findRelevantFiles } from "./sc
 export { detectEnv, detectDeps } from "./scanner/detect.js";
 export { ensureGitignore } from "./scanner/gitignore.js";
 export { refreshFiles } from "./scanner/incremental.js";
-export type { RepoMap, RepoModule, RepoFile, RepoExport, RepoImport, EnvConfig, ScanDepth, Landscape, RelevantFiles } from "./scanner/types.js";
+export type {
+  RepoMap,
+  RepoModule,
+  RepoFile,
+  RepoExport,
+  RepoImport,
+  EnvConfig,
+  ScanDepth,
+  Landscape,
+  RelevantFiles,
+} from "./scanner/types.js";
 
 // Estimator
-export {
-  estimateTaskContext,
-  findOversizedTasks,
-} from "./seeder/estimator.js";
+export { estimateTaskContext, findOversizedTasks } from "./seeder/estimator.js";
 export type { OversizedTask } from "./seeder/estimator.js";
 
 // Supervisor
-export {
-  findStuckWorkers,
-  findDeadTasks,
-} from "./supervisor/health.js";
-export {
-  runSupervisorCheck,
-} from "./supervisor/cron.js";
+export { findStuckWorkers, findDeadTasks } from "./supervisor/health.js";
+export { runSupervisorCheck } from "./supervisor/cron.js";
 export type { SupervisorResult } from "./supervisor/cron.js";
 
 // Quality Gate
@@ -224,7 +228,11 @@ export type { SpawnFn } from "./types.js";
 // Spring Training
 export { validateStructure } from "./spring-training/validate.js";
 export type { ValidationResult } from "./spring-training/validate.js";
-export { generateContracts, buildContractPrompt, parseContractResponse } from "./spring-training/contracts.js";
+export {
+  generateContracts,
+  buildContractPrompt,
+  parseContractResponse,
+} from "./spring-training/contracts.js";
 export { simulateExecution } from "./spring-training/simulate.js";
 export type { SimulationResult } from "./spring-training/simulate.js";
 export { runSpringTraining } from "./spring-training/runner.js";
@@ -235,7 +243,12 @@ export type { TscResult } from "./stages/compile.js";
 export { runTestStage, runTests } from "./stages/test.js";
 export type { TestRunResult } from "./stages/test.js";
 export { runReviewStage, buildReviewPrompt, parseReviewResponse } from "./stages/review.js";
-export { digestCompileErrors, digestTestFailures, digestReviewIssues, parseFeedbackResponse } from "./stages/feedback.js";
+export {
+  digestCompileErrors,
+  digestTestFailures,
+  digestReviewIssues,
+  parseFeedbackResponse,
+} from "./stages/feedback.js";
 
 // Digests
 export { generateDigest } from "./digests/generator.js";
@@ -251,5 +264,40 @@ export { withRetry, DEFAULT_RETRY } from "./utils/retry.js";
 export type { RetryConfig } from "./utils/retry.js";
 
 // Cache
-export { getCachedContext, setCachedContext, invalidateContext, clearContextCache } from "./cache/context-cache.js";
-export { getCachedReadyTasks, setCachedReadyTasks, invalidateReadinessCache } from "./cache/readiness-cache.js";
+export {
+  getCachedContext,
+  setCachedContext,
+  invalidateContext,
+  clearContextCache,
+} from "./cache/context-cache.js";
+export {
+  getCachedReadyTasks,
+  setCachedReadyTasks,
+  invalidateReadinessCache,
+} from "./cache/readiness-cache.js";
+
+// Pipeline
+export { readFileContents } from "./pipeline/file-reader.js";
+export { runFeedbackLoop } from "./pipeline/feedback-loop.js";
+export type { FeedbackLoopOptions, FeedbackLoopResult } from "./pipeline/feedback-loop.js";
+export { runStagedPipeline } from "./pipeline/stage-runner.js";
+export type { PipelineOptions, PipelineResult, StageOutcome } from "./pipeline/stage-runner.js";
+
+// Prompt Templates
+export { agentRole } from "./prompts/partials/role.js";
+export {
+  outputFormat,
+  errorListFormat,
+  reviewFormat,
+  qualityFormat,
+} from "./prompts/partials/output-format.js";
+export { constraints, digestConstraints } from "./prompts/partials/constraints.js";
+export { feedbackPrompt } from "./prompts/feedback.js";
+export type { FeedbackPromptArgs } from "./prompts/feedback.js";
+export { reviewPrompt } from "./prompts/review.js";
+export type { ReviewPromptArgs } from "./prompts/review.js";
+export { contractPrompt } from "./prompts/contracts.js";
+export type { ContractPromptArgs } from "./prompts/contracts.js";
+export { qualityPrompt } from "./prompts/quality.js";
+export type { QualityPromptArgs } from "./prompts/quality.js";
+export { workerSystemPrompt } from "./prompts/worker.js";
