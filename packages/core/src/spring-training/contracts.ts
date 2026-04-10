@@ -1,48 +1,13 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { RepoMap } from "../scanner/types.js";
+import { contractPrompt } from "../prompts/contracts.js";
 
 /**
  * Build a prompt for contract generation from spec text.
  */
 export function buildContractPrompt(specText: string, repoMap?: RepoMap | null): string {
-  let prompt = `You are a TypeScript type architect.
-
-Given the following project specification, extract ALL domain entities, interfaces, and types referenced in the spec. Generate a single TypeScript file containing only type definitions (interfaces, types, enums). This file will be the single source of truth for shared types — every worker will import from it.
-
-## Rules
-
-1. Use the spec's domain language EXACTLY — do not substitute generic alternatives
-2. Every entity mentioned in the spec becomes an interface
-3. Every enum/union mentioned becomes a type
-4. Include JSDoc comments extracted from spec context
-5. Export everything
-6. No implementation code — types only
-7. No imports — this file is self-contained
-
-## Specification
-
-${specText}
-
-Output ONLY valid TypeScript source code. No markdown fences, no explanation.`;
-
-  if (repoMap) {
-    const existingTypes: string[] = [];
-    for (const mod of repoMap.modules) {
-      for (const file of mod.files) {
-        for (const ex of file.ex) {
-          if (ex.s.includes("interface") || ex.s.includes("type") || ex.s.includes("enum")) {
-            existingTypes.push(`// ${file.p}\n${ex.s}`);
-          }
-        }
-      }
-    }
-    if (existingTypes.length > 0) {
-      prompt += `\n\nEXISTING TYPES (merge with spec additions, preserve existing field names):\n\n${existingTypes.join("\n\n")}`;
-    }
-  }
-
-  return prompt;
+  return contractPrompt({ specText, repoMap, budget: 0.5 });
 }
 
 /**

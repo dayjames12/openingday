@@ -28,7 +28,7 @@ describe("contract generation", () => {
         },
       );
       expect(prompt).toContain("Player");
-      expect(prompt).toContain("EXISTING TYPES");
+      expect(prompt).toContain("existing-types:");
     });
   });
 
