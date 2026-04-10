@@ -1,13 +1,7 @@
 import type { Storage } from "./storage/interface.js";
 import type {
-  EnrichedContextPackage,
-  StageResult,
-  StageFeedback,
-  LoopTracker,
   SpawnFn,
 } from "./types.js";
-import type { EnvConfig } from "./scanner/types.js";
-import { inspectWorktreeOutput } from "./workers/inspect.js";
 import { refreshFiles } from "./scanner/incremental.js";
 import {
   createWorkerPool,
@@ -40,20 +34,13 @@ import {
   mergeWorktree,
 } from "./workers/worktree.js";
 import { preflightCheck } from "./preflight/check.js";
-import { runCompileStage } from "./stages/compile.js";
-import { runTestStage } from "./stages/test.js";
-import { runReviewStage } from "./stages/review.js";
 import { generateDigest } from "./digests/generator.js";
 import { createWatchdog, createWatchdogState } from "./safety/watchdog.js";
 import type { Watchdog } from "./safety/watchdog.js";
-import { createLoopTracker, recordLoop, shouldBreak } from "./safety/loops.js";
 import { getCachedContext, setCachedContext, invalidateContext } from "./cache/context-cache.js";
 import { runSpringTraining } from "./spring-training/runner.js";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { readFile } from "node:fs/promises";
-
-const exec = promisify(execFile);
+import { readFileContents } from "./pipeline/file-reader.js";
+import { runStagedPipeline } from "./pipeline/stage-runner.js";
 
 // === Types ===
 
@@ -203,7 +190,7 @@ export class Orchestrator {
       // Build enriched context (check cache first for retry loops)
       let context = getCachedContext(task.id);
       if (!context) {
-        const fileContents = await this.readFileContents(task.touches, task.reads);
+        const fileContents = await readFileContents(this.options.repoDir ?? ".", task.touches, task.reads);
         context = buildEnrichedContext(
           workTree, codeTree, config, task.id, memory, "",
           repoMap, contracts, digests, this.options.specText ?? "", fileContents,
@@ -229,114 +216,30 @@ export class Orchestrator {
       dispatched++;
 
       try {
-        // === STAGE: IMPLEMENT ===
-        const result = await this.spawn({
+        // === STAGED PIPELINE (implement -> compile -> test -> review) ===
+        const pipeline = await runStagedPipeline({
           taskId: task.id,
+          taskTouches: task.touches,
           worktreePath,
+          worktreeBranch,
           context,
-          budgetUsd: config.budgets.perTask.usd,
+          taskBudget: config.budgets.perTask.usd,
+          env,
+          repoDir: this.options.repoDir ?? null,
+          spawn: this.spawn,
+          contracts,
+          specExcerpt: this.options.specText ?? "",
         });
 
-        let workerOutput = result.output;
-        if (result.needsInspection && worktreePath !== ".") {
-          workerOutput = await inspectWorktreeOutput(worktreePath, task.touches, env);
+        state = addTokenSpend(state, pipeline.workerOutput.tokensUsed);
+        await this.storage.writeWorkerOutput(task.id, pipeline.workerOutput);
+
+        for (const sr of pipeline.stageResults) {
+          await this.storage.writeStageResult(task.id, sr);
         }
 
-        state = addTokenSpend(state, workerOutput.tokensUsed);
-        await this.storage.writeWorkerOutput(task.id, workerOutput);
-
-        // === STAGED FEEDBACK LOOPS ===
-        let loopTracker = createLoopTracker(task.id);
-        let allStagesPassed = true;
-
-        // === STAGE: COMPILE ===
-        if (env?.ts && worktreePath !== ".") {
-          const compileResult = await this.runStageLoop(
-            "compile",
-            loopTracker,
-            worktreePath,
-            env,
-            task.touches,
-            config.budgets.perTask.usd,
-            context,
-            contracts,
-            this.options.specText ?? "",
-          );
-          loopTracker = compileResult.tracker;
-          await this.storage.writeStageResult(task.id, compileResult.result);
-          if (!compileResult.result.passed) {
-            allStagesPassed = false;
-          }
-        }
-
-        // === STAGE: TEST ===
-        if (allStagesPassed && env && worktreePath !== ".") {
-          const testResult = await this.runStageLoop(
-            "test",
-            loopTracker,
-            worktreePath,
-            env,
-            task.touches,
-            config.budgets.perTask.usd,
-            context,
-            contracts,
-            this.options.specText ?? "",
-          );
-          loopTracker = testResult.tracker;
-          await this.storage.writeStageResult(task.id, testResult.result);
-          if (!testResult.result.passed) {
-            allStagesPassed = false;
-          }
-        }
-
-        // === STAGE: REVIEW ===
-        if (allStagesPassed && worktreePath !== ".") {
-          let diff = "";
-          try {
-            const { stdout } = await exec("git", ["diff", "HEAD"], { cwd: worktreePath });
-            diff = stdout;
-          } catch {
-            diff = "(could not generate diff)";
-          }
-
-          const reviewResult = await runReviewStage(
-            worktreePath,
-            diff,
-            contracts,
-            this.options.specText ?? "",
-            config.budgets.perTask.usd,
-          );
-          await this.storage.writeStageResult(task.id, reviewResult);
-          if (!reviewResult.passed) {
-            // Give worker one chance to fix review issues
-            loopTracker = recordLoop(loopTracker, "review");
-            const breakCheck = shouldBreak(loopTracker, "review", reviewResult.feedback, []);
-            if (breakCheck.break) {
-              allStagesPassed = false;
-            } else {
-              // Re-spawn with review feedback
-              const feedbackContext = {
-                ...context,
-                memory: context.memory + `\nREVIEW FEEDBACK:\n${JSON.stringify(reviewResult.feedback)}`,
-              };
-              await this.spawn({
-                taskId: task.id,
-                worktreePath,
-                context: feedbackContext,
-                budgetUsd: config.budgets.perTask.usd / 4,
-              });
-              // Re-run review
-              const retryReview = await runReviewStage(
-                worktreePath, diff, contracts, this.options.specText ?? "",
-                config.budgets.perTask.usd,
-              );
-              await this.storage.writeStageResult(task.id, retryReview);
-              if (!retryReview.passed) {
-                allStagesPassed = false;
-              }
-            }
-          }
-        }
+        let allStagesPassed = pipeline.allPassed;
+        const workerOutput = pipeline.workerOutput;
 
         // === GATE PIPELINE (extra validation) ===
         if (allStagesPassed) {
@@ -421,114 +324,4 @@ export class Orchestrator {
     return { dispatched, completed, failed, isComplete: false, isPaused: false };
   }
 
-  /**
-   * Run a stage (compile or test) in a loop with AI feedback until passed or safety cap.
-   */
-  private async runStageLoop(
-    stage: "compile" | "test",
-    tracker: LoopTracker,
-    worktreePath: string,
-    env: EnvConfig,
-    taskTouches: string[],
-    taskBudget: number,
-    context: EnrichedContextPackage,
-    _contracts: string,
-    _specExcerpt: string,
-  ): Promise<{ result: StageResult; tracker: LoopTracker }> {
-    const errorHistory: StageFeedback[] = [];
-    const diffHistory: string[] = [];
-    let totalLoops = 0;
-
-    for (let i = 0; i < 5; i++) {
-      // Run the stage
-      let stageResult: StageResult;
-      if (stage === "compile") {
-        stageResult = await runCompileStage(worktreePath, taskBudget);
-      } else {
-        stageResult = await runTestStage(worktreePath, env, taskTouches, taskBudget);
-      }
-
-      if (stageResult.passed) {
-        stageResult.loops = totalLoops;
-        return { result: stageResult, tracker };
-      }
-
-      // Record loop
-      tracker = recordLoop(tracker, stage);
-      totalLoops++;
-
-      // Collect feedback
-      for (const fb of stageResult.feedback) {
-        errorHistory.push(fb);
-      }
-
-      // Check safety caps
-      const breakCheck = shouldBreak(tracker, stage, errorHistory, diffHistory);
-      if (breakCheck.break) {
-        stageResult.loops = totalLoops;
-        return { result: stageResult, tracker };
-      }
-
-      // Re-spawn worker with feedback to fix issues
-      const feedbackJson = JSON.stringify(stageResult.feedback);
-      const feedbackContext: EnrichedContextPackage = {
-        ...context,
-        memory: context.memory + `\n${stage.toUpperCase()} FEEDBACK (loop ${totalLoops}):\n${feedbackJson}`,
-      };
-
-      await this.spawn({
-        taskId: context.task.name,
-        worktreePath,
-        context: feedbackContext,
-        budgetUsd: taskBudget / 4,
-      });
-
-      // Capture diff for stuck detection
-      try {
-        const { stdout } = await exec("git", ["diff"], { cwd: worktreePath });
-        diffHistory.push(stdout);
-      } catch {
-        diffHistory.push("");
-      }
-    }
-
-    // Fell through — max loops
-    return {
-      result: { stage, passed: false, loops: totalLoops, feedback: errorHistory },
-      tracker,
-    };
-  }
-
-  /**
-   * Read actual file contents from disk for enriched context.
-   * Large files (>300 lines): first 50 lines + exports + truncation notice.
-   */
-  private async readFileContents(touches: string[], reads: string[]): Promise<Record<string, string>> {
-    const contents: Record<string, string> = {};
-    const basePath = this.options.repoDir ?? ".";
-    const allPaths = [...new Set([...touches, ...reads])];
-
-    for (const filePath of allPaths) {
-      try {
-        const fullPath = `${basePath}/${filePath}`;
-        const content = await readFile(fullPath, "utf-8");
-        const lines = content.split("\n");
-
-        if (lines.length > 300) {
-          // Large file: first 50 lines + exports + truncation notice
-          const first50 = lines.slice(0, 50).join("\n");
-          const exportLines = lines
-            .filter((l) => l.startsWith("export "))
-            .join("\n");
-          contents[filePath] = `${first50}\n\n// ... (${lines.length} lines total, truncated) ...\n\n// Exports:\n${exportLines}`;
-        } else {
-          contents[filePath] = content;
-        }
-      } catch {
-        // File doesn't exist yet (new file) — skip
-      }
-    }
-
-    return contents;
-  }
 }
