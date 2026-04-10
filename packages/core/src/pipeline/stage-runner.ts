@@ -15,6 +15,7 @@ import { runFeedbackLoop } from "./feedback-loop.js";
 import { recordLoop, createLoopTracker, shouldBreak } from "../safety/loops.js";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { join } from "node:path";
 
 const exec = promisify(execFile);
 
@@ -59,6 +60,7 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     context,
     taskBudget,
     env,
+    repoDir,
     spawn,
     contracts,
     specExcerpt,
@@ -90,6 +92,20 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
   // Skip compile/test/review when not in a real worktree or no env detected
   if (worktreePath === "." || !env) {
     return { workerOutput, spawnResult, stages, allPassed: true, stageResults };
+  }
+
+  // Ensure worktree has node_modules (symlink from main repo)
+  if (repoDir) {
+    try {
+      const { stdout: lsOut } = await exec("ls", ["-d", join(worktreePath, "node_modules")]).catch(
+        () => ({ stdout: "" }),
+      );
+      if (!lsOut.trim()) {
+        await exec("ln", ["-s", join(repoDir, "node_modules"), join(worktreePath, "node_modules")]);
+      }
+    } catch {
+      /* non-fatal */
+    }
   }
 
   let allPassed = true;
