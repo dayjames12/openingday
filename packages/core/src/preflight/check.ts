@@ -67,15 +67,21 @@ export function preflightCheck(
   for (const touchPath of task.touches) {
     if (!codeFiles.has(touchPath) && !repoFiles.has(touchPath)) {
       if (repoMap) {
-        // Brownfield: check if parent directory exists (new file in existing dir = OK)
-        const parentDir = touchPath.split("/").slice(0, -1).join("/");
-        if (parentDir && repoDirs.has(parentDir)) {
-          // New file in existing directory — allowed, just warn
-          warnings.push(`New file "${touchPath}" will be created in existing directory`);
+        // Brownfield: walk up ancestor dirs — if any ancestor exists, allow new file
+        const parts = touchPath.split("/");
+        let ancestorFound = false;
+        for (let i = parts.length - 1; i > 0; i--) {
+          const ancestor = parts.slice(0, i).join("/");
+          if (repoDirs.has(ancestor)) {
+            ancestorFound = true;
+            break;
+          }
+        }
+        if (ancestorFound) {
+          warnings.push(`New file "${touchPath}" will be created under existing ancestor`);
         } else {
-          // File not in repo AND parent dir doesn't exist — likely wrong path
           blockers.push(
-            `Touch file "${touchPath}" not found in repo map and parent directory doesn't exist (brownfield mode)`,
+            `Touch file "${touchPath}" not found in repo map and no ancestor directory exists (brownfield mode)`,
           );
         }
       } else {

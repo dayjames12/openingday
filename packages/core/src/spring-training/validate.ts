@@ -25,10 +25,14 @@ export function validateStructure(
   const allTasks = getAllTasks(workTree);
   const codeFiles = new Set(getAllFiles(codeTree).map((f) => f.path));
   const repoFiles = new Set<string>();
+  const repoDirs = new Set<string>();
   if (repoMap) {
     for (const mod of repoMap.modules) {
+      repoDirs.add(mod.p);
       for (const file of mod.files) {
         repoFiles.add(file.p);
+        const dir = file.p.split("/").slice(0, -1).join("/");
+        if (dir) repoDirs.add(dir);
       }
     }
   }
@@ -47,13 +51,29 @@ export function validateStructure(
     taskDeps.set(task.id, new Set(task.dependencies));
   }
 
-  // Check: file existence
+  // Check: file existence (allow new files under existing ancestor dirs)
   for (const task of allTasks) {
     for (const touchPath of task.touches) {
       if (!codeFiles.has(touchPath) && !repoFiles.has(touchPath)) {
-        blockers.push(
-          `Task "${task.id}": touch file "${touchPath}" not found in code tree or repo map`,
-        );
+        if (repoMap) {
+          const parts = touchPath.split("/");
+          let ancestorFound = false;
+          for (let i = parts.length - 1; i > 0; i--) {
+            if (repoDirs.has(parts.slice(0, i).join("/"))) {
+              ancestorFound = true;
+              break;
+            }
+          }
+          if (!ancestorFound) {
+            blockers.push(
+              `Task "${task.id}": touch file "${touchPath}" not found and no ancestor directory exists`,
+            );
+          }
+        } else {
+          blockers.push(
+            `Task "${task.id}": touch file "${touchPath}" not found in code tree or repo map`,
+          );
+        }
       }
     }
     for (const readPath of task.reads) {

@@ -243,7 +243,44 @@ describe("preflightCheck", () => {
       "t1",
     );
     expect(result.canProceed).toBe(false);
-    expect(result.blockers.some((b) => b.includes("brownfield"))).toBe(true);
+    expect(result.blockers.some((b) => b.includes("no ancestor directory exists"))).toBe(true);
+  });
+
+  it("allows new files under existing ancestor directory in brownfield mode", () => {
+    const repoMap = {
+      v: 1,
+      scannedAt: new Date().toISOString(),
+      depth: "standard" as const,
+      env: {
+        pm: "pnpm" as const,
+        test: "vitest" as const,
+        lint: "eslint" as const,
+        ts: true,
+        monorepo: false,
+        workspaces: [],
+        infra: "none" as const,
+      },
+      deps: [],
+      modules: [
+        {
+          p: "packages/core/src",
+          d: "Core source",
+          fc: 1,
+          k: [],
+          files: [{ p: "packages/core/src/index.ts", ex: [], im: [], loc: 10 }],
+        },
+      ],
+    };
+
+    const result = preflightCheck(
+      makeWorkTree({ touches: ["packages/core/src/lambda/handler.ts"] }),
+      makeCodeTree(),
+      repoMap,
+      makeConfig(),
+      "t1",
+    );
+    expect(result.canProceed).toBe(true);
+    expect(result.warnings.some((w) => w.includes("existing ancestor"))).toBe(true);
   });
 
   it("accepts touch files found in repo map", () => {
