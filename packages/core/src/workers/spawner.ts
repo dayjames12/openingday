@@ -131,37 +131,6 @@ export async function spawnAgent(options: SpawnOptions): Promise<SpawnResult> {
           persistSession: false,
           cwd: worktreePath,
           settingSources: ["project"],
-          outputFormat: {
-            type: "json_schema" as const,
-            schema: {
-              type: "object",
-              properties: {
-                s: { type: "string", enum: ["ok", "partial", "fail"] },
-                changed: { type: "array", items: { type: "string" } },
-                iface: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      f: { type: "string" },
-                      e: { type: "string" },
-                      b: { type: "string" },
-                      a: { type: "string" },
-                    },
-                    required: ["f", "e", "b", "a"],
-                  },
-                },
-                tests: {
-                  type: "object",
-                  properties: { p: { type: "number" }, f: { type: "number" } },
-                  required: ["p", "f"],
-                },
-                t: { type: "number" },
-                n: { type: "string" },
-              },
-              required: ["s", "changed", "iface", "tests", "t", "n"],
-            },
-          },
         },
       });
 

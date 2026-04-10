@@ -71,7 +71,9 @@ export function registerRun(program: Command): void {
         return;
       }
 
-      const orchestrator = new Orchestrator(storage, spawnAgent);
+      const orchestrator = new Orchestrator(storage, spawnAgent, {
+        repoDir: process.cwd(),
+      });
 
       // Handle SIGINT for graceful shutdown
       let shuttingDown = false;

@@ -76,7 +76,7 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
   });
 
   let workerOutput = spawnResult.output;
-  if (spawnResult.needsInspection && worktreePath !== ".") {
+  if (spawnResult.needsInspection) {
     workerOutput = await inspectWorktreeOutput(worktreePath, taskTouches, env);
   }
 
