@@ -2,49 +2,13 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { StageResult, StageFeedback } from "../types.js";
+import { reviewPrompt } from "../prompts/review.js";
 
 /**
  * Build a prompt for the AI reviewer.
  */
 export function buildReviewPrompt(diff: string, contracts: string, specExcerpt: string): string {
-  return `You are a code reviewer for an AI-orchestrated project. Review this diff against the contracts and spec.
-
-## Contracts (shared types — single source of truth)
-
-${contracts || "(no contracts file)"}
-
-## Relevant Spec Section
-
-${specExcerpt || "(no spec excerpt)"}
-
-## Diff to Review
-
-${diff}
-
-## Check These
-
-1. **Domain fidelity**: Types match contracts exactly. No local re-definitions of shared types.
-2. **Pattern consistency**: Follows patterns established by prior tasks (if visible in diff context).
-3. **No duplicate logic**: No re-implementation of something that should be imported.
-4. **Proper imports**: All shared types imported from contracts, not defined locally.
-5. **Middleware order**: If Express/Hono, middleware registered in correct order.
-6. **Test coverage**: Tests cover the main paths described in the task.
-
-## Response Format
-
-Output ONLY a JSON object:
-
-{
-  "approved": boolean,
-  "issues": [
-    { "f": "file path", "l": line_number, "e": "description of issue", "fix": "how to fix it" }
-  ]
-}
-
-If approved with no issues: {"approved": true, "issues": []}
-If issues found: {"approved": false, "issues": [...]}
-
-No markdown fences, no explanation.`;
+  return reviewPrompt({ diff, contracts, specExcerpt, budget: 0.5 });
 }
 
 /**
