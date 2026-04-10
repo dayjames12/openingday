@@ -1,11 +1,10 @@
 import type { Storage } from "./storage/interface.js";
-import type { SpawnResult } from "./workers/spawner.js";
 import type {
-  ContextPackage,
   EnrichedContextPackage,
   StageResult,
   StageFeedback,
   LoopTracker,
+  SpawnFn,
 } from "./types.js";
 import type { EnvConfig } from "./scanner/types.js";
 import { inspectWorktreeOutput } from "./workers/inspect.js";
@@ -58,12 +57,7 @@ const exec = promisify(execFile);
 
 // === Types ===
 
-export type SpawnFn = (options: {
-  taskId: string;
-  worktreePath: string;
-  context: ContextPackage | EnrichedContextPackage;
-  budgetUsd: number;
-}) => Promise<SpawnResult>;
+export type { SpawnFn } from "./types.js";
 
 export interface CycleResult {
   dispatched: number;

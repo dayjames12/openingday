@@ -218,7 +218,8 @@ export type { PreflightResult } from "./preflight/check.js";
 
 // Orchestrator
 export { Orchestrator } from "./orchestrator.js";
-export type { CycleResult, SpawnFn, OrchestratorOptions } from "./orchestrator.js";
+export type { CycleResult, OrchestratorOptions } from "./orchestrator.js";
+export type { SpawnFn } from "./types.js";
 
 // Spring Training
 export { validateStructure } from "./spring-training/validate.js";

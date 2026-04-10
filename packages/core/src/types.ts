@@ -196,6 +196,15 @@ export interface EnrichedContextPackage extends ContextPackage {
   specExcerpt: string;
 }
 
+// === Spawn ===
+
+export type SpawnFn = (options: {
+  taskId: string;
+  worktreePath: string;
+  context: ContextPackage | EnrichedContextPackage;
+  budgetUsd: number;
+}) => Promise<import("./workers/spawner.js").SpawnResult>;
+
 // === Safety ===
 
 export interface WatchdogState {
