@@ -181,7 +181,15 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
       budgetUsd: taskBudget / 4,
     });
 
-    // Re-run review
+    // Re-capture diff after worker fix attempt
+    try {
+      const { stdout } = await exec("git", ["diff", "HEAD"], { cwd: worktreePath });
+      diff = stdout;
+    } catch {
+      diff = "(could not generate diff)";
+    }
+
+    // Re-run review with fresh diff
     reviewResult = await runReviewStage(worktreePath, diff, contracts, specExcerpt, taskBudget);
     stageResults.push(reviewResult);
 
