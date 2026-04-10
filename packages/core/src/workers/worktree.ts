@@ -13,6 +13,12 @@ export interface WorktreeInfo {
 export async function createWorktree(repoDir: string, taskId: string): Promise<WorktreeInfo> {
   const branch = `openingday/${taskId}`;
   const worktreePath = join(tmpdir(), `openingday-wt-${taskId}-${Date.now()}`);
+  // Clean up stale branch from previous attempts
+  try {
+    await exec("git", ["branch", "-D", branch], { cwd: repoDir });
+  } catch {
+    /* branch didn't exist — fine */
+  }
   await exec("git", ["worktree", "add", "-b", branch, worktreePath], { cwd: repoDir });
   return { path: worktreePath, branch };
 }
