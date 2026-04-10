@@ -13,7 +13,13 @@ export interface WorktreeInfo {
 export async function createWorktree(repoDir: string, taskId: string): Promise<WorktreeInfo> {
   const branch = `openingday/${taskId}`;
   const worktreePath = join(tmpdir(), `openingday-wt-${taskId}-${Date.now()}`);
-  // Clean up stale branch from previous attempts
+  // Clean up stale worktrees and branches from previous attempts
+  await exec("git", ["worktree", "prune"], { cwd: repoDir }).catch(() => {});
+  try {
+    await exec("git", ["worktree", "remove", "--force", branch], { cwd: repoDir });
+  } catch {
+    /* no stale worktree — fine */
+  }
   try {
     await exec("git", ["branch", "-D", branch], { cwd: repoDir });
   } catch {
