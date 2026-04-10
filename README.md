@@ -263,7 +263,7 @@ Built-in: `base.json` (maintainability, testing, caching) and `aws-serverless.js
 ```bash
 pnpm install        # install deps
 pnpm build          # build all packages
-pnpm test           # run all tests (382)
+pnpm test           # run all tests (424)
 pnpm typecheck      # TypeScript checks
 pnpm lint           # ESLint
 ```
