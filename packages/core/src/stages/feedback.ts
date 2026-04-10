@@ -2,6 +2,7 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { StageFeedback, StageType } from "../types.js";
+import { feedbackPrompt } from "../prompts/feedback.js";
 
 /**
  * Parse an AI feedback response into a StageFeedback object.
@@ -42,18 +43,7 @@ export async function digestCompileErrors(
   budget: number,
 ): Promise<StageFeedback> {
   try {
-    const prompt = `Digest these TypeScript compilation errors into structured JSON.
-
-## Raw tsc output
-
-${rawOutput.slice(0, 3000)}
-
-## Response Format
-
-Output ONLY a JSON object:
-{"errors":[{"f":"file path","l":line_number,"e":"error description","fix":"suggested fix"}]}
-
-Be specific about fixes. Reference actual types and imports. No markdown fences, no explanation.`;
+    const prompt = feedbackPrompt({ stage: "compile", rawOutput, budget });
 
     const stream = query({
       prompt,
@@ -101,18 +91,7 @@ export async function digestTestFailures(
   budget: number,
 ): Promise<StageFeedback> {
   try {
-    const prompt = `Digest these test failures into structured JSON.
-
-## Raw test output
-
-${rawOutput.slice(0, 3000)}
-
-## Response Format
-
-Output ONLY a JSON object:
-{"errors":[{"f":"file path","l":line_number,"e":"test_name: expected X got Y — root cause","fix":"specific fix suggestion"}]}
-
-Be specific about root causes and fixes. No markdown fences, no explanation.`;
+    const prompt = feedbackPrompt({ stage: "test", rawOutput, budget });
 
     const stream = query({
       prompt,
