@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text } from "ink";
 import { DiskStorage, getAllTasks } from "@openingday/core";
-import type {
-  ProjectConfig,
-  ProjectState,
-  WorkTree,
-  CodeTree,
-  GateResult,
-} from "@openingday/core";
+import type { ProjectConfig, ProjectState, WorkTree, CodeTree, GateResult } from "@openingday/core";
 import { WorkTreeView } from "./WorkTreeView.js";
 import { WorkersView } from "./WorkersView.js";
 import { GatesView } from "./GatesView.js";
@@ -22,13 +16,7 @@ interface DashboardState {
   error: string | null;
 }
 
-function ProgressBar({
-  pct,
-  width = 10,
-}: {
-  pct: number;
-  width?: number;
-}): React.ReactElement {
+function ProgressBar({ pct, width = 10 }: { pct: number; width?: number }): React.ReactElement {
   const filled = Math.round((pct / 100) * width);
   const empty = width - filled;
   return (
@@ -152,9 +140,7 @@ export function Dashboard(): React.ReactElement {
       </Box>
 
       {/* Separator */}
-      <Text color="gray">
-        {"─".repeat(79)}
-      </Text>
+      <Text color="gray">{"─".repeat(79)}</Text>
 
       {/* Main layout: Left (work tree) | Right (workers) */}
       <Box>
@@ -165,26 +151,21 @@ export function Dashboard(): React.ReactElement {
           <Text color="gray">│</Text>
         </Box>
         <Box flexDirection="column" width="50%">
-          <WorkersView
-            workTree={data.workTree}
-            state={data.state}
-            config={data.config}
-          />
+          <WorkersView workTree={data.workTree} state={data.state} config={data.config} />
         </Box>
       </Box>
 
       {/* Separator */}
       <Text color="gray">
-        {"─".repeat(39)}{"┼"}{"─".repeat(39)}
+        {"─".repeat(39)}
+        {"┼"}
+        {"─".repeat(39)}
       </Text>
 
       {/* Bottom layout: Left (gates) | Right (costs) */}
       <Box>
         <Box flexDirection="column" width="50%">
-          <GatesView
-            workTree={data.workTree}
-            gateResults={data.gateResults}
-          />
+          <GatesView workTree={data.workTree} gateResults={data.gateResults} />
         </Box>
         <Box flexDirection="column" width={1}>
           <Text color="gray">│</Text>

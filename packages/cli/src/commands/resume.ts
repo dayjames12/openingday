@@ -9,17 +9,13 @@ export function registerResume(program: Command): void {
     .action(async () => {
       const storage = new DiskStorage(".openingday");
       if (!(await storage.exists())) {
-        console.log(
-          chalk.red("No project found. Run `openingday init --from <spec>` first."),
-        );
+        console.log(chalk.red("No project found. Run `openingday init --from <spec>` first."));
         return;
       }
 
       const state = await storage.readProjectState();
       if (state.status !== "paused") {
-        console.log(
-          chalk.red(`Cannot resume from state "${state.status}". Must be "paused".`),
-        );
+        console.log(chalk.red(`Cannot resume from state "${state.status}". Must be "paused".`));
         return;
       }
 

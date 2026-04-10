@@ -8,10 +8,12 @@ export async function refreshFiles(
   repoDir: string,
   changedPaths: string[],
 ): Promise<RepoMap> {
-  const updatedModules = [...map.modules.map((m) => ({
-    ...m,
-    files: [...m.files],
-  }))];
+  const updatedModules = [
+    ...map.modules.map((m) => ({
+      ...m,
+      files: [...m.files],
+    })),
+  ];
 
   for (const relPath of changedPaths) {
     const fullPath = join(repoDir, relPath);

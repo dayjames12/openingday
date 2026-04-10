@@ -21,9 +21,7 @@ export async function readFileContents(
 
       if (lines.length > truncateThreshold) {
         const first50 = lines.slice(0, 50).join("\n");
-        const exportLines = lines
-          .filter((l) => l.startsWith("export "))
-          .join("\n");
+        const exportLines = lines.filter((l) => l.startsWith("export ")).join("\n");
         contents[filePath] =
           `${first50}\n\n// ... (${lines.length} lines total, truncated) ...\n\n// Exports:\n${exportLines}`;
       } else {

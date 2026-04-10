@@ -68,7 +68,13 @@ export function registerInit(program: Command): void {
             const specPath = resolve(opts.spec);
             console.log(chalk.gray("Seeding from spec..."));
             const specText = await readFile(specPath, "utf-8");
-            const result = await seedFromSpec(specText, opts.name, process.cwd(), undefined, repoMap);
+            const result = await seedFromSpec(
+              specText,
+              opts.name,
+              process.cwd(),
+              undefined,
+              repoMap,
+            );
             if (result) {
               workTree = result.workTree;
               // Keep the scanned code tree (more accurate than AI-generated)
@@ -118,9 +124,7 @@ export function registerInit(program: Command): void {
         }
       }
 
-      console.log(
-        chalk.green(`Initialized project "${opts.name}" in .openingday/`),
-      );
+      console.log(chalk.green(`Initialized project "${opts.name}" in .openingday/`));
       console.log(chalk.gray(`  Spec: ${opts.from}`));
 
       // Print seeding summary

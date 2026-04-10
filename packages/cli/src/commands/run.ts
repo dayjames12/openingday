@@ -3,12 +3,7 @@ import chalk from "chalk";
 import { join, resolve } from "node:path";
 import { writeFile, readFile, unlink } from "node:fs/promises";
 import { unlinkSync } from "node:fs";
-import {
-  DiskStorage,
-  transition,
-  Orchestrator,
-  spawnAgent,
-} from "@openingday/core";
+import { DiskStorage, transition, Orchestrator, spawnAgent } from "@openingday/core";
 
 export function registerRun(program: Command): void {
   program
@@ -19,9 +14,7 @@ export function registerRun(program: Command): void {
     .action(async (opts: { step?: boolean; dryRun?: boolean }) => {
       const storage = new DiskStorage(".openingday");
       if (!(await storage.exists())) {
-        console.log(
-          chalk.red("No project found. Run `openingday init --from <spec>` first."),
-        );
+        console.log(chalk.red("No project found. Run `openingday init --from <spec>` first."));
         return;
       }
 
@@ -50,7 +43,11 @@ export function registerRun(program: Command): void {
 
       // Write PID file and register cleanup
       await writeFile(pidFile, String(process.pid));
-      process.on("exit", () => { try { unlinkSync(pidFile); } catch {} });
+      process.on("exit", () => {
+        try {
+          unlinkSync(pidFile);
+        } catch {}
+      });
 
       // Transition based on current state
       if (state.status === "idle") {
@@ -65,9 +62,7 @@ export function registerRun(program: Command): void {
       } else if (state.status === "running") {
         // Already running state but we passed PID check — continue
       } else {
-        console.log(
-          chalk.red(`Cannot run from state "${state.status}".`),
-        );
+        console.log(chalk.red(`Cannot run from state "${state.status}".`));
         return;
       }
 
@@ -135,9 +130,7 @@ export function registerRun(program: Command): void {
             }
           } catch (err) {
             consecutiveErrors++;
-            console.error(
-              chalk.red(`Cycle error (${consecutiveErrors}/3): ${err}`),
-            );
+            console.error(chalk.red(`Cycle error (${consecutiveErrors}/3): ${err}`));
             if (consecutiveErrors >= 3) {
               console.error(chalk.red("3 consecutive cycle errors. Pausing."));
               const currentState = await storage.readProjectState();

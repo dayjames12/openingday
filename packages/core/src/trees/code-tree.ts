@@ -8,10 +8,7 @@ export function createCodeTree(): CodeTree {
 
 // === Module CRUD ===
 
-export function addModule(
-  tree: CodeTree,
-  mod: Pick<CodeModule, "path" | "description">,
-): CodeTree {
+export function addModule(tree: CodeTree, mod: Pick<CodeModule, "path" | "description">): CodeTree {
   const newModule: CodeModule = {
     path: mod.path,
     description: mod.description,
@@ -61,26 +58,16 @@ export function getAllFiles(tree: CodeTree): CodeFile[] {
 
 // === File Updates ===
 
-export function updateFile(
-  tree: CodeTree,
-  filePath: string,
-  updates: Partial<CodeFile>,
-): CodeTree {
+export function updateFile(tree: CodeTree, filePath: string, updates: Partial<CodeFile>): CodeTree {
   return {
     modules: tree.modules.map((m) => ({
       ...m,
-      files: m.files.map((f) =>
-        f.path === filePath ? { ...f, ...updates } : f,
-      ),
+      files: m.files.map((f) => (f.path === filePath ? { ...f, ...updates } : f)),
     })),
   };
 }
 
-export function setLastModifiedBy(
-  tree: CodeTree,
-  filePath: string,
-  taskId: string,
-): CodeTree {
+export function setLastModifiedBy(tree: CodeTree, filePath: string, taskId: string): CodeTree {
   return updateFile(tree, filePath, { lastModifiedBy: taskId });
 }
 
@@ -100,9 +87,7 @@ export function getFileImports(tree: CodeTree, filePath: string): CodeImport[] {
  * Find all files that import from the given file path.
  */
 export function getDependents(tree: CodeTree, filePath: string): CodeFile[] {
-  return getAllFiles(tree).filter((f) =>
-    f.imports.some((imp) => imp.from === filePath),
-  );
+  return getAllFiles(tree).filter((f) => f.imports.some((imp) => imp.from === filePath));
 }
 
 /**

@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { getCachedContext, setCachedContext, invalidateContext, clearContextCache } from "./context-cache.js";
+import {
+  getCachedContext,
+  setCachedContext,
+  invalidateContext,
+  clearContextCache,
+} from "./context-cache.js";
 import type { EnrichedContextPackage } from "../types.js";
 
 function makeContext(taskName: string): EnrichedContextPackage {

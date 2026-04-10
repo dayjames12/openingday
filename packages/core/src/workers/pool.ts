@@ -71,11 +71,13 @@ export function planSpawns(
 
   const fileLocks = getActiveFileLocks(workTree);
   const cached = getCachedReadyTasks(workTree, fileLocks);
-  const readyTasks = cached ?? (() => {
-    const tasks = getReadyTasks(workTree, fileLocks);
-    setCachedReadyTasks(tasks, workTree, fileLocks);
-    return tasks;
-  })();
+  const readyTasks =
+    cached ??
+    (() => {
+      const tasks = getReadyTasks(workTree, fileLocks);
+      setCachedReadyTasks(tasks, workTree, fileLocks);
+      return tasks;
+    })();
 
   if (readyTasks.length === 0) {
     return { canSpawn: false, reason: "No ready tasks", tasksToSpawn: [] };
@@ -122,9 +124,7 @@ export function completeWorker(
 ): WorkerPool {
   return {
     ...pool,
-    sessions: pool.sessions.map((s) =>
-      s.id === sessionId ? { ...s, status } : s,
-    ),
+    sessions: pool.sessions.map((s) => (s.id === sessionId ? { ...s, status } : s)),
   };
 }
 
@@ -136,7 +136,7 @@ export function applyWorkerResult(
   taskId: string,
   output: WorkerOutput,
 ): WorkTree {
-  const newStatus = output.status === "complete" ? "complete" as const : "failed" as const;
+  const newStatus = output.status === "complete" ? ("complete" as const) : ("failed" as const);
   let tree = updateTaskStatus(workTree, taskId, newStatus);
   const existing = workTree.milestones
     .flatMap((m) => m.slices.flatMap((s) => s.tasks))

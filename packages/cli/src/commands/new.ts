@@ -128,14 +128,11 @@ export function registerNew(program: Command): void {
 
       if (stackChoice === "custom") {
         customStack = await input({
-          message:
-            "Describe your tech stack (languages, frameworks, databases, etc.):",
-          validate: (val) =>
-            val.trim() ? true : "Please describe your stack",
+          message: "Describe your tech stack (languages, frameworks, databases, etc.):",
+          validate: (val) => (val.trim() ? true : "Please describe your stack"),
         });
       } else {
-        selectedPreset =
-          STACK_PRESETS.find((p) => p.name === stackChoice) ?? null;
+        selectedPreset = STACK_PRESETS.find((p) => p.name === stackChoice) ?? null;
       }
 
       // Step 3: Scale
@@ -217,22 +214,14 @@ export function registerNew(program: Command): void {
       }
 
       try {
-        const result = await seedFromSpec(
-          specText,
-          projectName,
-          process.cwd(),
-          undefined,
-          repoMap,
-        );
+        const result = await seedFromSpec(specText, projectName, process.cwd(), undefined, repoMap);
         if (result) {
           workTree = result.workTree;
           codeTree = result.codeTree;
         } else {
           clearInterval(spinnerInterval);
           process.stdout.write("\r");
-          console.log(
-            chalk.yellow("Seeder returned no result; using empty trees."),
-          );
+          console.log(chalk.yellow("Seeder returned no result; using empty trees."));
         }
       } catch (err) {
         clearInterval(spinnerInterval);
@@ -250,10 +239,7 @@ export function registerNew(program: Command): void {
       // Step 7: Summary
       const milestoneCount = workTree.milestones.length;
       const taskCount = getAllTasks(workTree).length;
-      const fileCount = codeTree.modules.reduce(
-        (n, m) => n + m.files.length,
-        0,
-      );
+      const fileCount = codeTree.modules.reduce((n, m) => n + m.files.length, 0);
 
       console.log();
       console.log(chalk.bold("Plan Summary"));
@@ -320,13 +306,9 @@ export function registerNew(program: Command): void {
       }
 
       console.log();
+      console.log(chalk.green(`Project "${projectName}" initialized in .openingday/`));
       console.log(
-        chalk.green(`Project "${projectName}" initialized in .openingday/`),
-      );
-      console.log(
-        chalk.gray("Run ") +
-          chalk.bold("openingday run") +
-          chalk.gray(" to start building."),
+        chalk.gray("Run ") + chalk.bold("openingday run") + chalk.gray(" to start building."),
       );
     });
 }

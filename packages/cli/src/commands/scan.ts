@@ -22,7 +22,11 @@ export function registerScan(program: Command): void {
 
       const totalFiles = map.modules.reduce((sum, m) => sum + m.fc, 0);
       console.log(chalk.green(`Done: ${map.modules.length} modules, ${totalFiles} files`));
-      console.log(chalk.gray(`  pm: ${map.env.pm} | test: ${map.env.test} | lint: ${map.env.lint} | ts: ${map.env.ts}`));
+      console.log(
+        chalk.gray(
+          `  pm: ${map.env.pm} | test: ${map.env.test} | lint: ${map.env.lint} | ts: ${map.env.ts}`,
+        ),
+      );
       if (map.env.monorepo) console.log(chalk.gray(`  monorepo: ${map.env.workspaces.join(", ")}`));
       if (map.env.infra !== "none") console.log(chalk.gray(`  infra: ${map.env.infra}`));
     });

@@ -61,6 +61,7 @@ vi.mock("../safety/loops.js", () => ({
     stageLoopIds: [],
     totalLoops: 0,
   })),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   recordLoop: vi.fn((tracker: any, _stage: string) => ({
     ...tracker,
     totalLoops: tracker.totalLoops + 1,
@@ -69,6 +70,7 @@ vi.mock("../safety/loops.js", () => ({
 }));
 
 vi.mock("node:child_process", () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   execFile: vi.fn((_cmd: string, _args: string[], _opts: any, cb: any) => {
     cb(null, "mock-diff", "");
   }),

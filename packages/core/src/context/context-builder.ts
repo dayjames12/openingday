@@ -61,7 +61,7 @@ export function buildContext(
   const below = resolveFiles(codeTree, Array.from(belowPaths));
 
   const perTaskBudget = config.budgets.perTask.usd;
-  const softLimit = Math.floor(perTaskBudget * config.budgets.perTask.softPct / 100 * 1000);
+  const softLimit = Math.floor(((perTaskBudget * config.budgets.perTask.softPct) / 100) * 1000);
   const hardLimit = perTaskBudget * 1000;
 
   const landscape = repoMap ? buildLandscape(repoMap) : { mc: 0, fc: 0, modules: [] };
@@ -117,9 +117,7 @@ export function buildEnrichedContext(
 }
 
 function resolveFiles(codeTree: CodeTree, paths: string[]): CodeFile[] {
-  return paths
-    .map((p) => getFile(codeTree, p))
-    .filter((f): f is CodeFile => f !== null);
+  return paths.map((p) => getFile(codeTree, p)).filter((f): f is CodeFile => f !== null);
 }
 
 function buildAcceptanceCriteria(task: WorkTask): string[] {

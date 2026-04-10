@@ -73,7 +73,9 @@ describe("spawner", () => {
       const wireJson = JSON.stringify({
         s: "ok",
         changed: ["src/auth/middleware.ts"],
-        iface: [{ f: "src/auth/middleware.ts", e: "authMiddleware", b: "() => void", a: "() => string" }],
+        iface: [
+          { f: "src/auth/middleware.ts", e: "authMiddleware", b: "() => void", a: "() => string" },
+        ],
         tests: { p: 3, f: 0 },
         t: 8000,
         n: "Implemented JWT middleware",
@@ -200,7 +202,7 @@ describe("spawner", () => {
         subtype: "success" as const,
         result: "some raw text",
         structured_output: wireObj,
-        total_cost_usd: 0.10,
+        total_cost_usd: 0.1,
         num_turns: 3,
         is_error: false,
         duration_ms: 15000,

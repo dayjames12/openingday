@@ -125,16 +125,10 @@ describe("from-repo", () => {
         `export function hidden(): void {}`,
       );
       await mkdir(join(tempDir, "dist"), { recursive: true });
-      await writeFile(
-        join(tempDir, "dist", "bundle.ts"),
-        `export function bundled(): void {}`,
-      );
+      await writeFile(join(tempDir, "dist", "bundle.ts"), `export function bundled(): void {}`);
       // One real file
       await mkdir(join(tempDir, "src"), { recursive: true });
-      await writeFile(
-        join(tempDir, "src", "app.ts"),
-        `export function app(): void {}`,
-      );
+      await writeFile(join(tempDir, "src", "app.ts"), `export function app(): void {}`);
 
       const tree = await scanRepo(tempDir);
       const allPaths = tree.modules.flatMap((m) => m.files.map((f) => f.path));

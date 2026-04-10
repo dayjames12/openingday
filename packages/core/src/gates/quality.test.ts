@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  buildQualityPrompt,
-  parseQualityResponse,
-  createQualityGateCheck,
-} from "./quality.js";
+import { buildQualityPrompt, parseQualityResponse, createQualityGateCheck } from "./quality.js";
 import type { WorkerOutput, WorkTree, CodeTree } from "../types.js";
 
 const emptyWorkTree: WorkTree = { milestones: [] };
@@ -50,9 +46,7 @@ describe("quality gate", () => {
     it("parses a failing review with issues", () => {
       const response = JSON.stringify({
         pass: false,
-        issues: [
-          { rule: "naming", file: "a.ts", note: "Bad variable name", severity: "low" },
-        ],
+        issues: [{ rule: "naming", file: "a.ts", note: "Bad variable name", severity: "low" }],
       });
       const result = parseQualityResponse(response);
       expect(result).not.toBeNull();
@@ -77,7 +71,11 @@ describe("quality gate", () => {
   describe("createQualityGateCheck", () => {
     it("passes when no anti-patterns found", () => {
       const check = createQualityGateCheck("Use strict TypeScript");
-      const result = check.run(makeOutput({ notes: "Clean implementation" }), emptyWorkTree, emptyCodeTree);
+      const result = check.run(
+        makeOutput({ notes: "Clean implementation" }),
+        emptyWorkTree,
+        emptyCodeTree,
+      );
       expect(result.pass).toBe(true);
       expect(result.layer).toBe("quality");
     });

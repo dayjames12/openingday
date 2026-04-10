@@ -1,9 +1,4 @@
-import type {
-  ProjectConfig,
-  ProjectState,
-  WorkTree,
-  WorkTask,
-} from "../types.js";
+import type { ProjectConfig, ProjectState, WorkTree, WorkTask } from "../types.js";
 import { getAllTasks } from "../trees/work-tree.js";
 
 // === Budget Checks ===
@@ -19,10 +14,7 @@ export interface BudgetStatus {
 /**
  * Calculate the overall project budget status.
  */
-export function getProjectBudgetStatus(
-  state: ProjectState,
-  config: ProjectConfig,
-): BudgetStatus {
+export function getProjectBudgetStatus(state: ProjectState, config: ProjectConfig): BudgetStatus {
   const totalSpent = state.totalTokenSpend;
   const projectBudget = config.budgets.project.usd * 1000; // convert to token-dollars (simplified)
   const percentage = projectBudget > 0 ? (totalSpent / projectBudget) * 100 : 0;
@@ -39,10 +31,7 @@ export function getProjectBudgetStatus(
 /**
  * Check if a task is within its per-task budget.
  */
-export function isTaskWithinBudget(
-  task: WorkTask,
-  config: ProjectConfig,
-): boolean {
+export function isTaskWithinBudget(task: WorkTask, config: ProjectConfig): boolean {
   const hardLimit = config.budgets.perTask.usd * 1000;
   return task.tokenSpend < hardLimit;
 }
@@ -50,12 +39,9 @@ export function isTaskWithinBudget(
 /**
  * Check if a task has hit its soft budget limit.
  */
-export function isTaskAtSoftLimit(
-  task: WorkTask,
-  config: ProjectConfig,
-): boolean {
+export function isTaskAtSoftLimit(task: WorkTask, config: ProjectConfig): boolean {
   const hardLimit = config.budgets.perTask.usd * 1000;
-  const softLimit = hardLimit * config.budgets.perTask.softPct / 100;
+  const softLimit = (hardLimit * config.budgets.perTask.softPct) / 100;
   return task.tokenSpend >= softLimit;
 }
 
@@ -96,10 +82,7 @@ export function checkCircuitBreakers(
 /**
  * Check consecutive failures within each slice.
  */
-function checkSliceBreaker(
-  allTasks: WorkTask[],
-  config: ProjectConfig,
-): boolean {
+function checkSliceBreaker(allTasks: WorkTask[], config: ProjectConfig): boolean {
   const bySlice = new Map<string, WorkTask[]>();
   for (const task of allTasks) {
     const key = task.parentSliceId;
@@ -121,10 +104,7 @@ function checkSliceBreaker(
 /**
  * Check consecutive failures across the entire project.
  */
-function checkProjectBreaker(
-  allTasks: WorkTask[],
-  config: ProjectConfig,
-): boolean {
+function checkProjectBreaker(allTasks: WorkTask[], config: ProjectConfig): boolean {
   const completedOrFailed = allTasks.filter(
     (t) => t.status === "complete" || t.status === "failed",
   );
@@ -143,9 +123,7 @@ function checkEfficiencyBreaker(
   if (state.totalTokenSpend === 0) return false;
 
   const completedTasks = allTasks.filter((t) => t.status === "complete");
-  const totalTasks = allTasks.filter(
-    (t) => t.status === "complete" || t.status === "failed",
-  );
+  const totalTasks = allTasks.filter((t) => t.status === "complete" || t.status === "failed");
 
   if (totalTasks.length === 0) return false;
 

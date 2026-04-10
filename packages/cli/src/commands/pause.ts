@@ -9,17 +9,13 @@ export function registerPause(program: Command): void {
     .action(async () => {
       const storage = new DiskStorage(".openingday");
       if (!(await storage.exists())) {
-        console.log(
-          chalk.red("No project found. Run `openingday init --from <spec>` first."),
-        );
+        console.log(chalk.red("No project found. Run `openingday init --from <spec>` first."));
         return;
       }
 
       const state = await storage.readProjectState();
       if (state.status !== "running") {
-        console.log(
-          chalk.red(`Cannot pause from state "${state.status}". Must be "running".`),
-        );
+        console.log(chalk.red(`Cannot pause from state "${state.status}". Must be "running".`));
         return;
       }
 

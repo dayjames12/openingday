@@ -56,7 +56,10 @@ export function shouldBreak(
 
   // Check: max total loops across all stages
   if (tracker.totalLoops >= MAX_TOTAL_LOOPS) {
-    return { break: true, reason: `Total loops (${tracker.totalLoops}) reached max ${MAX_TOTAL_LOOPS}` };
+    return {
+      break: true,
+      reason: `Total loops (${tracker.totalLoops}) reached max ${MAX_TOTAL_LOOPS}`,
+    };
   }
 
   // Check: max per stage
@@ -79,7 +82,10 @@ export function shouldBreak(
   if (diffHistory.length >= MAX_IDENTICAL_DIFFS) {
     const recent = diffHistory.slice(-MAX_IDENTICAL_DIFFS);
     if (recent.length === MAX_IDENTICAL_DIFFS && recent.every((d) => d === recent[0])) {
-      return { break: true, reason: `Identical diff produced ${MAX_IDENTICAL_DIFFS} times — worker is stuck` };
+      return {
+        break: true,
+        reason: `Identical diff produced ${MAX_IDENTICAL_DIFFS} times — worker is stuck`,
+      };
     }
   }
 

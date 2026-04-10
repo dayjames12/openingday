@@ -28,9 +28,14 @@ describe("runCompileStage", () => {
     const { execFile } = await import("node:child_process");
     const mockExec = vi.mocked(execFile);
     mockExec.mockImplementation((_cmd: string, _args: unknown, _opts: unknown, cb: unknown) => {
-      const error = new Error("tsc failed") as Error & { code: number; stdout: string; stderr: string };
+      const error = new Error("tsc failed") as Error & {
+        code: number;
+        stdout: string;
+        stderr: string;
+      };
       error.code = 1;
-      error.stdout = "src/index.ts(5,3): error TS2322: Type 'string' is not assignable to type 'number'.";
+      error.stdout =
+        "src/index.ts(5,3): error TS2322: Type 'string' is not assignable to type 'number'.";
       error.stderr = "";
       (cb as (err: typeof error) => void)(error);
       return {} as ReturnType<typeof execFile>;

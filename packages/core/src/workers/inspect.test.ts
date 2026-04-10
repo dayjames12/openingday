@@ -17,7 +17,7 @@ describe("inspectWorktreeOutput", () => {
     await exec("git", ["config", "user.email", "test@test.com"], { cwd: repoDir });
     await exec("git", ["config", "user.name", "Test"], { cwd: repoDir });
     // Create initial commit with a file
-    await writeFile(join(repoDir, "src.ts"), 'export function hello(): void {}\n');
+    await writeFile(join(repoDir, "src.ts"), "export function hello(): void {}\n");
     await exec("git", ["add", "."], { cwd: repoDir });
     await exec("git", ["commit", "-m", "init"], { cwd: repoDir });
   });
@@ -38,7 +38,7 @@ describe("inspectWorktreeOutput", () => {
   });
 
   it("detects new untracked files", async () => {
-    await writeFile(join(repoDir, "new-file.ts"), 'export const x = 1;\n');
+    await writeFile(join(repoDir, "new-file.ts"), "export const x = 1;\n");
 
     const output = await inspectWorktreeOutput(repoDir, ["new-file.ts"], null);
 
@@ -67,7 +67,7 @@ describe("inspectWorktreeOutput", () => {
   it("detects interface changes in the diff", async () => {
     await writeFile(
       join(repoDir, "src.ts"),
-      'export function hello(name: string): string { return name; }\n',
+      "export function hello(name: string): string { return name; }\n",
     );
 
     const output = await inspectWorktreeOutput(repoDir, ["src.ts"], null);
@@ -80,8 +80,8 @@ describe("inspectWorktreeOutput", () => {
   });
 
   it("handles multiple modified files", async () => {
-    await writeFile(join(repoDir, "a.ts"), 'export const a = 1;\n');
-    await writeFile(join(repoDir, "b.ts"), 'export const b = 2;\n');
+    await writeFile(join(repoDir, "a.ts"), "export const a = 1;\n");
+    await writeFile(join(repoDir, "b.ts"), "export const b = 2;\n");
 
     const output = await inspectWorktreeOutput(repoDir, ["a.ts", "b.ts"], null);
 
@@ -109,10 +109,7 @@ describe("parseInterfaceChanges", () => {
   });
 
   it("detects new exports", () => {
-    const diff = [
-      "+++ b/src/utils.ts",
-      "+export function newHelper(): void",
-    ].join("\n");
+    const diff = ["+++ b/src/utils.ts", "+export function newHelper(): void"].join("\n");
 
     const changes = parseInterfaceChanges(diff);
     expect(changes).toHaveLength(1);
@@ -141,11 +138,7 @@ describe("parseInterfaceChanges", () => {
   });
 
   it("returns empty for diffs with no export changes", () => {
-    const diff = [
-      "+++ b/src/internal.ts",
-      "-const x = 1;",
-      "+const x = 2;",
-    ].join("\n");
+    const diff = ["+++ b/src/internal.ts", "-const x = 1;", "+const x = 2;"].join("\n");
 
     expect(parseInterfaceChanges(diff)).toEqual([]);
   });

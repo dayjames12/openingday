@@ -32,7 +32,9 @@ export class DiskStorage implements Storage {
       await writeFile(tmpFile, JSON.stringify(data, null, 2), "utf-8");
       await rename(tmpFile, filePath);
     } catch (err) {
-      try { await unlink(tmpFile); } catch {}
+      try {
+        await unlink(tmpFile);
+      } catch {}
       throw err;
     }
   }
@@ -43,7 +45,9 @@ export class DiskStorage implements Storage {
       await writeFile(tmpFile, content, "utf-8");
       await rename(tmpFile, filePath);
     } catch (err) {
-      try { await unlink(tmpFile); } catch {}
+      try {
+        await unlink(tmpFile);
+      } catch {}
       throw err;
     }
   }

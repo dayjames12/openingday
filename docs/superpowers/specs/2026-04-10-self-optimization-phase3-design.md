@@ -21,6 +21,7 @@ Make OD capable of self-improvement by breaking its largest files into worker-si
 ### Current State
 
 `packages/core/src/orchestrator.ts` (540 lines) — single class containing:
+
 - Cycle loop + spring training gate + budget/circuit-breaker checks
 - Stage pipeline sequencing (implement → compile → test → review → gate → merge)
 - Feedback loops (retry compile/test up to 5x with AI digestion)
@@ -34,6 +35,7 @@ Split into 4 modules. Orchestrator becomes thin coordinator.
 #### `orchestrator.ts` (~120 lines) — Coordinator
 
 Responsibilities:
+
 - Own the cycle loop (`runOneCycle`)
 - Check terminal/paused status
 - Run watchdog, circuit breakers, budget checks
@@ -73,6 +75,7 @@ async runOneCycle(): Promise<CycleResult> {
 #### `pipeline/stage-runner.ts` (~150 lines) — Stage Pipeline
 
 Responsibilities:
+
 - `run(task, context, config) → PipelineResult`
 - Sequence: implement → compile → test → review → gate → merge
 - Call `FeedbackLoopRunner` for compile/test stages
@@ -98,6 +101,7 @@ export interface StageOutcome {
 #### `pipeline/feedback-loop.ts` (~80 lines) — Feedback Loop
 
 Responsibilities:
+
 - `runLoop(stage, task, context, config) → LoopResult`
 - Retry stage up to `config.maxLoopIterations` times (default 5)
 - Each iteration: run stage → digest AI feedback → respawn worker with feedback
@@ -116,6 +120,7 @@ export interface LoopResult {
 #### `pipeline/file-reader.ts` (~50 lines) — File Content Reader
 
 Responsibilities:
+
 - `readFileContents(paths, options?) → Record<string, string>`
 - Truncate large files: first 50 lines + export signatures + truncation notice
 - Configurable truncation threshold (default 300 lines)
@@ -145,13 +150,13 @@ Currently buried in orchestrator lines 512-539. Extract as pure function.
 
 AI prompts scattered across 5 modules, each building prompt strings inline:
 
-| Module | Prompt type | Wire mode? |
-|--------|------------|-----------|
-| `workers/spawner.ts` | Worker spawn | Yes |
-| `stages/feedback.ts` | Compile/test digestion | **No — prose** |
-| `stages/review.ts` | Code review | **No — prose** |
-| `spring-training/contracts.ts` | Contract extraction | **No — prose** |
-| `gates/quality.ts` | Quality gate | **No — prose** |
+| Module                         | Prompt type            | Wire mode?     |
+| ------------------------------ | ---------------------- | -------------- |
+| `workers/spawner.ts`           | Worker spawn           | Yes            |
+| `stages/feedback.ts`           | Compile/test digestion | **No — prose** |
+| `stages/review.ts`             | Code review            | **No — prose** |
+| `spring-training/contracts.ts` | Contract extraction    | **No — prose** |
+| `gates/quality.ts`             | Quality gate           | **No — prose** |
 
 4 of 5 AI-facing modules use uncompressed prose. Inconsistent framing, wasted tokens.
 
@@ -189,7 +194,7 @@ export function outputFormat(schema: string): string {
 
 // prompts/partials/constraints.ts
 export function constraints(budget: number, safetyRules: string[]): string {
-  return `budget:${budget}tok|rules:[${safetyRules.join(',')}]`;
+  return `budget:${budget}tok|rules:[${safetyRules.join(",")}]`;
 }
 ```
 
@@ -199,10 +204,10 @@ Each template: typed args in, wire-compressed string out.
 
 ```typescript
 // prompts/feedback.ts
-import { agentRole, outputFormat, constraints } from './partials/index.js';
+import { agentRole, outputFormat, constraints } from "./partials/index.js";
 
 export interface FeedbackPromptArgs {
-  stage: 'compile' | 'test';
+  stage: "compile" | "test";
   rawOutput: string;
   taskName: string;
   filesChanged: string[];
@@ -213,23 +218,25 @@ export function feedbackPrompt(args: FeedbackPromptArgs): string {
   return [
     agentRole(`${args.stage}-feedback`),
     `task:${args.taskName}`,
-    `files:[${args.filesChanged.join(',')}]`,
+    `files:[${args.filesChanged.join(",")}]`,
     `raw:${args.rawOutput}`,
-    outputFormat('issues:{file,line,msg,fix}[]'),
-    constraints(args.budget, ['no-new-files', 'preserve-exports']),
-  ].join('|');
+    outputFormat("issues:{file,line,msg,fix}[]"),
+    constraints(args.budget, ["no-new-files", "preserve-exports"]),
+  ].join("|");
 }
 ```
 
 #### Migration Plan
 
 For each module:
+
 1. Create prompt template in `prompts/`
 2. Update source module to import and call template function
 3. Remove inline prompt string from source module
 4. Verify tests pass
 
 Order (least dependencies first):
+
 1. `prompts/partials/*` — shared building blocks
 2. `prompts/contracts.ts` — standalone, used only by spring-training
 3. `prompts/quality.ts` — standalone, used only by gates
@@ -240,6 +247,7 @@ Order (least dependencies first):
 ### Wire Mode Enforcement
 
 After migration, all AI-to-AI communication goes through `prompts/*`. No module should build prompt strings inline. Enforced by:
+
 - ESLint rule or grep check: no `Anthropic()` calls outside spawner/stages
 - All `messages[].content` values come from `prompts/*` functions
 
@@ -248,6 +256,7 @@ After migration, all AI-to-AI communication goes through `prompts/*`. No module 
 ## Scope Boundaries
 
 **In scope:**
+
 - Extract orchestrator into 4 modules
 - Create prompt template system with partials
 - Migrate all 5 prompt sources to templates
@@ -255,6 +264,7 @@ After migration, all AI-to-AI communication goes through `prompts/*`. No module 
 - Tests for all new modules
 
 **Out of scope:**
+
 - Model tier selection, skills-enabled workers, quality intelligence (Phase 3.5 — depends on clean architecture from this phase)
 - Storage changes (Phase 4)
 - Wire compression algorithm changes (Phase 4)
@@ -265,6 +275,7 @@ After migration, all AI-to-AI communication goes through `prompts/*`. No module 
 ## File Inventory
 
 ### New Files
+
 - `packages/core/src/pipeline/stage-runner.ts`
 - `packages/core/src/pipeline/stage-runner.test.ts`
 - `packages/core/src/pipeline/feedback-loop.ts`
@@ -282,6 +293,7 @@ After migration, all AI-to-AI communication goes through `prompts/*`. No module 
 - `packages/core/src/prompts/quality.ts`
 
 ### Modified Files
+
 - `packages/core/src/orchestrator.ts` — slim to ~120 lines, import pipeline runner
 - `packages/core/src/orchestrator.test.ts` — keep as integration tests
 - `packages/core/src/workers/spawner.ts` — import prompt from `prompts/worker.ts`
@@ -292,6 +304,7 @@ After migration, all AI-to-AI communication goes through `prompts/*`. No module 
 - `packages/core/src/index.ts` — export new modules
 
 ### Deleted Files
+
 None — all changes are extractions + migrations.
 
 ## Risks

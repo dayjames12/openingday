@@ -102,7 +102,12 @@ export interface ContextPackage {
   rules: string;
   budget: { softLimit: number; hardLimit: number };
   landscape: { mc: number; fc: number; modules: { p: string; fc: number; k: string[] }[] };
-  relevant: { p: string; ex: { n: string; s: string }[]; im: { f: string; n: string[] }[]; loc: number }[];
+  relevant: {
+    p: string;
+    ex: { n: string; s: string }[];
+    im: { f: string; n: string[] }[];
+    loc: number;
+  }[];
 }
 
 // === Wire Mode ===

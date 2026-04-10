@@ -10,7 +10,14 @@ import {
   applyWorkerResult,
   findTimedOutSessions,
 } from "./pool.js";
-import { createWorkTree, addMilestone, addSlice, addTask, updateTaskStatus, getTask } from "../trees/work-tree.js";
+import {
+  createWorkTree,
+  addMilestone,
+  addSlice,
+  addTask,
+  updateTaskStatus,
+  getTask,
+} from "../trees/work-tree.js";
 import { defaultConfig } from "../config/defaults.js";
 import type { WorkerOutput, ProjectState } from "../types.js";
 
@@ -27,16 +34,36 @@ function buildWorkTree() {
   tree = addMilestone(tree, { id: "m1", name: "M1", description: "", dependencies: [] });
   tree = addSlice(tree, "m1", { id: "s1", name: "S1", description: "" });
   tree = addTask(tree, "s1", {
-    id: "t1", name: "Task 1", description: "", dependencies: [], touches: ["a.ts"], reads: [],
+    id: "t1",
+    name: "Task 1",
+    description: "",
+    dependencies: [],
+    touches: ["a.ts"],
+    reads: [],
   });
   tree = addTask(tree, "s1", {
-    id: "t2", name: "Task 2", description: "", dependencies: [], touches: ["b.ts"], reads: [],
+    id: "t2",
+    name: "Task 2",
+    description: "",
+    dependencies: [],
+    touches: ["b.ts"],
+    reads: [],
   });
   tree = addTask(tree, "s1", {
-    id: "t3", name: "Task 3", description: "", dependencies: [], touches: ["c.ts"], reads: [],
+    id: "t3",
+    name: "Task 3",
+    description: "",
+    dependencies: [],
+    touches: ["c.ts"],
+    reads: [],
   });
   tree = addTask(tree, "s1", {
-    id: "t4", name: "Task 4", description: "", dependencies: [], touches: ["d.ts"], reads: [],
+    id: "t4",
+    name: "Task 4",
+    description: "",
+    dependencies: [],
+    touches: ["d.ts"],
+    reads: [],
   });
   return tree;
 }
@@ -222,8 +249,22 @@ describe("worker pool", () => {
       pool = {
         ...pool,
         sessions: [
-          { id: "s1", taskId: "t1", startedAt: past, status: "active" as const, worktreePath: null, lastActivityAt: past },
-          { id: "s2", taskId: "t2", startedAt: new Date().toISOString(), status: "active" as const, worktreePath: null, lastActivityAt: new Date().toISOString() },
+          {
+            id: "s1",
+            taskId: "t1",
+            startedAt: past,
+            status: "active" as const,
+            worktreePath: null,
+            lastActivityAt: past,
+          },
+          {
+            id: "s2",
+            taskId: "t2",
+            startedAt: new Date().toISOString(),
+            status: "active" as const,
+            worktreePath: null,
+            lastActivityAt: new Date().toISOString(),
+          },
         ],
         totalSpawned: 2,
       };
@@ -239,7 +280,14 @@ describe("worker pool", () => {
       pool = {
         ...pool,
         sessions: [
-          { id: "s1", taskId: "t1", startedAt: past, status: "completed" as const, worktreePath: null, lastActivityAt: past },
+          {
+            id: "s1",
+            taskId: "t1",
+            startedAt: past,
+            status: "completed" as const,
+            worktreePath: null,
+            lastActivityAt: past,
+          },
         ],
         totalSpawned: 1,
       };

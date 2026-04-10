@@ -21,10 +21,7 @@ export function findStuckWorkers(
 /**
  * Find tasks with status "in_progress" that have no corresponding active session in the pool.
  */
-export function findDeadTasks(
-  workTree: WorkTree,
-  pool: WorkerPool,
-): WorkTask[] {
+export function findDeadTasks(workTree: WorkTree, pool: WorkerPool): WorkTask[] {
   const activeTaskIds = new Set(getActiveSessions(pool).map((s) => s.taskId));
   return getAllTasks(workTree).filter(
     (t) => t.status === "in_progress" && !activeTaskIds.has(t.id),

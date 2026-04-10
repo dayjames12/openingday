@@ -119,13 +119,7 @@ function makeWorkTree(overrides?: {
 
 describe("preflightCheck", () => {
   it("passes for a well-formed task", () => {
-    const result = preflightCheck(
-      makeWorkTree(),
-      makeCodeTree(),
-      null,
-      makeConfig(),
-      "t1",
-    );
+    const result = preflightCheck(makeWorkTree(), makeCodeTree(), null, makeConfig(), "t1");
     expect(result.canProceed).toBe(true);
     expect(result.blockers).toHaveLength(0);
   });
@@ -182,7 +176,9 @@ describe("preflightCheck", () => {
     const result = preflightCheck(
       makeWorkTree({
         dependencies: ["t2"],
-        extraTasks: [{ id: "t2", status: "pending", touches: ["src/feature.ts"], dependencies: ["t1"] }],
+        extraTasks: [
+          { id: "t2", status: "pending", touches: ["src/feature.ts"], dependencies: ["t1"] },
+        ],
       }),
       makeCodeTree(),
       null,
@@ -196,12 +192,14 @@ describe("preflightCheck", () => {
   it("warns on file conflicts with in-progress tasks", () => {
     const result = preflightCheck(
       makeWorkTree({
-        extraTasks: [{
-          id: "t2",
-          status: "in_progress",
-          touches: ["src/feature.ts"],
-          dependencies: [],
-        }],
+        extraTasks: [
+          {
+            id: "t2",
+            status: "in_progress",
+            touches: ["src/feature.ts"],
+            dependencies: [],
+          },
+        ],
       }),
       makeCodeTree(),
       null,

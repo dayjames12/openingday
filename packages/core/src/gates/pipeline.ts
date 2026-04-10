@@ -7,16 +7,18 @@ import type {
   CodeTree,
 } from "../types.js";
 import { createQualityGateCheck } from "./quality.js";
-import {
-  realTestGate,
-  realDiffGate,
-  realSecurityGate,
-} from "./verification.js";
+import { realTestGate, realDiffGate, realSecurityGate } from "./verification.js";
 import type { EnvConfig } from "../scanner/types.js";
 
 // === Gate Layer Definition ===
 
-export type GateLayer = "automated" | "security" | "quality" | "tree-check" | "verification" | "human";
+export type GateLayer =
+  | "automated"
+  | "security"
+  | "quality"
+  | "tree-check"
+  | "verification"
+  | "human";
 
 export interface GateCheck {
   layer: GateLayer;
@@ -25,7 +27,12 @@ export interface GateCheck {
 
 export interface VerificationGateCheck {
   layer: GateLayer;
-  run: (output: WorkerOutput, workTree: WorkTree, codeTree: CodeTree, worktreePath: string) => Promise<GateResult>;
+  run: (
+    output: WorkerOutput,
+    workTree: WorkTree,
+    codeTree: CodeTree,
+    worktreePath: string,
+  ) => Promise<GateResult>;
 }
 
 export type AnyGateCheck = GateCheck | VerificationGateCheck;
@@ -132,7 +139,9 @@ export function treeCheckGate(taskTouches: string[]): GateCheck {
 /**
  * Security gate: basic check for known dangerous patterns.
  */
-export function securityGate(dangerousPatterns: string[] = ["eval(", "exec(", "child_process"]): GateCheck {
+export function securityGate(
+  dangerousPatterns: string[] = ["eval(", "exec(", "child_process"],
+): GateCheck {
   return {
     layer: "security",
     run(output) {
@@ -196,7 +205,11 @@ export function createDefaultPipeline(
   standards?: string,
   opts?: { worktreePath?: string; env?: EnvConfig },
 ): AnyGateCheck[] {
-  const pipeline: AnyGateCheck[] = [automatedTestGate(), treeCheckGate(taskTouches), securityGate()];
+  const pipeline: AnyGateCheck[] = [
+    automatedTestGate(),
+    treeCheckGate(taskTouches),
+    securityGate(),
+  ];
   if (standards) {
     pipeline.push(createQualityGateCheck(standards));
   }

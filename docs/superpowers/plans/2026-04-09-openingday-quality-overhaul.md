@@ -16,47 +16,48 @@
 
 ### `packages/core/src/` — New Files
 
-| File | Responsibility |
-|------|---------------|
-| `spring-training/validate.ts` | Structural validation: file existence, one-owner-per-file, DAG, context estimation, description quality, tests-with-impl |
-| `spring-training/contracts.ts` | AI contract generation from spec — shared types file |
-| `spring-training/simulate.ts` | Execution plan simulation — walk tasks, detect missing deps, optimize order |
-| `spring-training/runner.ts` | Orchestrate validate + contracts + simulate pipeline |
-| `stages/compile.ts` | Compile stage runner — `tsc --noEmit` with AI feedback |
-| `stages/test.ts` | Test stage runner — `{env.pm} test` with AI feedback |
-| `stages/review.ts` | Review stage runner — AI reviewer reads diff + contracts + spec |
-| `stages/feedback.ts` | AI error digesters for compile/test/review output |
-| `digests/generator.ts` | Task completion digest generation |
-| `safety/watchdog.ts` | Global watchdog timer — no-progress detection |
-| `safety/loops.ts` | Per-task loop tracking with circuit breakers |
+| File                           | Responsibility                                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `spring-training/validate.ts`  | Structural validation: file existence, one-owner-per-file, DAG, context estimation, description quality, tests-with-impl |
+| `spring-training/contracts.ts` | AI contract generation from spec — shared types file                                                                     |
+| `spring-training/simulate.ts`  | Execution plan simulation — walk tasks, detect missing deps, optimize order                                              |
+| `spring-training/runner.ts`    | Orchestrate validate + contracts + simulate pipeline                                                                     |
+| `stages/compile.ts`            | Compile stage runner — `tsc --noEmit` with AI feedback                                                                   |
+| `stages/test.ts`               | Test stage runner — `{env.pm} test` with AI feedback                                                                     |
+| `stages/review.ts`             | Review stage runner — AI reviewer reads diff + contracts + spec                                                          |
+| `stages/feedback.ts`           | AI error digesters for compile/test/review output                                                                        |
+| `digests/generator.ts`         | Task completion digest generation                                                                                        |
+| `safety/watchdog.ts`           | Global watchdog timer — no-progress detection                                                                            |
+| `safety/loops.ts`              | Per-task loop tracking with circuit breakers                                                                             |
 
 ### `packages/core/src/` — Modified Files
 
-| File | Change |
-|------|--------|
-| `types.ts` | Add StageType, StageFeedback, StageResult, TaskDigest, SpringTrainingResult, EnrichedContextPackage, WatchdogState, LoopTracker; update WirePrompt |
-| `storage/interface.ts` | Add writeDigest, readDigests, writeContracts, readContracts, writeStageResult, readStageResults |
-| `storage/disk.ts` | Implement new storage methods |
-| `context/context-builder.ts` | Add buildEnrichedContext function |
-| `wire/wire.ts` | Add toEnrichedWirePrompt function |
-| `seeder/from-spec.ts` | Enforce 5 seeder rules in prompt + validation |
-| `orchestrator.ts` | Rewrite runOneCycle to staged pipeline |
-| `index.ts` | Export all new modules |
+| File                         | Change                                                                                                                                             |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `types.ts`                   | Add StageType, StageFeedback, StageResult, TaskDigest, SpringTrainingResult, EnrichedContextPackage, WatchdogState, LoopTracker; update WirePrompt |
+| `storage/interface.ts`       | Add writeDigest, readDigests, writeContracts, readContracts, writeStageResult, readStageResults                                                    |
+| `storage/disk.ts`            | Implement new storage methods                                                                                                                      |
+| `context/context-builder.ts` | Add buildEnrichedContext function                                                                                                                  |
+| `wire/wire.ts`               | Add toEnrichedWirePrompt function                                                                                                                  |
+| `seeder/from-spec.ts`        | Enforce 5 seeder rules in prompt + validation                                                                                                      |
+| `orchestrator.ts`            | Rewrite runOneCycle to staged pipeline                                                                                                             |
+| `index.ts`                   | Export all new modules                                                                                                                             |
 
 ### `packages/cli/src/` — Modified/New Files
 
-| File | Change |
-|------|--------|
-| `commands/init.ts` | Run spring training after seeding |
-| `commands/new.ts` | Run spring training after seeding |
+| File                          | Change                                   |
+| ----------------------------- | ---------------------------------------- |
+| `commands/init.ts`            | Run spring training after seeding        |
+| `commands/new.ts`             | Run spring training after seeding        |
 | `commands/spring-training.ts` | New `openingday spring-training` command |
-| `index.ts` | Register spring-training command |
+| `index.ts`                    | Register spring-training command         |
 
 ---
 
 ## Task 1: New Types
 
 **Files:**
+
 - Modify: `packages/core/src/types.ts`
 - Modify: `packages/core/src/types.test.ts`
 
@@ -154,93 +155,101 @@ export interface WirePrompt {
 ```ts
 // packages/core/src/types.test.ts — add to existing describe block
 
-  it("creates a valid StageFeedback", () => {
-    const feedback: StageFeedback = {
-      stage: "compile",
-      errors: [
-        { f: "src/routes/players.ts", l: 12, e: "Property 'team' does not exist", fix: "Import Player from contracts.ts" },
-      ],
-    };
-    expect(feedback.stage).toBe("compile");
-    expect(feedback.errors).toHaveLength(1);
-    expect(feedback.errors[0]!.f).toBe("src/routes/players.ts");
-  });
+it("creates a valid StageFeedback", () => {
+  const feedback: StageFeedback = {
+    stage: "compile",
+    errors: [
+      {
+        f: "src/routes/players.ts",
+        l: 12,
+        e: "Property 'team' does not exist",
+        fix: "Import Player from contracts.ts",
+      },
+    ],
+  };
+  expect(feedback.stage).toBe("compile");
+  expect(feedback.errors).toHaveLength(1);
+  expect(feedback.errors[0]!.f).toBe("src/routes/players.ts");
+});
 
-  it("creates a valid StageResult", () => {
-    const result: StageResult = {
-      stage: "test",
-      passed: false,
-      loops: 2,
-      feedback: [
-        { stage: "test", errors: [{ f: "test.ts", l: 5, e: "Expected 200 got 404", fix: "Register route" }] },
-      ],
-    };
-    expect(result.passed).toBe(false);
-    expect(result.loops).toBe(2);
-  });
+it("creates a valid StageResult", () => {
+  const result: StageResult = {
+    stage: "test",
+    passed: false,
+    loops: 2,
+    feedback: [
+      {
+        stage: "test",
+        errors: [{ f: "test.ts", l: 5, e: "Expected 200 got 404", fix: "Register route" }],
+      },
+    ],
+  };
+  expect(result.passed).toBe(false);
+  expect(result.loops).toBe(2);
+});
 
-  it("creates a valid TaskDigest", () => {
-    const digest: TaskDigest = {
-      task: "m1-s1-t1",
-      did: "created GET /players in src/routes/players.ts",
-      ex: ["playersRouter"],
-      im: ["Player from contracts", "store"],
-      pattern: "Router, json array response, no wrapper",
-    };
-    expect(digest.task).toBe("m1-s1-t1");
-    expect(digest.ex).toContain("playersRouter");
-  });
+it("creates a valid TaskDigest", () => {
+  const digest: TaskDigest = {
+    task: "m1-s1-t1",
+    did: "created GET /players in src/routes/players.ts",
+    ex: ["playersRouter"],
+    im: ["Player from contracts", "store"],
+    pattern: "Router, json array response, no wrapper",
+  };
+  expect(digest.task).toBe("m1-s1-t1");
+  expect(digest.ex).toContain("playersRouter");
+});
 
-  it("creates a valid SpringTrainingResult", () => {
-    const result: SpringTrainingResult = {
-      valid: true,
-      blockers: [],
-      warnings: ["Task m1-s1-t3 context near 150k limit"],
-      contracts: "export interface Player { name: string; team: string; }",
-      executionOrder: ["m1-s1-t1", "m1-s1-t2", "m1-s1-t3"],
-      addedDependencies: [["m1-s1-t3", "m1-s1-t2"]],
-    };
-    expect(result.valid).toBe(true);
-    expect(result.executionOrder).toHaveLength(3);
-  });
+it("creates a valid SpringTrainingResult", () => {
+  const result: SpringTrainingResult = {
+    valid: true,
+    blockers: [],
+    warnings: ["Task m1-s1-t3 context near 150k limit"],
+    contracts: "export interface Player { name: string; team: string; }",
+    executionOrder: ["m1-s1-t1", "m1-s1-t2", "m1-s1-t3"],
+    addedDependencies: [["m1-s1-t3", "m1-s1-t2"]],
+  };
+  expect(result.valid).toBe(true);
+  expect(result.executionOrder).toHaveLength(3);
+});
 
-  it("creates a valid EnrichedContextPackage", () => {
-    const pkg: EnrichedContextPackage = {
-      task: { name: "test", description: "test task", acceptanceCriteria: [] },
-      interfaces: [],
-      above: [],
-      below: [],
-      memory: "",
-      rules: "",
-      budget: { softLimit: 1500, hardLimit: 2000 },
-      landscape: { mc: 0, fc: 0, modules: [] },
-      relevant: [],
-      fileContents: { "src/index.ts": "export const x = 1;" },
-      contracts: "export interface Player { name: string; }",
-      digests: [],
-      specExcerpt: "Build a players API",
-    };
-    expect(pkg.fileContents).toHaveProperty("src/index.ts");
-    expect(pkg.contracts).toContain("Player");
-  });
+it("creates a valid EnrichedContextPackage", () => {
+  const pkg: EnrichedContextPackage = {
+    task: { name: "test", description: "test task", acceptanceCriteria: [] },
+    interfaces: [],
+    above: [],
+    below: [],
+    memory: "",
+    rules: "",
+    budget: { softLimit: 1500, hardLimit: 2000 },
+    landscape: { mc: 0, fc: 0, modules: [] },
+    relevant: [],
+    fileContents: { "src/index.ts": "export const x = 1;" },
+    contracts: "export interface Player { name: string; }",
+    digests: [],
+    specExcerpt: "Build a players API",
+  };
+  expect(pkg.fileContents).toHaveProperty("src/index.ts");
+  expect(pkg.contracts).toContain("Player");
+});
 
-  it("creates a valid WatchdogState", () => {
-    const state: WatchdogState = {
-      lastTaskCompletedAt: "2026-04-09T10:00:00Z",
-      warningIssued: false,
-    };
-    expect(state.warningIssued).toBe(false);
-  });
+it("creates a valid WatchdogState", () => {
+  const state: WatchdogState = {
+    lastTaskCompletedAt: "2026-04-09T10:00:00Z",
+    warningIssued: false,
+  };
+  expect(state.warningIssued).toBe(false);
+});
 
-  it("creates a valid LoopTracker", () => {
-    const tracker: LoopTracker = {
-      taskId: "m1-s1-t1",
-      stageLoopIds: ["loop-1", "loop-2"],
-      totalLoops: 2,
-    };
-    expect(tracker.totalLoops).toBe(2);
-    expect(tracker.stageLoopIds).toHaveLength(2);
-  });
+it("creates a valid LoopTracker", () => {
+  const tracker: LoopTracker = {
+    taskId: "m1-s1-t1",
+    stageLoopIds: ["loop-1", "loop-2"],
+    totalLoops: 2,
+  };
+  expect(tracker.totalLoops).toBe(2);
+  expect(tracker.stageLoopIds).toHaveLength(2);
+});
 ```
 
 - [ ] **Step 4: Run tests**
@@ -257,6 +266,7 @@ pnpm typecheck
 ## Task 2: Storage Extensions
 
 **Files:**
+
 - Modify: `packages/core/src/storage/interface.ts`
 - Modify: `packages/core/src/storage/disk.ts`
 - Modify: `packages/core/src/storage/disk.test.ts`
@@ -302,8 +312,8 @@ Add to `disk.ts` class body, and add `digests`, `stages` dirs in `initialize()`:
 
 ```ts
 // packages/core/src/storage/disk.ts — add to initialize()
-    await mkdir(this.path("digests"), { recursive: true });
-    await mkdir(this.path("stages"), { recursive: true });
+await mkdir(this.path("digests"), { recursive: true });
+await mkdir(this.path("stages"), { recursive: true });
 ```
 
 ```ts
@@ -384,69 +394,69 @@ Add to existing `disk.test.ts`:
 ```ts
 // packages/core/src/storage/disk.test.ts — add to existing describe block
 
-  describe("digests", () => {
-    it("writes and reads a digest", async () => {
-      const digest: TaskDigest = {
-        task: "m1-s1-t1",
-        did: "created players route",
-        ex: ["playersRouter"],
-        im: ["Player"],
-        pattern: "express router",
-      };
-      await storage.writeDigest("m1-s1-t1", digest);
-      const digests = await storage.readDigests();
-      expect(digests).toHaveLength(1);
-      expect(digests[0]!.task).toBe("m1-s1-t1");
-    });
-
-    it("reads empty digests when none exist", async () => {
-      const digests = await storage.readDigests();
-      expect(digests).toEqual([]);
-    });
+describe("digests", () => {
+  it("writes and reads a digest", async () => {
+    const digest: TaskDigest = {
+      task: "m1-s1-t1",
+      did: "created players route",
+      ex: ["playersRouter"],
+      im: ["Player"],
+      pattern: "express router",
+    };
+    await storage.writeDigest("m1-s1-t1", digest);
+    const digests = await storage.readDigests();
+    expect(digests).toHaveLength(1);
+    expect(digests[0]!.task).toBe("m1-s1-t1");
   });
 
-  describe("contracts", () => {
-    it("writes and reads contracts", async () => {
-      const content = "export interface Player { name: string; }";
-      await storage.writeContracts(content);
-      const result = await storage.readContracts();
-      expect(result).toBe(content);
-    });
+  it("reads empty digests when none exist", async () => {
+    const digests = await storage.readDigests();
+    expect(digests).toEqual([]);
+  });
+});
 
-    it("returns empty string when no contracts exist", async () => {
-      const result = await storage.readContracts();
-      expect(result).toBe("");
-    });
+describe("contracts", () => {
+  it("writes and reads contracts", async () => {
+    const content = "export interface Player { name: string; }";
+    await storage.writeContracts(content);
+    const result = await storage.readContracts();
+    expect(result).toBe(content);
   });
 
-  describe("stage results", () => {
-    it("writes and reads stage results", async () => {
-      const result: StageResult = {
-        stage: "compile",
-        passed: true,
-        loops: 1,
-        feedback: [],
-      };
-      await storage.writeStageResult("m1-s1-t1", result);
-      const results = await storage.readStageResults("m1-s1-t1");
-      expect(results).toHaveLength(1);
-      expect(results[0]!.stage).toBe("compile");
-    });
-
-    it("appends stage results", async () => {
-      const r1: StageResult = { stage: "compile", passed: true, loops: 1, feedback: [] };
-      const r2: StageResult = { stage: "test", passed: false, loops: 3, feedback: [] };
-      await storage.writeStageResult("m1-s1-t1", r1);
-      await storage.writeStageResult("m1-s1-t1", r2);
-      const results = await storage.readStageResults("m1-s1-t1");
-      expect(results).toHaveLength(2);
-    });
-
-    it("returns empty array when no stage results exist", async () => {
-      const results = await storage.readStageResults("nonexistent");
-      expect(results).toEqual([]);
-    });
+  it("returns empty string when no contracts exist", async () => {
+    const result = await storage.readContracts();
+    expect(result).toBe("");
   });
+});
+
+describe("stage results", () => {
+  it("writes and reads stage results", async () => {
+    const result: StageResult = {
+      stage: "compile",
+      passed: true,
+      loops: 1,
+      feedback: [],
+    };
+    await storage.writeStageResult("m1-s1-t1", result);
+    const results = await storage.readStageResults("m1-s1-t1");
+    expect(results).toHaveLength(1);
+    expect(results[0]!.stage).toBe("compile");
+  });
+
+  it("appends stage results", async () => {
+    const r1: StageResult = { stage: "compile", passed: true, loops: 1, feedback: [] };
+    const r2: StageResult = { stage: "test", passed: false, loops: 3, feedback: [] };
+    await storage.writeStageResult("m1-s1-t1", r1);
+    await storage.writeStageResult("m1-s1-t1", r2);
+    const results = await storage.readStageResults("m1-s1-t1");
+    expect(results).toHaveLength(2);
+  });
+
+  it("returns empty array when no stage results exist", async () => {
+    const results = await storage.readStageResults("nonexistent");
+    expect(results).toEqual([]);
+  });
+});
 ```
 
 Import `TaskDigest` and `StageResult` at top of `disk.test.ts`:
@@ -469,6 +479,7 @@ pnpm typecheck
 ## Task 3: Spring Training — Structural Validation
 
 **Files:**
+
 - Create: `packages/core/src/spring-training/validate.ts`
 - Create: `packages/core/src/spring-training/validate.test.ts`
 
@@ -480,7 +491,17 @@ import { describe, it, expect } from "vitest";
 import { validateStructure } from "./validate.js";
 import type { WorkTree, CodeTree } from "../types.js";
 
-function makeWorkTree(tasks: { id: string; desc: string; deps: string[]; touches: string[]; reads: string[]; sliceId: string; milestoneId: string }[]): WorkTree {
+function makeWorkTree(
+  tasks: {
+    id: string;
+    desc: string;
+    deps: string[];
+    touches: string[];
+    reads: string[];
+    sliceId: string;
+    milestoneId: string;
+  }[],
+): WorkTree {
   const milestoneMap = new Map<string, { id: string; slices: Map<string, typeof tasks> }>();
   for (const t of tasks) {
     if (!milestoneMap.has(t.milestoneId)) {
@@ -525,24 +546,34 @@ function makeWorkTree(tasks: { id: string; desc: string; deps: string[]; touches
 
 function makeCodeTree(files: string[]): CodeTree {
   return {
-    modules: [{
-      path: "src",
-      description: "source",
-      files: files.map((p) => ({
-        path: p,
-        description: p,
-        exports: [],
-        imports: [],
-        lastModifiedBy: null,
-      })),
-    }],
+    modules: [
+      {
+        path: "src",
+        description: "source",
+        files: files.map((p) => ({
+          path: p,
+          description: p,
+          exports: [],
+          imports: [],
+          lastModifiedBy: null,
+        })),
+      },
+    ],
   };
 }
 
 describe("validateStructure", () => {
   it("passes valid structure", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create players route in src/routes/players.ts", deps: [], touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create players route in src/routes/players.ts",
+        deps: [],
+        touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts", "src/__tests__/players.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -552,7 +583,15 @@ describe("validateStructure", () => {
 
   it("blocks on missing file in code tree", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/routes/players.ts", deps: [], touches: ["src/routes/players.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/routes/players.ts",
+        deps: [],
+        touches: ["src/routes/players.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree([]);
     const result = validateStructure(wt, ct);
@@ -561,8 +600,24 @@ describe("validateStructure", () => {
 
   it("blocks on independent tasks touching same file", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/routes/players.ts with tests", deps: [], touches: ["src/routes/players.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
-      { id: "t2", desc: "Update route in src/routes/players.ts with tests", deps: [], touches: ["src/routes/players.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/routes/players.ts with tests",
+        deps: [],
+        touches: ["src/routes/players.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
+      {
+        id: "t2",
+        desc: "Update route in src/routes/players.ts with tests",
+        deps: [],
+        touches: ["src/routes/players.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts"]);
     const result = validateStructure(wt, ct);
@@ -572,8 +627,24 @@ describe("validateStructure", () => {
 
   it("allows dependent tasks touching same file", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/routes/players.ts with tests", deps: [], touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
-      { id: "t2", desc: "Add validation to src/routes/players.ts with tests", deps: ["t1"], touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/routes/players.ts with tests",
+        deps: [],
+        touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
+      {
+        id: "t2",
+        desc: "Add validation to src/routes/players.ts with tests",
+        deps: ["t1"],
+        touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts", "src/__tests__/players.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -582,8 +653,24 @@ describe("validateStructure", () => {
 
   it("blocks on circular dependencies", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/a.ts with test", deps: ["t2"], touches: ["src/a.ts", "src/a.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
-      { id: "t2", desc: "Create route in src/b.ts with test", deps: ["t1"], touches: ["src/b.ts", "src/b.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/a.ts with test",
+        deps: ["t2"],
+        touches: ["src/a.ts", "src/a.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
+      {
+        id: "t2",
+        desc: "Create route in src/b.ts with test",
+        deps: ["t1"],
+        touches: ["src/b.ts", "src/b.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/a.ts", "src/b.ts", "src/a.test.ts", "src/b.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -593,7 +680,15 @@ describe("validateStructure", () => {
 
   it("warns on short description", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "short", deps: [], touches: ["src/a.ts", "src/a.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "short",
+        deps: [],
+        touches: ["src/a.ts", "src/a.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/a.ts", "src/a.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -602,7 +697,15 @@ describe("validateStructure", () => {
 
   it("warns on impl task without test files in touches", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create players route in src/routes/players.ts", deps: [], touches: ["src/routes/players.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create players route in src/routes/players.ts",
+        deps: [],
+        touches: ["src/routes/players.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts"]);
     const result = validateStructure(wt, ct);
@@ -612,7 +715,15 @@ describe("validateStructure", () => {
   it("blocks when context estimate exceeds 150k", () => {
     // Indirectly tested — would need a massive tree. Validate the check exists.
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/routes/players.ts with tests", deps: [], touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/routes/players.ts with tests",
+        deps: [],
+        touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts", "src/__tests__/players.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -622,13 +733,15 @@ describe("validateStructure", () => {
 
   it("warns when milestone has no tasks", () => {
     const wt: WorkTree = {
-      milestones: [{
-        id: "m1",
-        name: "Empty",
-        description: "empty milestone",
-        dependencies: [],
-        slices: [],
-      }],
+      milestones: [
+        {
+          id: "m1",
+          name: "Empty",
+          description: "empty milestone",
+          dependencies: [],
+          slices: [],
+        },
+      ],
     };
     const ct = makeCodeTree([]);
     const result = validateStructure(wt, ct);
@@ -694,12 +807,16 @@ export function validateStructure(
   for (const task of allTasks) {
     for (const touchPath of task.touches) {
       if (!codeFiles.has(touchPath) && !repoFiles.has(touchPath)) {
-        blockers.push(`Task "${task.id}": touch file "${touchPath}" not found in code tree or repo map`);
+        blockers.push(
+          `Task "${task.id}": touch file "${touchPath}" not found in code tree or repo map`,
+        );
       }
     }
     for (const readPath of task.reads) {
       if (!codeFiles.has(readPath) && !repoFiles.has(readPath)) {
-        warnings.push(`Task "${task.id}": read file "${readPath}" not found in code tree or repo map`);
+        warnings.push(
+          `Task "${task.id}": read file "${readPath}" not found in code tree or repo map`,
+        );
       }
     }
   }
@@ -724,7 +841,9 @@ export function validateStructure(
         const bDeps = taskDeps.get(b);
         // Check full transitive dependency chain
         if (!hasTransitiveDep(taskDeps, a, b) && !hasTransitiveDep(taskDeps, b, a)) {
-          blockers.push(`one-owner violation: tasks "${a}" and "${b}" both touch "${file}" with no dependency chain`);
+          blockers.push(
+            `one-owner violation: tasks "${a}" and "${b}" both touch "${file}" with no dependency chain`,
+          );
         }
       }
     }
@@ -749,14 +868,20 @@ export function validateStructure(
   // Check: description quality (> 20 chars with file path)
   for (const task of allTasks) {
     if (task.description.length < 20) {
-      warnings.push(`Task "${task.id}": description too short (${task.description.length} chars, need 20+)`);
+      warnings.push(
+        `Task "${task.id}": description too short (${task.description.length} chars, need 20+)`,
+      );
     }
   }
 
   // Check: tests-with-impl (implementation tasks should have test files)
   for (const task of allTasks) {
-    const hasImplFile = task.touches.some((f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."));
-    const hasTestFile = task.touches.some((f) => f.includes(".test.") || f.includes("__tests__") || f.includes(".spec."));
+    const hasImplFile = task.touches.some(
+      (f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."),
+    );
+    const hasTestFile = task.touches.some(
+      (f) => f.includes(".test.") || f.includes("__tests__") || f.includes(".spec."),
+    );
     if (hasImplFile && !hasTestFile) {
       warnings.push(`Task "${task.id}": implementation task has no test files in touches`);
     }
@@ -843,12 +968,13 @@ pnpm typecheck
 ## Task 4: Spring Training — Contract Generation
 
 **Files:**
+
 - Create: `packages/core/src/spring-training/contracts.ts`
 - Create: `packages/core/src/spring-training/contracts.test.ts`
 
 - [ ] **Step 1: Write tests first**
 
-```ts
+````ts
 // packages/core/src/spring-training/contracts.test.ts
 import { describe, it, expect } from "vitest";
 import { buildContractPrompt, parseContractResponse } from "./contracts.js";
@@ -856,29 +982,45 @@ import { buildContractPrompt, parseContractResponse } from "./contracts.js";
 describe("contract generation", () => {
   describe("buildContractPrompt", () => {
     it("includes spec text in prompt", () => {
-      const prompt = buildContractPrompt("Build a baseball stats API with Player and Team entities");
+      const prompt = buildContractPrompt(
+        "Build a baseball stats API with Player and Team entities",
+      );
       expect(prompt).toContain("baseball stats API");
       expect(prompt).toContain("Player");
     });
 
     it("includes existing types when repoMap provided", () => {
-      const prompt = buildContractPrompt(
-        "Add batting average to players",
-        {
-          v: 1, scannedAt: "", depth: "standard",
-          env: { pm: "pnpm", test: "vitest", lint: "eslint", ts: true, monorepo: false, workspaces: [], infra: "none" },
-          deps: [],
-          modules: [{
-            p: "src", d: "source", fc: 1, k: ["types"],
-            files: [{
-              p: "src/types.ts",
-              ex: [{ n: "Player", s: "interface Player { name: string; team: string }" }],
-              im: [],
-              loc: 10,
-            }],
-          }],
+      const prompt = buildContractPrompt("Add batting average to players", {
+        v: 1,
+        scannedAt: "",
+        depth: "standard",
+        env: {
+          pm: "pnpm",
+          test: "vitest",
+          lint: "eslint",
+          ts: true,
+          monorepo: false,
+          workspaces: [],
+          infra: "none",
         },
-      );
+        deps: [],
+        modules: [
+          {
+            p: "src",
+            d: "source",
+            fc: 1,
+            k: ["types"],
+            files: [
+              {
+                p: "src/types.ts",
+                ex: [{ n: "Player", s: "interface Player { name: string; team: string }" }],
+                im: [],
+                loc: 10,
+              },
+            ],
+          },
+        ],
+      });
       expect(prompt).toContain("Player");
       expect(prompt).toContain("EXISTING TYPES");
     });
@@ -886,7 +1028,8 @@ describe("contract generation", () => {
 
   describe("parseContractResponse", () => {
     it("extracts TypeScript from response", () => {
-      const response = '```typescript\nexport interface Player {\n  name: string;\n  team: string;\n}\n```';
+      const response =
+        "```typescript\nexport interface Player {\n  name: string;\n  team: string;\n}\n```";
       const result = parseContractResponse(response);
       expect(result).toContain("export interface Player");
       expect(result).not.toContain("```");
@@ -904,11 +1047,11 @@ describe("contract generation", () => {
     });
   });
 });
-```
+````
 
 - [ ] **Step 2: Implement contracts.ts**
 
-```ts
+````ts
 // packages/core/src/spring-training/contracts.ts
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
@@ -971,7 +1114,10 @@ export function parseContractResponse(text: string): string {
   }
 
   // Validate it looks like TypeScript types
-  if (!source.includes("export") || (!source.includes("interface") && !source.includes("type") && !source.includes("enum"))) {
+  if (
+    !source.includes("export") ||
+    (!source.includes("interface") && !source.includes("type") && !source.includes("enum"))
+  ) {
     return "";
   }
 
@@ -1015,7 +1161,7 @@ export async function generateContracts(
 
   return parseContractResponse(resultMsg.result);
 }
-```
+````
 
 - [ ] **Step 3: Run tests**
 
@@ -1031,6 +1177,7 @@ pnpm typecheck
 ## Task 5: Spring Training — Execution Simulation
 
 **Files:**
+
 - Create: `packages/core/src/spring-training/simulate.ts`
 - Create: `packages/core/src/spring-training/simulate.test.ts`
 
@@ -1042,50 +1189,58 @@ import { describe, it, expect } from "vitest";
 import { simulateExecution } from "./simulate.js";
 import type { WorkTree, CodeTree } from "../types.js";
 
-function makeWorkTree(tasks: { id: string; deps: string[]; touches: string[]; reads: string[] }[]): WorkTree {
+function makeWorkTree(
+  tasks: { id: string; deps: string[]; touches: string[]; reads: string[] }[],
+): WorkTree {
   return {
-    milestones: [{
-      id: "m1",
-      name: "m1",
-      description: "milestone",
-      dependencies: [],
-      slices: [{
-        id: "m1-s1",
-        name: "s1",
-        description: "slice",
-        parentMilestoneId: "m1",
-        tasks: tasks.map((t) => ({
-          id: t.id,
-          name: t.id,
-          description: `Task ${t.id} implementation with tests`,
-          status: "pending" as const,
-          dependencies: t.deps,
-          touches: t.touches,
-          reads: t.reads,
-          worker: null,
-          tokenSpend: 0,
-          attemptCount: 0,
-          gateResults: [],
-          parentSliceId: "m1-s1",
-        })),
-      }],
-    }],
+    milestones: [
+      {
+        id: "m1",
+        name: "m1",
+        description: "milestone",
+        dependencies: [],
+        slices: [
+          {
+            id: "m1-s1",
+            name: "s1",
+            description: "slice",
+            parentMilestoneId: "m1",
+            tasks: tasks.map((t) => ({
+              id: t.id,
+              name: t.id,
+              description: `Task ${t.id} implementation with tests`,
+              status: "pending" as const,
+              dependencies: t.deps,
+              touches: t.touches,
+              reads: t.reads,
+              worker: null,
+              tokenSpend: 0,
+              attemptCount: 0,
+              gateResults: [],
+              parentSliceId: "m1-s1",
+            })),
+          },
+        ],
+      },
+    ],
   };
 }
 
 function makeCodeTree(files: string[]): CodeTree {
   return {
-    modules: [{
-      path: "src",
-      description: "source",
-      files: files.map((p) => ({
-        path: p,
-        description: p,
-        exports: [],
-        imports: [],
-        lastModifiedBy: null,
-      })),
-    }],
+    modules: [
+      {
+        path: "src",
+        description: "source",
+        files: files.map((p) => ({
+          path: p,
+          description: p,
+          exports: [],
+          imports: [],
+          lastModifiedBy: null,
+        })),
+      },
+    ],
   };
 }
 
@@ -1157,10 +1312,7 @@ export interface SimulationResult {
  * Simulate execution of the work tree to find missing dependencies and optimize order.
  * Walks tasks in dependency order, checking context sufficiency at each step.
  */
-export function simulateExecution(
-  workTree: WorkTree,
-  codeTree: CodeTree,
-): SimulationResult {
+export function simulateExecution(workTree: WorkTree, codeTree: CodeTree): SimulationResult {
   const allTasks = getAllTasks(workTree);
   const codeFiles = new Set(getAllFiles(codeTree).map((f) => f.path));
   const warnings: string[] = [];
@@ -1190,7 +1342,9 @@ export function simulateExecution(
         if (!hasTransitiveDep(taskDeps, task.id, writer)) {
           addedDependencies.push([task.id, writer]);
           deps.add(writer);
-          warnings.push(`Added dependency: "${task.id}" now depends on "${writer}" (reads "${readFile}")`);
+          warnings.push(
+            `Added dependency: "${task.id}" now depends on "${writer}" (reads "${readFile}")`,
+          );
         }
       }
     }
@@ -1198,13 +1352,18 @@ export function simulateExecution(
     // Check for reads that reference files not in code tree and not produced by any task
     for (const readFile of task.reads) {
       if (!codeFiles.has(readFile) && !touchMap.has(readFile)) {
-        warnings.push(`Task "${task.id}" reads "${readFile}" which is not in code tree and not produced by any task`);
+        warnings.push(
+          `Task "${task.id}" reads "${readFile}" which is not in code tree and not produced by any task`,
+        );
       }
     }
   }
 
   // Topological sort for execution order
-  const executionOrder = topologicalSort(allTasks.map((t) => t.id), taskDeps);
+  const executionOrder = topologicalSort(
+    allTasks.map((t) => t.id),
+    taskDeps,
+  );
 
   return {
     executionOrder,
@@ -1241,10 +1400,7 @@ function hasTransitiveDep(
  * Topological sort using Kahn's algorithm.
  * Returns tasks in valid execution order.
  */
-function topologicalSort(
-  taskIds: string[],
-  taskDeps: Map<string, Set<string>>,
-): string[] {
+function topologicalSort(taskIds: string[], taskDeps: Map<string, Set<string>>): string[] {
   const inDegree = new Map<string, number>();
   const adjacency = new Map<string, string[]>();
 
@@ -1301,6 +1457,7 @@ pnpm typecheck
 ## Task 6: Spring Training — Runner
 
 **Files:**
+
 - Create: `packages/core/src/spring-training/runner.ts`
 - Create: `packages/core/src/spring-training/runner.test.ts`
 
@@ -1315,45 +1472,66 @@ import type { WorkTree, CodeTree, SpringTrainingResult } from "../types.js";
 
 function makeMinimalWorkTree(): WorkTree {
   return {
-    milestones: [{
-      id: "m1",
-      name: "Build",
-      description: "Build the thing",
-      dependencies: [],
-      slices: [{
-        id: "m1-s1",
-        name: "Core",
-        description: "Core work",
-        parentMilestoneId: "m1",
-        tasks: [{
-          id: "m1-s1-t1",
-          name: "Create players route",
-          description: "Create players route in src/routes/players.ts with GET/POST endpoints and tests",
-          status: "pending",
-          dependencies: [],
-          touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
-          reads: [],
-          worker: null,
-          tokenSpend: 0,
-          attemptCount: 0,
-          gateResults: [],
-          parentSliceId: "m1-s1",
-        }],
-      }],
-    }],
+    milestones: [
+      {
+        id: "m1",
+        name: "Build",
+        description: "Build the thing",
+        dependencies: [],
+        slices: [
+          {
+            id: "m1-s1",
+            name: "Core",
+            description: "Core work",
+            parentMilestoneId: "m1",
+            tasks: [
+              {
+                id: "m1-s1-t1",
+                name: "Create players route",
+                description:
+                  "Create players route in src/routes/players.ts with GET/POST endpoints and tests",
+                status: "pending",
+                dependencies: [],
+                touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+                reads: [],
+                worker: null,
+                tokenSpend: 0,
+                attemptCount: 0,
+                gateResults: [],
+                parentSliceId: "m1-s1",
+              },
+            ],
+          },
+        ],
+      },
+    ],
   };
 }
 
 function makeMinimalCodeTree(): CodeTree {
   return {
-    modules: [{
-      path: "src",
-      description: "source",
-      files: [
-        { path: "src/routes/players.ts", description: "players route", exports: [], imports: [], lastModifiedBy: null },
-        { path: "src/__tests__/players.test.ts", description: "players tests", exports: [], imports: [], lastModifiedBy: null },
-      ],
-    }],
+    modules: [
+      {
+        path: "src",
+        description: "source",
+        files: [
+          {
+            path: "src/routes/players.ts",
+            description: "players route",
+            exports: [],
+            imports: [],
+            lastModifiedBy: null,
+          },
+          {
+            path: "src/__tests__/players.test.ts",
+            description: "players tests",
+            exports: [],
+            imports: [],
+            lastModifiedBy: null,
+          },
+        ],
+      },
+    ],
   };
 }
 
@@ -1362,12 +1540,36 @@ function makeMockStorage(workTree: WorkTree, codeTree: CodeTree): Storage {
     readProjectConfig: vi.fn().mockResolvedValue({
       name: "test",
       specPath: "spec.md",
-      budgets: { project: { usd: 50, warnPct: 70 }, perTask: { usd: 2, softPct: 75 }, supervisor: { usd: 3 }, planning: { usd: 5 } },
-      limits: { maxConcurrentWorkers: 3, maxTotalWorkers: 50, maxRetries: 3, maxTaskDepth: 4, sessionTimeoutMin: 15, spawnRatePerMin: 5 },
-      circuitBreakers: { consecutiveFailuresSlice: 3, consecutiveFailuresProject: 5, budgetEfficiencyThreshold: 0.5 },
+      budgets: {
+        project: { usd: 50, warnPct: 70 },
+        perTask: { usd: 2, softPct: 75 },
+        supervisor: { usd: 3 },
+        planning: { usd: 5 },
+      },
+      limits: {
+        maxConcurrentWorkers: 3,
+        maxTotalWorkers: 50,
+        maxRetries: 3,
+        maxTaskDepth: 4,
+        sessionTimeoutMin: 15,
+        spawnRatePerMin: 5,
+      },
+      circuitBreakers: {
+        consecutiveFailuresSlice: 3,
+        consecutiveFailuresProject: 5,
+        budgetEfficiencyThreshold: 0.5,
+      },
     }),
     writeProjectConfig: vi.fn().mockResolvedValue(undefined),
-    readProjectState: vi.fn().mockResolvedValue({ status: "idle", totalTokenSpend: 0, totalWorkersSpawned: 0, startedAt: "", pausedAt: null }),
+    readProjectState: vi
+      .fn()
+      .mockResolvedValue({
+        status: "idle",
+        totalTokenSpend: 0,
+        totalWorkersSpawned: 0,
+        startedAt: "",
+        pausedAt: null,
+      }),
     writeProjectState: vi.fn().mockResolvedValue(undefined),
     readWorkTree: vi.fn().mockResolvedValue(workTree),
     writeWorkTree: vi.fn().mockResolvedValue(undefined),
@@ -1403,7 +1605,13 @@ describe("runSpringTraining", () => {
     const storage = makeMockStorage(wt, ct);
 
     // Skip AI contract generation for unit test — test the orchestration flow
-    const result = await runSpringTraining(storage, "Build a players API", undefined, process.cwd(), true);
+    const result = await runSpringTraining(
+      storage,
+      "Build a players API",
+      undefined,
+      process.cwd(),
+      true,
+    );
     expect(result).toHaveProperty("valid");
     expect(result).toHaveProperty("blockers");
     expect(result).toHaveProperty("warnings");
@@ -1417,7 +1625,13 @@ describe("runSpringTraining", () => {
     const ct: CodeTree = { modules: [] };
     const storage = makeMockStorage(wt, ct);
 
-    const result = await runSpringTraining(storage, "Build a players API", undefined, process.cwd(), true);
+    const result = await runSpringTraining(
+      storage,
+      "Build a players API",
+      undefined,
+      process.cwd(),
+      true,
+    );
     expect(result.valid).toBe(false);
     expect(result.blockers.length).toBeGreaterThan(0);
   });
@@ -1510,6 +1724,7 @@ pnpm typecheck
 ## Task 7: Stage Runners — Compile Stage
 
 **Files:**
+
 - Create: `packages/core/src/stages/compile.ts`
 - Create: `packages/core/src/stages/compile.test.ts`
 
@@ -1533,7 +1748,10 @@ describe("runCompileStage", () => {
     const { execFile } = await import("node:child_process");
     const mockExec = vi.mocked(execFile);
     mockExec.mockImplementation((_cmd: string, _args: unknown, _opts: unknown, cb: unknown) => {
-      (cb as (err: null, result: { stdout: string; stderr: string }) => void)(null, { stdout: "", stderr: "" });
+      (cb as (err: null, result: { stdout: string; stderr: string }) => void)(null, {
+        stdout: "",
+        stderr: "",
+      });
       return {} as ReturnType<typeof execFile>;
     });
 
@@ -1546,9 +1764,14 @@ describe("runCompileStage", () => {
     const { execFile } = await import("node:child_process");
     const mockExec = vi.mocked(execFile);
     mockExec.mockImplementation((_cmd: string, _args: unknown, _opts: unknown, cb: unknown) => {
-      const error = new Error("tsc failed") as Error & { code: number; stdout: string; stderr: string };
+      const error = new Error("tsc failed") as Error & {
+        code: number;
+        stdout: string;
+        stderr: string;
+      };
       error.code = 1;
-      error.stdout = "src/index.ts(5,3): error TS2322: Type 'string' is not assignable to type 'number'.";
+      error.stdout =
+        "src/index.ts(5,3): error TS2322: Type 'string' is not assignable to type 'number'.";
       error.stderr = "";
       (cb as (err: typeof error) => void)(error);
       return {} as ReturnType<typeof execFile>;
@@ -1640,7 +1863,14 @@ export async function runCompileStage(
     // If AI digest fails, create a raw feedback entry
     feedback = {
       stage: "compile",
-      errors: [{ f: "unknown", l: 0, e: tscResult.output.slice(0, 500), fix: "Fix TypeScript compilation errors" }],
+      errors: [
+        {
+          f: "unknown",
+          l: 0,
+          e: tscResult.output.slice(0, 500),
+          fix: "Fix TypeScript compilation errors",
+        },
+      ],
     };
   }
 
@@ -1667,6 +1897,7 @@ pnpm typecheck
 ## Task 8: Stage Runners — Test Stage
 
 **Files:**
+
 - Create: `packages/core/src/stages/test.ts`
 - Create: `packages/core/src/stages/test.test.ts`
 
@@ -1716,7 +1947,11 @@ describe("runTests", () => {
     const { execFile } = await import("node:child_process");
     const mockExec = vi.mocked(execFile);
     mockExec.mockImplementation((_cmd: string, _args: unknown, _opts: unknown, cb: unknown) => {
-      const error = new Error("tests failed") as Error & { code: number; stdout: string; stderr: string };
+      const error = new Error("tests failed") as Error & {
+        code: number;
+        stdout: string;
+        stderr: string;
+      };
       error.code = 1;
       error.stdout = "FAIL src/__tests__/players.test.ts\n  Expected 200, received 404";
       error.stderr = "";
@@ -1736,10 +1971,19 @@ describe("test StageResult shape", () => {
       stage: "test",
       passed: false,
       loops: 0,
-      feedback: [{
-        stage: "test",
-        errors: [{ f: "src/routes/players.ts", l: 0, e: "No tests found", fix: "Write tests for this module" }],
-      }],
+      feedback: [
+        {
+          stage: "test",
+          errors: [
+            {
+              f: "src/routes/players.ts",
+              l: 0,
+              e: "No tests found",
+              fix: "Write tests for this module",
+            },
+          ],
+        },
+      ],
     };
     expect(result.feedback[0]!.errors[0]!.e).toContain("No tests");
   });
@@ -1768,22 +2012,17 @@ export function runTests(worktreePath: string, env: EnvConfig): Promise<TestRunR
   const args = ["test"];
 
   return new Promise((resolve) => {
-    execFile(
-      cmd,
-      args,
-      { cwd: worktreePath, timeout: 300_000 },
-      (error, stdout, stderr) => {
-        if (error) {
-          const err = error as Error & { code?: number; stdout?: string; stderr?: string };
-          resolve({
-            exitCode: typeof err.code === "number" ? err.code : 1,
-            output: (err.stdout ?? stdout ?? "") + (err.stderr ?? stderr ?? ""),
-          });
-        } else {
-          resolve({ exitCode: 0, output: (stdout ?? "") + (stderr ?? "") });
-        }
-      },
-    );
+    execFile(cmd, args, { cwd: worktreePath, timeout: 300_000 }, (error, stdout, stderr) => {
+      if (error) {
+        const err = error as Error & { code?: number; stdout?: string; stderr?: string };
+        resolve({
+          exitCode: typeof err.code === "number" ? err.code : 1,
+          output: (err.stdout ?? stdout ?? "") + (err.stderr ?? stderr ?? ""),
+        });
+      } else {
+        resolve({ exitCode: 0, output: (stdout ?? "") + (stderr ?? "") });
+      }
+    });
   });
 }
 
@@ -1818,20 +2057,24 @@ export async function runTestStage(
   if (testResult.exitCode === 0) {
     // Check for "no tests found" even on exit 0 (some runners don't fail)
     if (isNoTestsFound(testResult.output)) {
-      const implFiles = taskTouches.filter((f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."));
+      const implFiles = taskTouches.filter(
+        (f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."),
+      );
       return {
         stage: "test",
         passed: false,
         loops: 0,
-        feedback: [{
-          stage: "test",
-          errors: implFiles.map((f) => ({
-            f,
-            l: 0,
-            e: "No tests found for this file",
-            fix: `Write tests for ${f} — cover main exports and edge cases`,
-          })),
-        }],
+        feedback: [
+          {
+            stage: "test",
+            errors: implFiles.map((f) => ({
+              f,
+              l: 0,
+              e: "No tests found for this file",
+              fix: `Write tests for ${f} — cover main exports and edge cases`,
+            })),
+          },
+        ],
       };
     }
     return {
@@ -1844,20 +2087,24 @@ export async function runTestStage(
 
   // Check for "no tests found" on failure too
   if (isNoTestsFound(testResult.output)) {
-    const implFiles = taskTouches.filter((f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."));
+    const implFiles = taskTouches.filter(
+      (f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."),
+    );
     return {
       stage: "test",
       passed: false,
       loops: 0,
-      feedback: [{
-        stage: "test",
-        errors: implFiles.map((f) => ({
-          f,
-          l: 0,
-          e: "No tests found for this file",
-          fix: `Write tests for ${f} — cover main exports and edge cases`,
-        })),
-      }],
+      feedback: [
+        {
+          stage: "test",
+          errors: implFiles.map((f) => ({
+            f,
+            l: 0,
+            e: "No tests found for this file",
+            fix: `Write tests for ${f} — cover main exports and edge cases`,
+          })),
+        },
+      ],
     };
   }
 
@@ -1868,7 +2115,9 @@ export async function runTestStage(
   } catch {
     feedback = {
       stage: "test",
-      errors: [{ f: "unknown", l: 0, e: testResult.output.slice(0, 500), fix: "Fix failing tests" }],
+      errors: [
+        { f: "unknown", l: 0, e: testResult.output.slice(0, 500), fix: "Fix failing tests" },
+      ],
     };
   }
 
@@ -1895,6 +2144,7 @@ pnpm typecheck
 ## Task 9: Stage Runners — Review Stage
 
 **Files:**
+
 - Create: `packages/core/src/stages/review.ts`
 - Create: `packages/core/src/stages/review.test.ts`
 
@@ -1928,7 +2178,9 @@ describe("review stage", () => {
     });
 
     it("returns failed with issues when response has problems", () => {
-      const result = parseReviewResponse('{"approved":false,"issues":[{"f":"src/index.ts","l":5,"e":"Uses local Player type instead of contracts","fix":"Import Player from contracts.ts"}]}');
+      const result = parseReviewResponse(
+        '{"approved":false,"issues":[{"f":"src/index.ts","l":5,"e":"Uses local Player type instead of contracts","fix":"Import Player from contracts.ts"}]}',
+      );
       expect(result.passed).toBe(false);
       expect(result.feedback).toHaveLength(1);
       expect(result.feedback[0]!.errors[0]!.f).toBe("src/index.ts");
@@ -1944,7 +2196,7 @@ describe("review stage", () => {
 
 - [ ] **Step 2: Implement review.ts**
 
-```ts
+````ts
 // packages/core/src/stages/review.ts
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
@@ -2005,7 +2257,10 @@ export function parseReviewResponse(text: string): { passed: boolean; feedback: 
       jsonStr = fenceMatch[1]!.trim();
     }
 
-    const parsed = JSON.parse(jsonStr) as { approved: boolean; issues: { f: string; l: number; e: string; fix: string }[] };
+    const parsed = JSON.parse(jsonStr) as {
+      approved: boolean;
+      issues: { f: string; l: number; e: string; fix: string }[];
+    };
 
     if (parsed.approved && (!parsed.issues || parsed.issues.length === 0)) {
       return { passed: true, feedback: [] };
@@ -2028,10 +2283,19 @@ export function parseReviewResponse(text: string): { passed: boolean; feedback: 
   } catch {
     return {
       passed: false,
-      feedback: [{
-        stage: "review",
-        errors: [{ f: "unknown", l: 0, e: "Review response was not parseable JSON", fix: "Re-run review" }],
-      }],
+      feedback: [
+        {
+          stage: "review",
+          errors: [
+            {
+              f: "unknown",
+              l: 0,
+              e: "Review response was not parseable JSON",
+              fix: "Re-run review",
+            },
+          ],
+        },
+      ],
     };
   }
 }
@@ -2074,10 +2338,14 @@ export async function runReviewStage(
       stage: "review",
       passed: false,
       loops: 0,
-      feedback: [{
-        stage: "review",
-        errors: [{ f: "unknown", l: 0, e: "AI reviewer failed to produce result", fix: "Retry review" }],
-      }],
+      feedback: [
+        {
+          stage: "review",
+          errors: [
+            { f: "unknown", l: 0, e: "AI reviewer failed to produce result", fix: "Retry review" },
+          ],
+        },
+      ],
     };
   }
 
@@ -2090,7 +2358,7 @@ export async function runReviewStage(
     feedback: parsed.feedback,
   };
 }
-```
+````
 
 - [ ] **Step 3: Run tests**
 
@@ -2106,12 +2374,13 @@ pnpm typecheck
 ## Task 10: AI Feedback Digester
 
 **Files:**
+
 - Create: `packages/core/src/stages/feedback.ts`
 - Create: `packages/core/src/stages/feedback.test.ts`
 
 - [ ] **Step 1: Write tests first**
 
-```ts
+````ts
 // packages/core/src/stages/feedback.test.ts
 import { describe, it, expect } from "vitest";
 import { digestReviewIssues, parseFeedbackResponse } from "./feedback.js";
@@ -2120,7 +2389,8 @@ import type { StageFeedback } from "../types.js";
 describe("feedback digester", () => {
   describe("digestReviewIssues", () => {
     it("converts raw review issues to StageFeedback", () => {
-      const rawReview = '{"issues":[{"f":"src/index.ts","l":5,"e":"Wrong type","fix":"Use Player from contracts"}]}';
+      const rawReview =
+        '{"issues":[{"f":"src/index.ts","l":5,"e":"Wrong type","fix":"Use Player from contracts"}]}';
       const result = digestReviewIssues(rawReview);
       expect(result.stage).toBe("review");
       expect(result.errors).toHaveLength(1);
@@ -2156,11 +2426,11 @@ describe("feedback digester", () => {
     });
   });
 });
-```
+````
 
 - [ ] **Step 2: Implement feedback.ts**
 
-```ts
+````ts
 // packages/core/src/stages/feedback.ts
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
@@ -2177,7 +2447,9 @@ export function parseFeedbackResponse(text: string, stage: StageType): StageFeed
       jsonStr = fenceMatch[1]!.trim();
     }
 
-    const parsed = JSON.parse(jsonStr) as { errors: { f: string; l: number; e: string; fix: string }[] };
+    const parsed = JSON.parse(jsonStr) as {
+      errors: { f: string; l: number; e: string; fix: string }[];
+    };
     return {
       stage,
       errors: (parsed.errors ?? []).map((e) => ({
@@ -2240,7 +2512,14 @@ Be specific about fixes. Reference actual types and imports. No markdown fences,
   if (!resultMsg || resultMsg.subtype !== "success") {
     return {
       stage: "compile",
-      errors: [{ f: "unknown", l: 0, e: rawOutput.slice(0, 500), fix: "Fix TypeScript compilation errors" }],
+      errors: [
+        {
+          f: "unknown",
+          l: 0,
+          e: rawOutput.slice(0, 500),
+          fix: "Fix TypeScript compilation errors",
+        },
+      ],
     };
   }
 
@@ -2311,7 +2590,9 @@ export function digestReviewIssues(rawReview: string): StageFeedback {
       jsonStr = fenceMatch[1]!.trim();
     }
 
-    const parsed = JSON.parse(jsonStr) as { issues: { f: string; l: number; e: string; fix: string }[] };
+    const parsed = JSON.parse(jsonStr) as {
+      issues: { f: string; l: number; e: string; fix: string }[];
+    };
     return {
       stage: "review",
       errors: (parsed.issues ?? []).map((i) => ({
@@ -2324,11 +2605,18 @@ export function digestReviewIssues(rawReview: string): StageFeedback {
   } catch {
     return {
       stage: "review",
-      errors: [{ f: "unknown", l: 0, e: `Failed to parse review response: ${rawReview.slice(0, 200)}`, fix: "Re-run review" }],
+      errors: [
+        {
+          f: "unknown",
+          l: 0,
+          e: `Failed to parse review response: ${rawReview.slice(0, 200)}`,
+          fix: "Re-run review",
+        },
+      ],
     };
   }
 }
-```
+````
 
 - [ ] **Step 3: Run tests**
 
@@ -2344,6 +2632,7 @@ pnpm typecheck
 ## Task 11: Task Completion Digests
 
 **Files:**
+
 - Create: `packages/core/src/digests/generator.ts`
 - Create: `packages/core/src/digests/generator.test.ts`
 
@@ -2369,44 +2658,63 @@ describe("generateDigest", () => {
   };
 
   const workTree: WorkTree = {
-    milestones: [{
-      id: "m1", name: "m1", description: "Build", dependencies: [],
-      slices: [{
-        id: "m1-s1", name: "s1", description: "Core", parentMilestoneId: "m1",
-        tasks: [{
-          id: "m1-s1-t1", name: "Create players route",
-          description: "Create GET/POST /players in src/routes/players.ts",
-          status: "complete", dependencies: [],
-          touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
-          reads: ["src/contracts.ts"],
-          worker: null, tokenSpend: 15000, attemptCount: 1, gateResults: [],
-          parentSliceId: "m1-s1",
-        }],
-      }],
-    }],
+    milestones: [
+      {
+        id: "m1",
+        name: "m1",
+        description: "Build",
+        dependencies: [],
+        slices: [
+          {
+            id: "m1-s1",
+            name: "s1",
+            description: "Core",
+            parentMilestoneId: "m1",
+            tasks: [
+              {
+                id: "m1-s1-t1",
+                name: "Create players route",
+                description: "Create GET/POST /players in src/routes/players.ts",
+                status: "complete",
+                dependencies: [],
+                touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+                reads: ["src/contracts.ts"],
+                worker: null,
+                tokenSpend: 15000,
+                attemptCount: 1,
+                gateResults: [],
+                parentSliceId: "m1-s1",
+              },
+            ],
+          },
+        ],
+      },
+    ],
   };
 
   const codeTree: CodeTree = {
-    modules: [{
-      path: "src",
-      description: "source",
-      files: [
-        {
-          path: "src/routes/players.ts",
-          description: "players route",
-          exports: [{ name: "playersRouter", signature: "Router", description: "" }],
-          imports: [{ from: "src/contracts", names: ["Player"] }],
-          lastModifiedBy: null,
-        },
-        {
-          path: "src/contracts.ts",
-          description: "contracts",
-          exports: [{ name: "Player", signature: "interface Player", description: "" }],
-          imports: [],
-          lastModifiedBy: null,
-        },
-      ],
-    }],
+    modules: [
+      {
+        path: "src",
+        description: "source",
+        files: [
+          {
+            path: "src/routes/players.ts",
+            description: "players route",
+            exports: [{ name: "playersRouter", signature: "Router", description: "" }],
+            imports: [{ from: "src/contracts", names: ["Player"] }],
+            lastModifiedBy: null,
+          },
+          {
+            path: "src/contracts.ts",
+            description: "contracts",
+            exports: [{ name: "Player", signature: "interface Player", description: "" }],
+            imports: [],
+            lastModifiedBy: null,
+          },
+        ],
+      },
+    ],
   };
 
   it("generates a valid TaskDigest", () => {
@@ -2533,6 +2841,7 @@ pnpm typecheck
 ## Task 12: Safety — Watchdog + Loop Tracking
 
 **Files:**
+
 - Create: `packages/core/src/safety/watchdog.ts`
 - Create: `packages/core/src/safety/watchdog.test.ts`
 - Create: `packages/core/src/safety/loops.ts`
@@ -2606,7 +2915,7 @@ import type { WatchdogState } from "../types.js";
 
 export type WatchdogAction = "continue" | "warn" | "pause";
 
-const WARN_THRESHOLD_MS = 20 * 60 * 1000;  // 20 minutes
+const WARN_THRESHOLD_MS = 20 * 60 * 1000; // 20 minutes
 const PAUSE_THRESHOLD_MS = 40 * 60 * 1000; // 40 minutes
 
 export interface Watchdog {
@@ -2816,7 +3125,10 @@ export function shouldBreak(
 
   // Check: max total loops across all stages
   if (tracker.totalLoops >= MAX_TOTAL_LOOPS) {
-    return { break: true, reason: `Total loops (${tracker.totalLoops}) reached max ${MAX_TOTAL_LOOPS}` };
+    return {
+      break: true,
+      reason: `Total loops (${tracker.totalLoops}) reached max ${MAX_TOTAL_LOOPS}`,
+    };
   }
 
   // Check: max per stage
@@ -2839,7 +3151,10 @@ export function shouldBreak(
   if (diffHistory.length >= MAX_IDENTICAL_DIFFS) {
     const recent = diffHistory.slice(-MAX_IDENTICAL_DIFFS);
     if (recent.length === MAX_IDENTICAL_DIFFS && recent.every((d) => d === recent[0])) {
-      return { break: true, reason: `Identical diff produced ${MAX_IDENTICAL_DIFFS} times — worker is stuck` };
+      return {
+        break: true,
+        reason: `Identical diff produced ${MAX_IDENTICAL_DIFFS} times — worker is stuck`,
+      };
     }
   }
 
@@ -2862,6 +3177,7 @@ pnpm typecheck
 ## Task 13: Enriched Context Builder
 
 **Files:**
+
 - Modify: `packages/core/src/context/context-builder.ts`
 - Modify: `packages/core/src/context/context-builder.test.ts`
 
@@ -2879,9 +3195,25 @@ describe("buildEnrichedContext", () => {
   const config: ProjectConfig = {
     name: "test",
     specPath: "spec.md",
-    budgets: { project: { usd: 50, warnPct: 70 }, perTask: { usd: 2, softPct: 75 }, supervisor: { usd: 3 }, planning: { usd: 5 } },
-    limits: { maxConcurrentWorkers: 3, maxTotalWorkers: 50, maxRetries: 3, maxTaskDepth: 4, sessionTimeoutMin: 15, spawnRatePerMin: 5 },
-    circuitBreakers: { consecutiveFailuresSlice: 3, consecutiveFailuresProject: 5, budgetEfficiencyThreshold: 0.5 },
+    budgets: {
+      project: { usd: 50, warnPct: 70 },
+      perTask: { usd: 2, softPct: 75 },
+      supervisor: { usd: 3 },
+      planning: { usd: 5 },
+    },
+    limits: {
+      maxConcurrentWorkers: 3,
+      maxTotalWorkers: 50,
+      maxRetries: 3,
+      maxTaskDepth: 4,
+      sessionTimeoutMin: 15,
+      spawnRatePerMin: 5,
+    },
+    circuitBreakers: {
+      consecutiveFailuresSlice: 3,
+      consecutiveFailuresProject: 5,
+      budgetEfficiencyThreshold: 0.5,
+    },
   };
 
   it("returns null for nonexistent task", () => {
@@ -2893,23 +3225,55 @@ describe("buildEnrichedContext", () => {
 
   it("includes contracts and digests in enriched context", () => {
     const wt: WorkTree = {
-      milestones: [{
-        id: "m1", name: "m1", description: "test", dependencies: [],
-        slices: [{
-          id: "s1", name: "s1", description: "test", parentMilestoneId: "m1",
-          tasks: [{
-            id: "t1", name: "Create route", description: "Create route in src/a.ts",
-            status: "pending", dependencies: [], touches: ["src/a.ts"], reads: [],
-            worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "s1",
-          }],
-        }],
-      }],
+      milestones: [
+        {
+          id: "m1",
+          name: "m1",
+          description: "test",
+          dependencies: [],
+          slices: [
+            {
+              id: "s1",
+              name: "s1",
+              description: "test",
+              parentMilestoneId: "m1",
+              tasks: [
+                {
+                  id: "t1",
+                  name: "Create route",
+                  description: "Create route in src/a.ts",
+                  status: "pending",
+                  dependencies: [],
+                  touches: ["src/a.ts"],
+                  reads: [],
+                  worker: null,
+                  tokenSpend: 0,
+                  attemptCount: 0,
+                  gateResults: [],
+                  parentSliceId: "s1",
+                },
+              ],
+            },
+          ],
+        },
+      ],
     };
     const ct: CodeTree = {
-      modules: [{
-        path: "src", description: "source",
-        files: [{ path: "src/a.ts", description: "file a", exports: [], imports: [], lastModifiedBy: null }],
-      }],
+      modules: [
+        {
+          path: "src",
+          description: "source",
+          files: [
+            {
+              path: "src/a.ts",
+              description: "file a",
+              exports: [],
+              imports: [],
+              lastModifiedBy: null,
+            },
+          ],
+        },
+      ],
     };
     const digests: TaskDigest[] = [
       { task: "t0", did: "set up project", ex: ["app"], im: [], pattern: "scaffolding" },
@@ -2917,8 +3281,16 @@ describe("buildEnrichedContext", () => {
     const contracts = "export interface Player { name: string; }";
 
     const result = buildEnrichedContext(
-      wt, ct, config, "t1", "", "", undefined,
-      contracts, digests, "Build a players API",
+      wt,
+      ct,
+      config,
+      "t1",
+      "",
+      "",
+      undefined,
+      contracts,
+      digests,
+      "Build a players API",
     );
 
     expect(result).not.toBeNull();
@@ -2929,29 +3301,70 @@ describe("buildEnrichedContext", () => {
 
   it("includes fileContents when provided", () => {
     const wt: WorkTree = {
-      milestones: [{
-        id: "m1", name: "m1", description: "test", dependencies: [],
-        slices: [{
-          id: "s1", name: "s1", description: "test", parentMilestoneId: "m1",
-          tasks: [{
-            id: "t1", name: "Create route", description: "Create route in src/a.ts",
-            status: "pending", dependencies: [], touches: ["src/a.ts"], reads: [],
-            worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "s1",
-          }],
-        }],
-      }],
+      milestones: [
+        {
+          id: "m1",
+          name: "m1",
+          description: "test",
+          dependencies: [],
+          slices: [
+            {
+              id: "s1",
+              name: "s1",
+              description: "test",
+              parentMilestoneId: "m1",
+              tasks: [
+                {
+                  id: "t1",
+                  name: "Create route",
+                  description: "Create route in src/a.ts",
+                  status: "pending",
+                  dependencies: [],
+                  touches: ["src/a.ts"],
+                  reads: [],
+                  worker: null,
+                  tokenSpend: 0,
+                  attemptCount: 0,
+                  gateResults: [],
+                  parentSliceId: "s1",
+                },
+              ],
+            },
+          ],
+        },
+      ],
     };
     const ct: CodeTree = {
-      modules: [{
-        path: "src", description: "source",
-        files: [{ path: "src/a.ts", description: "file a", exports: [], imports: [], lastModifiedBy: null }],
-      }],
+      modules: [
+        {
+          path: "src",
+          description: "source",
+          files: [
+            {
+              path: "src/a.ts",
+              description: "file a",
+              exports: [],
+              imports: [],
+              lastModifiedBy: null,
+            },
+          ],
+        },
+      ],
     };
     const fileContents = { "src/a.ts": "export const x = 1;" };
 
     const result = buildEnrichedContext(
-      wt, ct, config, "t1", "", "", undefined,
-      "", [], "", fileContents,
+      wt,
+      ct,
+      config,
+      "t1",
+      "",
+      "",
+      undefined,
+      "",
+      [],
+      "",
+      fileContents,
     );
 
     expect(result).not.toBeNull();
@@ -3025,6 +3438,7 @@ pnpm typecheck
 ## Task 14: Updated Wire Mode
 
 **Files:**
+
 - Modify: `packages/core/src/wire/wire.ts`
 - Modify: `packages/core/src/wire/wire.test.ts`
 
@@ -3040,7 +3454,13 @@ describe("toEnrichedWirePrompt", () => {
     const ctx: EnrichedContextPackage = {
       task: { name: "test", description: "test task", acceptanceCriteria: ["pass tests"] },
       interfaces: [
-        { path: "src/a.ts", description: "file a", exports: [{ name: "fn", signature: "() => void", description: "" }], imports: [], lastModifiedBy: null },
+        {
+          path: "src/a.ts",
+          description: "file a",
+          exports: [{ name: "fn", signature: "() => void", description: "" }],
+          imports: [],
+          lastModifiedBy: null,
+        },
       ],
       above: [],
       below: [],
@@ -3113,6 +3533,7 @@ pnpm typecheck
 ## Task 15: Seeder Overhaul
 
 **Files:**
+
 - Modify: `packages/core/src/seeder/from-spec.ts`
 - Modify: `packages/core/src/seeder/from-spec.test.ts`
 
@@ -3126,18 +3547,70 @@ describe("seeder rules enforcement", () => {
     it("promotes one-owner-per-file conflict to hard block (not just warning)", () => {
       const response = JSON.stringify({
         workTree: {
-          milestones: [{
-            id: "m1", name: "m1", description: "build", dependencies: [],
-            slices: [{
-              id: "s1", name: "s1", description: "core", parentMilestoneId: "m1",
-              tasks: [
-                { id: "t1", name: "A", description: "Task A creates src/a.ts", status: "pending", dependencies: [], touches: ["src/a.ts"], reads: [], worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "s1" },
-                { id: "t2", name: "B", description: "Task B modifies src/a.ts", status: "pending", dependencies: [], touches: ["src/a.ts"], reads: [], worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "s1" },
+          milestones: [
+            {
+              id: "m1",
+              name: "m1",
+              description: "build",
+              dependencies: [],
+              slices: [
+                {
+                  id: "s1",
+                  name: "s1",
+                  description: "core",
+                  parentMilestoneId: "m1",
+                  tasks: [
+                    {
+                      id: "t1",
+                      name: "A",
+                      description: "Task A creates src/a.ts",
+                      status: "pending",
+                      dependencies: [],
+                      touches: ["src/a.ts"],
+                      reads: [],
+                      worker: null,
+                      tokenSpend: 0,
+                      attemptCount: 0,
+                      gateResults: [],
+                      parentSliceId: "s1",
+                    },
+                    {
+                      id: "t2",
+                      name: "B",
+                      description: "Task B modifies src/a.ts",
+                      status: "pending",
+                      dependencies: [],
+                      touches: ["src/a.ts"],
+                      reads: [],
+                      worker: null,
+                      tokenSpend: 0,
+                      attemptCount: 0,
+                      gateResults: [],
+                      parentSliceId: "s1",
+                    },
+                  ],
+                },
               ],
-            }],
-          }],
+            },
+          ],
         },
-        codeTree: { modules: [{ path: "src", description: "source", files: [{ path: "src/a.ts", description: "a", exports: [], imports: [], lastModifiedBy: null }] }] },
+        codeTree: {
+          modules: [
+            {
+              path: "src",
+              description: "source",
+              files: [
+                {
+                  path: "src/a.ts",
+                  description: "a",
+                  exports: [],
+                  imports: [],
+                  lastModifiedBy: null,
+                },
+              ],
+            },
+          ],
+        },
       });
       const { warnings } = parseSeederResponse(response);
       expect(warnings.some((w) => w.message.includes("both touch"))).toBe(true);
@@ -3244,6 +3717,7 @@ pnpm typecheck
 ## Task 16: Orchestrator Rewrite
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator.ts`
 - Modify: `packages/core/src/orchestrator.test.ts`
 
@@ -3315,15 +3789,8 @@ import {
   incrementWorkersSpawned,
   isTerminal,
 } from "./state/state-machine.js";
-import {
-  getProjectBudgetStatus,
-  checkCircuitBreakers,
-} from "./budget/budget.js";
-import {
-  createWorktree,
-  removeWorktree,
-  mergeWorktree,
-} from "./workers/worktree.js";
+import { getProjectBudgetStatus, checkCircuitBreakers } from "./budget/budget.js";
+import { createWorktree, removeWorktree, mergeWorktree } from "./workers/worktree.js";
 import { preflightCheck } from "./preflight/check.js";
 import { runCompileStage } from "./stages/compile.js";
 import { runTestStage } from "./stages/test.js";
@@ -3395,7 +3862,13 @@ export class Orchestrator {
 
     // 2. Check if terminal/paused state
     if (isTerminal(state.status)) {
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: state.status === "complete", isPaused: false };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: state.status === "complete",
+        isPaused: false,
+      };
     }
     if (state.status === "paused") {
       return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true };
@@ -3406,7 +3879,14 @@ export class Orchestrator {
     if (watchdogAction === "pause") {
       state = transition(state, "paused");
       await this.storage.writeProjectState(state);
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true, error: "Watchdog: no progress for 40 minutes" };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: false,
+        isPaused: true,
+        error: "Watchdog: no progress for 40 minutes",
+      };
     }
     if (watchdogAction === "warn") {
       await this.storage.appendMemory("Watchdog warning: no task completed in 20 minutes");
@@ -3417,7 +3897,14 @@ export class Orchestrator {
     if (circuitStatus.reason) {
       state = transition(state, "paused");
       await this.storage.writeProjectState(state);
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true, error: `Circuit breaker: ${circuitStatus.reason}` };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: false,
+        isPaused: true,
+        error: `Circuit breaker: ${circuitStatus.reason}`,
+      };
     }
 
     // 5. Budget check
@@ -3425,18 +3912,34 @@ export class Orchestrator {
     if (budgetStatus.atLimit) {
       state = transition(state, "paused");
       await this.storage.writeProjectState(state);
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true, error: "Budget limit reached" };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: false,
+        isPaused: true,
+        error: "Budget limit reached",
+      };
     }
 
     // 6. Spring training (once, before first dispatch)
     if (!this.springTrainingDone && !this.options.skipSpringTraining && this.options.specText) {
       try {
-        const stResult = await runSpringTraining(this.storage, this.options.specText, repoMap, this.options.repoDir);
+        const stResult = await runSpringTraining(
+          this.storage,
+          this.options.specText,
+          repoMap,
+          this.options.repoDir,
+        );
         if (!stResult.valid) {
-          await this.storage.appendMemory(`Spring training blockers: ${stResult.blockers.join("; ")}`);
+          await this.storage.appendMemory(
+            `Spring training blockers: ${stResult.blockers.join("; ")}`,
+          );
         }
         if (stResult.warnings.length > 0) {
-          await this.storage.appendMemory(`Spring training warnings: ${stResult.warnings.join("; ")}`);
+          await this.storage.appendMemory(
+            `Spring training warnings: ${stResult.warnings.join("; ")}`,
+          );
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -3458,7 +3961,9 @@ export class Orchestrator {
 
     // 9. Check completion
     const allTasks = getAllTasks(workTree);
-    const allDone = allTasks.length === 0 || allTasks.every((t) => t.status === "complete" || t.status === "failed");
+    const allDone =
+      allTasks.length === 0 ||
+      allTasks.every((t) => t.status === "complete" || t.status === "failed");
     const activeWorkers = getActiveCount(this.pool);
 
     if (allDone && activeWorkers === 0 && !spawnDecision.canSpawn) {
@@ -3483,18 +3988,31 @@ export class Orchestrator {
       if (!preflight.canProceed) {
         workTree = updateTaskStatus(workTree, task.id, "failed");
         failed++;
-        await this.storage.appendMemory(`Task ${task.id} blocked by preflight: ${preflight.blockers.join("; ")}`);
+        await this.storage.appendMemory(
+          `Task ${task.id} blocked by preflight: ${preflight.blockers.join("; ")}`,
+        );
         continue;
       }
       if (preflight.warnings.length > 0) {
-        await this.storage.appendMemory(`Task ${task.id} preflight warnings: ${preflight.warnings.join("; ")}`);
+        await this.storage.appendMemory(
+          `Task ${task.id} preflight warnings: ${preflight.warnings.join("; ")}`,
+        );
       }
 
       // Build enriched context
       const fileContents = await this.readFileContents(task.touches, task.reads);
       const context = buildEnrichedContext(
-        workTree, codeTree, config, task.id, memory, "",
-        repoMap, contracts, digests, this.options.specText ?? "", fileContents,
+        workTree,
+        codeTree,
+        config,
+        task.id,
+        memory,
+        "",
+        repoMap,
+        contracts,
+        digests,
+        this.options.specText ?? "",
+        fileContents,
       );
       if (!context) continue;
 
@@ -3603,7 +4121,8 @@ export class Orchestrator {
               // Re-spawn with review feedback
               const feedbackContext = {
                 ...context,
-                memory: context.memory + `\nREVIEW FEEDBACK:\n${JSON.stringify(reviewResult.feedback)}`,
+                memory:
+                  context.memory + `\nREVIEW FEEDBACK:\n${JSON.stringify(reviewResult.feedback)}`,
               };
               await this.spawn({
                 taskId: task.id,
@@ -3613,7 +4132,10 @@ export class Orchestrator {
               });
               // Re-run review
               const retryReview = await runReviewStage(
-                worktreePath, diff, contracts, this.options.specText ?? "",
+                worktreePath,
+                diff,
+                contracts,
+                this.options.specText ?? "",
                 config.budgets.perTask.usd,
               );
               await this.storage.writeStageResult(task.id, retryReview);
@@ -3630,10 +4152,14 @@ export class Orchestrator {
             const mergeResult = await mergeWorktree(this.options.repoDir, worktreeBranch);
             if (!mergeResult.success) {
               workTree = updateTaskStatus(workTree, task.id, "failed");
-              workTree = updateTask(workTree, task.id, { attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1 });
+              workTree = updateTask(workTree, task.id, {
+                attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+              });
               this.pool = completeWorker(this.pool, sessionId, "failed");
               failed++;
-              await this.storage.appendMemory(`Task ${task.id} merge conflict: ${mergeResult.error}`);
+              await this.storage.appendMemory(
+                `Task ${task.id} merge conflict: ${mergeResult.error}`,
+              );
               continue;
             }
           }
@@ -3648,7 +4174,11 @@ export class Orchestrator {
 
           // Incremental repo map refresh
           if (repoMap && workerOutput.filesChanged.length > 0) {
-            const updatedMap = await refreshFiles(repoMap, this.options.repoDir ?? ".", workerOutput.filesChanged);
+            const updatedMap = await refreshFiles(
+              repoMap,
+              this.options.repoDir ?? ".",
+              workerOutput.filesChanged,
+            );
             await this.storage.writeRepoMap(updatedMap);
           }
 
@@ -3656,21 +4186,29 @@ export class Orchestrator {
           this.watchdog.reset();
         } else {
           workTree = updateTaskStatus(workTree, task.id, "failed");
-          workTree = updateTask(workTree, task.id, { attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1 });
+          workTree = updateTask(workTree, task.id, {
+            attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+          });
           this.pool = completeWorker(this.pool, sessionId, "failed");
           failed++;
-          await this.storage.appendMemory(`Task ${task.id} failed staged pipeline at ${new Date().toISOString()}`);
+          await this.storage.appendMemory(
+            `Task ${task.id} failed staged pipeline at ${new Date().toISOString()}`,
+          );
         }
       } catch (err) {
         workTree = updateTaskStatus(workTree, task.id, "failed");
-        workTree = updateTask(workTree, task.id, { attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1 });
+        workTree = updateTask(workTree, task.id, {
+          attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+        });
         this.pool = completeWorker(this.pool, sessionId, "failed");
         failed++;
         const message = err instanceof Error ? err.message : String(err);
         await this.storage.appendMemory(`Task ${task.id} spawn error: ${message}`);
       } finally {
         if (this.options.repoDir && worktreePath !== ".") {
-          try { await removeWorktree(this.options.repoDir, worktreePath); } catch {}
+          try {
+            await removeWorktree(this.options.repoDir, worktreePath);
+          } catch {}
         }
       }
     }
@@ -3743,7 +4281,9 @@ export class Orchestrator {
       const feedbackJson = JSON.stringify(stageResult.feedback);
       const feedbackContext: EnrichedContextPackage = {
         ...context,
-        memory: context.memory + `\n${stage.toUpperCase()} FEEDBACK (loop ${totalLoops}):\n${feedbackJson}`,
+        memory:
+          context.memory +
+          `\n${stage.toUpperCase()} FEEDBACK (loop ${totalLoops}):\n${feedbackJson}`,
       };
 
       await this.spawn({
@@ -3773,7 +4313,10 @@ export class Orchestrator {
    * Read actual file contents from disk for enriched context.
    * Large files (>300 lines): first 50 lines + exports + relevant section.
    */
-  private async readFileContents(touches: string[], reads: string[]): Promise<Record<string, string>> {
+  private async readFileContents(
+    touches: string[],
+    reads: string[],
+  ): Promise<Record<string, string>> {
     const contents: Record<string, string> = {};
     const basePath = this.options.repoDir ?? ".";
     const allPaths = [...new Set([...touches, ...reads])];
@@ -3787,10 +4330,9 @@ export class Orchestrator {
         if (lines.length > 300) {
           // Large file: first 50 lines + exports + truncation notice
           const first50 = lines.slice(0, 50).join("\n");
-          const exportLines = lines
-            .filter((l) => l.startsWith("export "))
-            .join("\n");
-          contents[filePath] = `${first50}\n\n// ... (${lines.length} lines total, truncated) ...\n\n// Exports:\n${exportLines}`;
+          const exportLines = lines.filter((l) => l.startsWith("export ")).join("\n");
+          contents[filePath] =
+            `${first50}\n\n// ... (${lines.length} lines total, truncated) ...\n\n// Exports:\n${exportLines}`;
         } else {
           contents[filePath] = content;
         }
@@ -3818,6 +4360,7 @@ pnpm typecheck
 ## Task 17: CLI Updates
 
 **Files:**
+
 - Modify: `packages/cli/src/commands/init.ts`
 - Modify: `packages/cli/src/commands/new.ts`
 - Create: `packages/cli/src/commands/spring-training.ts`
@@ -3932,34 +4475,34 @@ import { runSpringTraining } from "@openingday/core/spring-training/runner";
 ```ts
 // packages/cli/src/commands/init.ts — add after writing trees, before final console.log
 
-      // Run spring training
-      if (workTree.milestones.length > 0) {
-        console.log(chalk.gray("Running spring training..."));
-        try {
-          let specText = "";
-          if (fromStat?.isFile() && fromPath.endsWith(".md")) {
-            specText = await readFile(fromPath, "utf-8");
-          } else if (opts.spec) {
-            specText = await readFile(resolve(opts.spec), "utf-8");
-          }
-          const stResult = await runSpringTraining(storage, specText, repoMap, process.cwd());
-          if (stResult.blockers.length > 0) {
-            console.log(chalk.yellow(`  Spring training blockers: ${stResult.blockers.length}`));
-            for (const b of stResult.blockers) {
-              console.log(chalk.yellow(`    - ${b}`));
-            }
-          }
-          if (stResult.warnings.length > 0) {
-            console.log(chalk.gray(`  Spring training warnings: ${stResult.warnings.length}`));
-          }
-          if (stResult.contracts) {
-            console.log(chalk.gray("  Contracts generated."));
-          }
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.log(chalk.yellow(`  Spring training failed: ${msg}`));
-        }
+// Run spring training
+if (workTree.milestones.length > 0) {
+  console.log(chalk.gray("Running spring training..."));
+  try {
+    let specText = "";
+    if (fromStat?.isFile() && fromPath.endsWith(".md")) {
+      specText = await readFile(fromPath, "utf-8");
+    } else if (opts.spec) {
+      specText = await readFile(resolve(opts.spec), "utf-8");
+    }
+    const stResult = await runSpringTraining(storage, specText, repoMap, process.cwd());
+    if (stResult.blockers.length > 0) {
+      console.log(chalk.yellow(`  Spring training blockers: ${stResult.blockers.length}`));
+      for (const b of stResult.blockers) {
+        console.log(chalk.yellow(`    - ${b}`));
       }
+    }
+    if (stResult.warnings.length > 0) {
+      console.log(chalk.gray(`  Spring training warnings: ${stResult.warnings.length}`));
+    }
+    if (stResult.contracts) {
+      console.log(chalk.gray("  Contracts generated."));
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.log(chalk.yellow(`  Spring training failed: ${msg}`));
+  }
+}
 ```
 
 - [ ] **Step 3: Update new.ts to run spring training after seeding**
@@ -3974,28 +4517,28 @@ import { runSpringTraining } from "@openingday/core/spring-training/runner";
 ```ts
 // packages/cli/src/commands/new.ts — add after writing trees, before final success message
 
-      // Run spring training
-      if (workTree.milestones.length > 0) {
-        console.log(chalk.gray("Running spring training..."));
-        try {
-          const stResult = await runSpringTraining(storage, specText, repoMap, process.cwd());
-          if (stResult.blockers.length > 0) {
-            console.log(chalk.yellow(`  Blockers: ${stResult.blockers.length}`));
-            for (const b of stResult.blockers) {
-              console.log(chalk.yellow(`    - ${b}`));
-            }
-          }
-          if (stResult.warnings.length > 0) {
-            console.log(chalk.gray(`  Warnings: ${stResult.warnings.length}`));
-          }
-          if (stResult.contracts) {
-            console.log(chalk.gray("  Contracts generated."));
-          }
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.log(chalk.yellow(`  Spring training failed: ${msg}`));
-        }
+// Run spring training
+if (workTree.milestones.length > 0) {
+  console.log(chalk.gray("Running spring training..."));
+  try {
+    const stResult = await runSpringTraining(storage, specText, repoMap, process.cwd());
+    if (stResult.blockers.length > 0) {
+      console.log(chalk.yellow(`  Blockers: ${stResult.blockers.length}`));
+      for (const b of stResult.blockers) {
+        console.log(chalk.yellow(`    - ${b}`));
       }
+    }
+    if (stResult.warnings.length > 0) {
+      console.log(chalk.gray(`  Warnings: ${stResult.warnings.length}`));
+    }
+    if (stResult.contracts) {
+      console.log(chalk.gray("  Contracts generated."));
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.log(chalk.yellow(`  Spring training failed: ${msg}`));
+  }
+}
 ```
 
 - [ ] **Step 4: Register spring-training command in CLI index**
@@ -4023,6 +4566,7 @@ pnpm typecheck
 ## Task 18: Core Exports + Integration Test
 
 **Files:**
+
 - Modify: `packages/core/src/index.ts`
 - Create: `tests/integration/staged-pipeline.test.ts`
 
@@ -4046,7 +4590,11 @@ export type {
 // Spring Training
 export { validateStructure } from "./spring-training/validate.js";
 export type { ValidationResult } from "./spring-training/validate.js";
-export { generateContracts, buildContractPrompt, parseContractResponse } from "./spring-training/contracts.js";
+export {
+  generateContracts,
+  buildContractPrompt,
+  parseContractResponse,
+} from "./spring-training/contracts.js";
 export { simulateExecution } from "./spring-training/simulate.js";
 export type { SimulationResult } from "./spring-training/simulate.js";
 export { runSpringTraining } from "./spring-training/runner.js";
@@ -4057,7 +4605,12 @@ export type { TscResult } from "./stages/compile.js";
 export { runTestStage, runTests } from "./stages/test.js";
 export type { TestRunResult } from "./stages/test.js";
 export { runReviewStage, buildReviewPrompt, parseReviewResponse } from "./stages/review.js";
-export { digestCompileErrors, digestTestFailures, digestReviewIssues, parseFeedbackResponse } from "./stages/feedback.js";
+export {
+  digestCompileErrors,
+  digestTestFailures,
+  digestReviewIssues,
+  parseFeedbackResponse,
+} from "./stages/feedback.js";
 
 // Digests
 export { generateDigest } from "./digests/generator.js";
@@ -4100,57 +4653,139 @@ import { toEnrichedWirePrompt } from "@openingday/core/wire/wire";
 const config: ProjectConfig = {
   name: "test-integration",
   specPath: "spec.md",
-  budgets: { project: { usd: 50, warnPct: 70 }, perTask: { usd: 2, softPct: 75 }, supervisor: { usd: 3 }, planning: { usd: 5 } },
-  limits: { maxConcurrentWorkers: 3, maxTotalWorkers: 50, maxRetries: 3, maxTaskDepth: 4, sessionTimeoutMin: 15, spawnRatePerMin: 5 },
-  circuitBreakers: { consecutiveFailuresSlice: 3, consecutiveFailuresProject: 5, budgetEfficiencyThreshold: 0.5 },
+  budgets: {
+    project: { usd: 50, warnPct: 70 },
+    perTask: { usd: 2, softPct: 75 },
+    supervisor: { usd: 3 },
+    planning: { usd: 5 },
+  },
+  limits: {
+    maxConcurrentWorkers: 3,
+    maxTotalWorkers: 50,
+    maxRetries: 3,
+    maxTaskDepth: 4,
+    sessionTimeoutMin: 15,
+    spawnRatePerMin: 5,
+  },
+  circuitBreakers: {
+    consecutiveFailuresSlice: 3,
+    consecutiveFailuresProject: 5,
+    budgetEfficiencyThreshold: 0.5,
+  },
 };
 
 function buildTestTrees(): { workTree: WorkTree; codeTree: CodeTree } {
   const workTree: WorkTree = {
-    milestones: [{
-      id: "m1", name: "Build", description: "Build the API", dependencies: [],
-      slices: [{
-        id: "m1-s1", name: "Core", description: "Core routes", parentMilestoneId: "m1",
-        tasks: [
+    milestones: [
+      {
+        id: "m1",
+        name: "Build",
+        description: "Build the API",
+        dependencies: [],
+        slices: [
           {
-            id: "m1-s1-t0", name: "Generate contracts",
-            description: "Generate shared types in src/contracts.ts from spec",
-            status: "complete", dependencies: [],
-            touches: ["src/contracts.ts"], reads: [],
-            worker: null, tokenSpend: 500, attemptCount: 1, gateResults: [], parentSliceId: "m1-s1",
-          },
-          {
-            id: "m1-s1-t1", name: "Create players route",
-            description: "Create GET/POST /players in src/routes/players.ts, import Player from contracts.ts, include tests",
-            status: "pending", dependencies: ["m1-s1-t0"],
-            touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
-            reads: ["src/contracts.ts"],
-            worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "m1-s1",
-          },
-          {
-            id: "m1-s1-t2", name: "Create teams route",
-            description: "Create GET/POST /teams in src/routes/teams.ts, import Team from contracts.ts, include tests",
-            status: "pending", dependencies: ["m1-s1-t0"],
-            touches: ["src/routes/teams.ts", "src/__tests__/teams.test.ts"],
-            reads: ["src/contracts.ts"],
-            worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "m1-s1",
+            id: "m1-s1",
+            name: "Core",
+            description: "Core routes",
+            parentMilestoneId: "m1",
+            tasks: [
+              {
+                id: "m1-s1-t0",
+                name: "Generate contracts",
+                description: "Generate shared types in src/contracts.ts from spec",
+                status: "complete",
+                dependencies: [],
+                touches: ["src/contracts.ts"],
+                reads: [],
+                worker: null,
+                tokenSpend: 500,
+                attemptCount: 1,
+                gateResults: [],
+                parentSliceId: "m1-s1",
+              },
+              {
+                id: "m1-s1-t1",
+                name: "Create players route",
+                description:
+                  "Create GET/POST /players in src/routes/players.ts, import Player from contracts.ts, include tests",
+                status: "pending",
+                dependencies: ["m1-s1-t0"],
+                touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+                reads: ["src/contracts.ts"],
+                worker: null,
+                tokenSpend: 0,
+                attemptCount: 0,
+                gateResults: [],
+                parentSliceId: "m1-s1",
+              },
+              {
+                id: "m1-s1-t2",
+                name: "Create teams route",
+                description:
+                  "Create GET/POST /teams in src/routes/teams.ts, import Team from contracts.ts, include tests",
+                status: "pending",
+                dependencies: ["m1-s1-t0"],
+                touches: ["src/routes/teams.ts", "src/__tests__/teams.test.ts"],
+                reads: ["src/contracts.ts"],
+                worker: null,
+                tokenSpend: 0,
+                attemptCount: 0,
+                gateResults: [],
+                parentSliceId: "m1-s1",
+              },
+            ],
           },
         ],
-      }],
-    }],
+      },
+    ],
   };
 
   const codeTree: CodeTree = {
-    modules: [{
-      path: "src", description: "source",
-      files: [
-        { path: "src/contracts.ts", description: "shared types", exports: [{ name: "Player", signature: "interface Player", description: "Player entity" }], imports: [], lastModifiedBy: "m1-s1-t0" },
-        { path: "src/routes/players.ts", description: "players route", exports: [], imports: [{ from: "src/contracts", names: ["Player"] }], lastModifiedBy: null },
-        { path: "src/routes/teams.ts", description: "teams route", exports: [], imports: [{ from: "src/contracts", names: ["Team"] }], lastModifiedBy: null },
-        { path: "src/__tests__/players.test.ts", description: "players tests", exports: [], imports: [], lastModifiedBy: null },
-        { path: "src/__tests__/teams.test.ts", description: "teams tests", exports: [], imports: [], lastModifiedBy: null },
-      ],
-    }],
+    modules: [
+      {
+        path: "src",
+        description: "source",
+        files: [
+          {
+            path: "src/contracts.ts",
+            description: "shared types",
+            exports: [
+              { name: "Player", signature: "interface Player", description: "Player entity" },
+            ],
+            imports: [],
+            lastModifiedBy: "m1-s1-t0",
+          },
+          {
+            path: "src/routes/players.ts",
+            description: "players route",
+            exports: [],
+            imports: [{ from: "src/contracts", names: ["Player"] }],
+            lastModifiedBy: null,
+          },
+          {
+            path: "src/routes/teams.ts",
+            description: "teams route",
+            exports: [],
+            imports: [{ from: "src/contracts", names: ["Team"] }],
+            lastModifiedBy: null,
+          },
+          {
+            path: "src/__tests__/players.test.ts",
+            description: "players tests",
+            exports: [],
+            imports: [],
+            lastModifiedBy: null,
+          },
+          {
+            path: "src/__tests__/teams.test.ts",
+            description: "teams tests",
+            exports: [],
+            imports: [],
+            lastModifiedBy: null,
+          },
+        ],
+      },
+    ],
   };
 
   return { workTree, codeTree };
@@ -4178,7 +4813,9 @@ describe("staged pipeline integration", () => {
     const output: WorkerOutput = {
       status: "complete",
       filesChanged: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
-      interfacesModified: [{ file: "src/routes/players.ts", export: "playersRouter", before: "", after: "Router" }],
+      interfacesModified: [
+        { file: "src/routes/players.ts", export: "playersRouter", before: "", after: "Router" },
+      ],
       testsAdded: ["src/__tests__/players.test.ts"],
       testResults: { pass: 3, fail: 0 },
       notes: "Created GET/POST /players endpoints",
@@ -4206,11 +4843,25 @@ describe("staged pipeline integration", () => {
   it("builds enriched context with contracts and digests", () => {
     const { workTree, codeTree } = buildTestTrees();
     const digests: TaskDigest[] = [
-      { task: "m1-s1-t0", did: "generated contracts", ex: ["Player", "Team"], im: [], pattern: "types" },
+      {
+        task: "m1-s1-t0",
+        did: "generated contracts",
+        ex: ["Player", "Team"],
+        im: [],
+        pattern: "types",
+      },
     ];
     const ctx = buildEnrichedContext(
-      workTree, codeTree, config, "m1-s1-t1", "", "", undefined,
-      "export interface Player { name: string; }", digests, "Build a baseball API",
+      workTree,
+      codeTree,
+      config,
+      "m1-s1-t1",
+      "",
+      "",
+      undefined,
+      "export interface Player { name: string; }",
+      digests,
+      "Build a baseball API",
     );
     expect(ctx).not.toBeNull();
     expect(ctx!.contracts).toContain("Player");
@@ -4221,7 +4872,13 @@ describe("staged pipeline integration", () => {
   it("converts enriched context to wire prompt with all fields", () => {
     const { workTree, codeTree } = buildTestTrees();
     const ctx = buildEnrichedContext(
-      workTree, codeTree, config, "m1-s1-t1", "", "", undefined,
+      workTree,
+      codeTree,
+      config,
+      "m1-s1-t1",
+      "",
+      "",
+      undefined,
       "export interface Player { name: string; }",
       [{ task: "m1-s1-t0", did: "contracts", ex: ["Player"], im: [], pattern: "types" }],
       "Build a baseball API",
@@ -4249,7 +4906,9 @@ describe("staged pipeline integration", () => {
     const output: WorkerOutput = {
       status: "complete",
       filesChanged: ["src/routes/players.ts"],
-      interfacesModified: [{ file: "src/routes/players.ts", export: "playersRouter", before: "", after: "Router" }],
+      interfacesModified: [
+        { file: "src/routes/players.ts", export: "playersRouter", before: "", after: "Router" },
+      ],
       testsAdded: [],
       testResults: { pass: 3, fail: 0 },
       notes: "done",
@@ -4260,8 +4919,16 @@ describe("staged pipeline integration", () => {
 
     // 4. Build enriched context for next task with prior digest
     const ctx = buildEnrichedContext(
-      workTree, codeTree, config, "m1-s1-t2", "", "", undefined,
-      "export interface Team { name: string; }", [digest], "Build a baseball API",
+      workTree,
+      codeTree,
+      config,
+      "m1-s1-t2",
+      "",
+      "",
+      undefined,
+      "export interface Team { name: string; }",
+      [digest],
+      "Build a baseball API",
     );
     expect(ctx).not.toBeNull();
     expect(ctx!.digests).toHaveLength(1);

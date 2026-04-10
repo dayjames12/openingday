@@ -1,4 +1,10 @@
-import type { SpawnFn, StageResult, StageType, StageFeedback, EnrichedContextPackage } from "../types.js";
+import type {
+  SpawnFn,
+  StageResult,
+  StageType,
+  StageFeedback,
+  EnrichedContextPackage,
+} from "../types.js";
 import { createLoopTracker, recordLoop, shouldBreak } from "../safety/loops.js";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -25,7 +31,8 @@ export interface FeedbackLoopResult {
 }
 
 export async function runFeedbackLoop(options: FeedbackLoopOptions): Promise<FeedbackLoopResult> {
-  const { stage, runStage, spawn, taskId, worktreePath, context, taskBudget, maxIterations } = options;
+  const { stage, runStage, spawn, taskId, worktreePath, context, taskBudget, maxIterations } =
+    options;
 
   let tracker = createLoopTracker(taskId);
   const errorHistory: StageFeedback[] = [];
@@ -59,7 +66,8 @@ export async function runFeedbackLoop(options: FeedbackLoopOptions): Promise<Fee
     // Check safety caps
     const breakCheck = shouldBreak(tracker, stage, errorHistory, diffHistory);
     if (breakCheck.break) {
-      const stuckDetected = breakCheck.reason.includes("Same error") || breakCheck.reason.includes("Identical diff");
+      const stuckDetected =
+        breakCheck.reason.includes("Same error") || breakCheck.reason.includes("Identical diff");
       stageResult.loops = iterations;
       return {
         passed: false,
@@ -74,7 +82,8 @@ export async function runFeedbackLoop(options: FeedbackLoopOptions): Promise<Fee
     const feedbackJson = JSON.stringify(stageResult.feedback);
     const feedbackContext: EnrichedContextPackage = {
       ...context,
-      memory: context.memory + `\n${stage.toUpperCase()} FEEDBACK (loop ${iterations}):\n${feedbackJson}`,
+      memory:
+        context.memory + `\n${stage.toUpperCase()} FEEDBACK (loop ${iterations}):\n${feedbackJson}`,
     };
 
     await spawn({

@@ -10,16 +10,24 @@ describe("tiered scanner", () => {
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "od-scan-"));
     // Create a mini project
-    await writeFile(join(dir, "package.json"), JSON.stringify({
-      name: "test", dependencies: { hono: "^4.0.0" },
-    }));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({
+        name: "test",
+        dependencies: { hono: "^4.0.0" },
+      }),
+    );
     await writeFile(join(dir, "tsconfig.json"), "{}");
     await writeFile(join(dir, "pnpm-lock.yaml"), "");
     await mkdir(join(dir, "src"), { recursive: true });
-    await writeFile(join(dir, "src", "auth.ts"),
-      'export function login(user: string): boolean { return true; }\nexport interface User { id: string; }\n');
-    await writeFile(join(dir, "src", "api.ts"),
-      'import { login } from "./auth";\nexport function handler() { login("x"); }\n');
+    await writeFile(
+      join(dir, "src", "auth.ts"),
+      "export function login(user: string): boolean { return true; }\nexport interface User { id: string; }\n",
+    );
+    await writeFile(
+      join(dir, "src", "api.ts"),
+      'import { login } from "./auth";\nexport function handler() { login("x"); }\n',
+    );
   });
 
   afterEach(async () => {

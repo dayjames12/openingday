@@ -43,10 +43,7 @@ function milestoneProgress(milestone: WorkMilestone): number {
 }
 
 function TaskRow({ task }: { task: WorkTask }): React.ReactElement {
-  const costStr =
-    task.tokenSpend > 0
-      ? `$${(task.tokenSpend / 1000).toFixed(2)}`
-      : "";
+  const costStr = task.tokenSpend > 0 ? `$${(task.tokenSpend / 1000).toFixed(2)}` : "";
   const workerStr = task.worker ? `←${task.worker.slice(0, 4)}` : "";
 
   return (
@@ -54,21 +51,13 @@ function TaskRow({ task }: { task: WorkTask }): React.ReactElement {
       <Text>{"    "}</Text>
       {taskIcon(task.status)}
       <Text> {task.name}</Text>
-      {costStr ? (
-        <Text color="gray"> {costStr}</Text>
-      ) : null}
-      {workerStr ? (
-        <Text color="blue"> {workerStr}</Text>
-      ) : null}
+      {costStr ? <Text color="gray"> {costStr}</Text> : null}
+      {workerStr ? <Text color="blue"> {workerStr}</Text> : null}
     </Box>
   );
 }
 
-export function WorkTreeView({
-  workTree,
-}: {
-  workTree: WorkTree;
-}): React.ReactElement {
+export function WorkTreeView({ workTree }: { workTree: WorkTree }): React.ReactElement {
   const allTasks = getAllTasks(workTree);
   if (allTasks.length === 0) {
     return (
@@ -94,7 +83,10 @@ export function WorkTreeView({
           {milestone.slices.map((slice) => (
             <Box key={slice.id} flexDirection="column">
               <Text>
-                <Text bold>{"   ▼ "}{slice.name}</Text>
+                <Text bold>
+                  {"   ▼ "}
+                  {slice.name}
+                </Text>
                 {"  "}
                 {sliceProgress(slice)}
               </Text>

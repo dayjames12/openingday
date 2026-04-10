@@ -2,50 +2,58 @@ import { describe, it, expect } from "vitest";
 import { simulateExecution } from "./simulate.js";
 import type { WorkTree, CodeTree } from "../types.js";
 
-function makeWorkTree(tasks: { id: string; deps: string[]; touches: string[]; reads: string[] }[]): WorkTree {
+function makeWorkTree(
+  tasks: { id: string; deps: string[]; touches: string[]; reads: string[] }[],
+): WorkTree {
   return {
-    milestones: [{
-      id: "m1",
-      name: "m1",
-      description: "milestone",
-      dependencies: [],
-      slices: [{
-        id: "m1-s1",
-        name: "s1",
-        description: "slice",
-        parentMilestoneId: "m1",
-        tasks: tasks.map((t) => ({
-          id: t.id,
-          name: t.id,
-          description: `Task ${t.id} implementation with tests`,
-          status: "pending" as const,
-          dependencies: t.deps,
-          touches: t.touches,
-          reads: t.reads,
-          worker: null,
-          tokenSpend: 0,
-          attemptCount: 0,
-          gateResults: [],
-          parentSliceId: "m1-s1",
-        })),
-      }],
-    }],
+    milestones: [
+      {
+        id: "m1",
+        name: "m1",
+        description: "milestone",
+        dependencies: [],
+        slices: [
+          {
+            id: "m1-s1",
+            name: "s1",
+            description: "slice",
+            parentMilestoneId: "m1",
+            tasks: tasks.map((t) => ({
+              id: t.id,
+              name: t.id,
+              description: `Task ${t.id} implementation with tests`,
+              status: "pending" as const,
+              dependencies: t.deps,
+              touches: t.touches,
+              reads: t.reads,
+              worker: null,
+              tokenSpend: 0,
+              attemptCount: 0,
+              gateResults: [],
+              parentSliceId: "m1-s1",
+            })),
+          },
+        ],
+      },
+    ],
   };
 }
 
 function makeCodeTree(files: string[]): CodeTree {
   return {
-    modules: [{
-      path: "src",
-      description: "source",
-      files: files.map((p) => ({
-        path: p,
-        description: p,
-        exports: [],
-        imports: [],
-        lastModifiedBy: null,
-      })),
-    }],
+    modules: [
+      {
+        path: "src",
+        description: "source",
+        files: files.map((p) => ({
+          path: p,
+          description: p,
+          exports: [],
+          imports: [],
+          lastModifiedBy: null,
+        })),
+      },
+    ],
   };
 }
 

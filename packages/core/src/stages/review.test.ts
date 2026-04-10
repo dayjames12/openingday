@@ -24,7 +24,9 @@ describe("review stage", () => {
     });
 
     it("returns failed with issues when response has problems", () => {
-      const result = parseReviewResponse('{"approved":false,"issues":[{"f":"src/index.ts","l":5,"e":"Uses local Player type instead of contracts","fix":"Import Player from contracts.ts"}]}');
+      const result = parseReviewResponse(
+        '{"approved":false,"issues":[{"f":"src/index.ts","l":5,"e":"Uses local Player type instead of contracts","fix":"Import Player from contracts.ts"}]}',
+      );
       expect(result.passed).toBe(false);
       expect(result.feedback).toHaveLength(1);
       expect(result.feedback[0]!.errors[0]!.f).toBe("src/index.ts");

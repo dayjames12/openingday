@@ -24,5 +24,7 @@ export function reviewFormat(): string {
  * Quality review output format.
  */
 export function qualityFormat(): string {
-  return outputFormat('"pass":bool,"issues":[{"rule":string,"file":string,"note":string,"severity":"high"|"low"}]');
+  return outputFormat(
+    '"pass":bool,"issues":[{"rule":string,"file":string,"note":string,"severity":"high"|"low"}]',
+  );
 }

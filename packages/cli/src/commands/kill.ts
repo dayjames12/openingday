@@ -9,24 +9,18 @@ export function registerKill(program: Command): void {
     .action(async () => {
       const storage = new DiskStorage(".openingday");
       if (!(await storage.exists())) {
-        console.log(
-          chalk.red("No project found. Run `openingday init --from <spec>` first."),
-        );
+        console.log(chalk.red("No project found. Run `openingday init --from <spec>` first."));
         return;
       }
 
       const state = await storage.readProjectState();
       if (isTerminal(state.status)) {
-        console.log(
-          chalk.yellow(`Project is already in terminal state "${state.status}".`),
-        );
+        console.log(chalk.yellow(`Project is already in terminal state "${state.status}".`));
         return;
       }
 
       if (state.status === "idle") {
-        console.log(
-          chalk.yellow(`Project is idle — nothing to kill.`),
-        );
+        console.log(chalk.yellow(`Project is idle — nothing to kill.`));
         return;
       }
 

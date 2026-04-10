@@ -151,7 +151,11 @@ export function createQualityGateCheck(standards: string): GateCheck {
       }
 
       // Check that standards reference is non-empty when standards provided
-      if (standards.length > 0 && output.filesChanged.length === 0 && output.status === "complete") {
+      if (
+        standards.length > 0 &&
+        output.filesChanged.length === 0 &&
+        output.status === "complete"
+      ) {
         issues.push({
           severity: "low",
           rule: "quality-no-changes",

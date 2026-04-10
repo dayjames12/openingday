@@ -26,11 +26,7 @@ describe("readFileContents", () => {
   it("deduplicates touches and reads", async () => {
     await writeFile(join(tempDir, "dup.ts"), "hello\n");
 
-    const result = await readFileContents(
-      tempDir,
-      ["dup.ts", "dup.ts"],
-      ["dup.ts"],
-    );
+    const result = await readFileContents(tempDir, ["dup.ts", "dup.ts"], ["dup.ts"]);
 
     expect(Object.keys(result)).toEqual(["dup.ts"]);
     expect(result["dup.ts"]).toBe("hello\n");

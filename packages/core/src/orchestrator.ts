@@ -1,7 +1,5 @@
 import type { Storage } from "./storage/interface.js";
-import type {
-  SpawnFn,
-} from "./types.js";
+import type { SpawnFn } from "./types.js";
 import { refreshFiles } from "./scanner/incremental.js";
 import {
   createWorkerPool,
@@ -13,10 +11,7 @@ import {
 } from "./workers/pool.js";
 import type { WorkerPool } from "./workers/pool.js";
 import { buildEnrichedContext } from "./context/context-builder.js";
-import {
-  runGatePipeline,
-  createDefaultPipeline,
-} from "./gates/pipeline.js";
+import { runGatePipeline, createDefaultPipeline } from "./gates/pipeline.js";
 import { getAllTasks, getTask, updateTaskStatus, updateTask } from "./trees/work-tree.js";
 import {
   transition,
@@ -24,15 +19,8 @@ import {
   incrementWorkersSpawned,
   isTerminal,
 } from "./state/state-machine.js";
-import {
-  getProjectBudgetStatus,
-  checkCircuitBreakers,
-} from "./budget/budget.js";
-import {
-  createWorktree,
-  removeWorktree,
-  mergeWorktree,
-} from "./workers/worktree.js";
+import { getProjectBudgetStatus, checkCircuitBreakers } from "./budget/budget.js";
+import { createWorktree, removeWorktree, mergeWorktree } from "./workers/worktree.js";
 import { preflightCheck } from "./preflight/check.js";
 import { generateDigest } from "./digests/generator.js";
 import { createWatchdog, createWatchdogState } from "./safety/watchdog.js";
@@ -92,7 +80,13 @@ export class Orchestrator {
 
     // 2. Check if terminal/paused state
     if (isTerminal(state.status)) {
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: state.status === "complete", isPaused: false };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: state.status === "complete",
+        isPaused: false,
+      };
     }
     if (state.status === "paused") {
       return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true };
@@ -103,7 +97,14 @@ export class Orchestrator {
     if (watchdogAction === "pause") {
       state = transition(state, "paused");
       await this.storage.writeProjectState(state);
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true, error: "Watchdog: no progress for 40 minutes" };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: false,
+        isPaused: true,
+        error: "Watchdog: no progress for 40 minutes",
+      };
     }
     if (watchdogAction === "warn") {
       await this.storage.appendMemory("Watchdog warning: no task completed in 20 minutes");
@@ -114,7 +115,14 @@ export class Orchestrator {
     if (circuitStatus.reason) {
       state = transition(state, "paused");
       await this.storage.writeProjectState(state);
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true, error: `Circuit breaker: ${circuitStatus.reason}` };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: false,
+        isPaused: true,
+        error: `Circuit breaker: ${circuitStatus.reason}`,
+      };
     }
 
     // 5. Budget check
@@ -122,18 +130,34 @@ export class Orchestrator {
     if (budgetStatus.atLimit) {
       state = transition(state, "paused");
       await this.storage.writeProjectState(state);
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true, error: "Budget limit reached" };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: false,
+        isPaused: true,
+        error: "Budget limit reached",
+      };
     }
 
     // 6. Spring training (once, before first dispatch)
     if (!this.springTrainingDone && !this.options.skipSpringTraining && this.options.specText) {
       try {
-        const stResult = await runSpringTraining(this.storage, this.options.specText, repoMap, this.options.repoDir);
+        const stResult = await runSpringTraining(
+          this.storage,
+          this.options.specText,
+          repoMap,
+          this.options.repoDir,
+        );
         if (!stResult.valid) {
-          await this.storage.appendMemory(`Spring training blockers: ${stResult.blockers.join("; ")}`);
+          await this.storage.appendMemory(
+            `Spring training blockers: ${stResult.blockers.join("; ")}`,
+          );
         }
         if (stResult.warnings.length > 0) {
-          await this.storage.appendMemory(`Spring training warnings: ${stResult.warnings.join("; ")}`);
+          await this.storage.appendMemory(
+            `Spring training warnings: ${stResult.warnings.join("; ")}`,
+          );
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -155,7 +179,9 @@ export class Orchestrator {
 
     // 9. Check completion
     const allTasks = getAllTasks(workTree);
-    const allDone = allTasks.length === 0 || allTasks.every((t) => t.status === "complete" || t.status === "failed");
+    const allDone =
+      allTasks.length === 0 ||
+      allTasks.every((t) => t.status === "complete" || t.status === "failed");
     const activeWorkers = getActiveCount(this.pool);
 
     if (allDone && activeWorkers === 0 && !spawnDecision.canSpawn) {
@@ -180,20 +206,37 @@ export class Orchestrator {
       if (!preflight.canProceed) {
         workTree = updateTaskStatus(workTree, task.id, "failed");
         failed++;
-        await this.storage.appendMemory(`Task ${task.id} blocked by preflight: ${preflight.blockers.join("; ")}`);
+        await this.storage.appendMemory(
+          `Task ${task.id} blocked by preflight: ${preflight.blockers.join("; ")}`,
+        );
         continue;
       }
       if (preflight.warnings.length > 0) {
-        await this.storage.appendMemory(`Task ${task.id} preflight warnings: ${preflight.warnings.join("; ")}`);
+        await this.storage.appendMemory(
+          `Task ${task.id} preflight warnings: ${preflight.warnings.join("; ")}`,
+        );
       }
 
       // Build enriched context (check cache first for retry loops)
       let context = getCachedContext(task.id);
       if (!context) {
-        const fileContents = await readFileContents(this.options.repoDir ?? ".", task.touches, task.reads);
+        const fileContents = await readFileContents(
+          this.options.repoDir ?? ".",
+          task.touches,
+          task.reads,
+        );
         context = buildEnrichedContext(
-          workTree, codeTree, config, task.id, memory, "",
-          repoMap, contracts, digests, this.options.specText ?? "", fileContents,
+          workTree,
+          codeTree,
+          config,
+          task.id,
+          memory,
+          "",
+          repoMap,
+          contracts,
+          digests,
+          this.options.specText ?? "",
+          fileContents,
         );
         if (!context) continue;
         setCachedContext(task.id, context);
@@ -269,10 +312,14 @@ export class Orchestrator {
             const mergeResult = await mergeWorktree(this.options.repoDir, worktreeBranch);
             if (!mergeResult.success) {
               workTree = updateTaskStatus(workTree, task.id, "failed");
-              workTree = updateTask(workTree, task.id, { attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1 });
+              workTree = updateTask(workTree, task.id, {
+                attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+              });
               this.pool = completeWorker(this.pool, sessionId, "failed");
               failed++;
-              await this.storage.appendMemory(`Task ${task.id} merge conflict: ${mergeResult.error}`);
+              await this.storage.appendMemory(
+                `Task ${task.id} merge conflict: ${mergeResult.error}`,
+              );
               continue;
             }
           }
@@ -290,7 +337,11 @@ export class Orchestrator {
 
           // Incremental repo map refresh
           if (repoMap && workerOutput.filesChanged.length > 0) {
-            const updatedMap = await refreshFiles(repoMap, this.options.repoDir ?? ".", workerOutput.filesChanged);
+            const updatedMap = await refreshFiles(
+              repoMap,
+              this.options.repoDir ?? ".",
+              workerOutput.filesChanged,
+            );
             await this.storage.writeRepoMap(updatedMap);
           }
 
@@ -298,21 +349,31 @@ export class Orchestrator {
           this.watchdog.reset();
         } else {
           workTree = updateTaskStatus(workTree, task.id, "failed");
-          workTree = updateTask(workTree, task.id, { attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1 });
+          workTree = updateTask(workTree, task.id, {
+            attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+          });
           this.pool = completeWorker(this.pool, sessionId, "failed");
           failed++;
-          await this.storage.appendMemory(`Task ${task.id} failed staged pipeline at ${new Date().toISOString()}`);
+          await this.storage.appendMemory(
+            `Task ${task.id} failed staged pipeline at ${new Date().toISOString()}`,
+          );
         }
       } catch (err) {
         workTree = updateTaskStatus(workTree, task.id, "failed");
-        workTree = updateTask(workTree, task.id, { attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1 });
+        workTree = updateTask(workTree, task.id, {
+          attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+        });
         this.pool = completeWorker(this.pool, sessionId, "failed");
         failed++;
         const message = err instanceof Error ? err.message : String(err);
         await this.storage.appendMemory(`Task ${task.id} spawn error: ${message}`);
       } finally {
         if (this.options.repoDir && worktreePath !== ".") {
-          try { await removeWorktree(this.options.repoDir, worktreePath); } catch { /* cleanup non-fatal */ }
+          try {
+            await removeWorktree(this.options.repoDir, worktreePath);
+          } catch {
+            /* cleanup non-fatal */
+          }
         }
       }
     }
@@ -323,5 +384,4 @@ export class Orchestrator {
 
     return { dispatched, completed, failed, isComplete: false, isPaused: false };
   }
-
 }

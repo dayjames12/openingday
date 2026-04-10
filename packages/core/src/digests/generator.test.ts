@@ -17,44 +17,63 @@ describe("generateDigest", () => {
   };
 
   const workTree: WorkTree = {
-    milestones: [{
-      id: "m1", name: "m1", description: "Build", dependencies: [],
-      slices: [{
-        id: "m1-s1", name: "s1", description: "Core", parentMilestoneId: "m1",
-        tasks: [{
-          id: "m1-s1-t1", name: "Create players route",
-          description: "Create GET/POST /players in src/routes/players.ts",
-          status: "complete", dependencies: [],
-          touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
-          reads: ["src/contracts.ts"],
-          worker: null, tokenSpend: 15000, attemptCount: 1, gateResults: [],
-          parentSliceId: "m1-s1",
-        }],
-      }],
-    }],
+    milestones: [
+      {
+        id: "m1",
+        name: "m1",
+        description: "Build",
+        dependencies: [],
+        slices: [
+          {
+            id: "m1-s1",
+            name: "s1",
+            description: "Core",
+            parentMilestoneId: "m1",
+            tasks: [
+              {
+                id: "m1-s1-t1",
+                name: "Create players route",
+                description: "Create GET/POST /players in src/routes/players.ts",
+                status: "complete",
+                dependencies: [],
+                touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+                reads: ["src/contracts.ts"],
+                worker: null,
+                tokenSpend: 15000,
+                attemptCount: 1,
+                gateResults: [],
+                parentSliceId: "m1-s1",
+              },
+            ],
+          },
+        ],
+      },
+    ],
   };
 
   const codeTree: CodeTree = {
-    modules: [{
-      path: "src",
-      description: "source",
-      files: [
-        {
-          path: "src/routes/players.ts",
-          description: "players route",
-          exports: [{ name: "playersRouter", signature: "Router", description: "" }],
-          imports: [{ from: "src/contracts", names: ["Player"] }],
-          lastModifiedBy: null,
-        },
-        {
-          path: "src/contracts.ts",
-          description: "contracts",
-          exports: [{ name: "Player", signature: "interface Player", description: "" }],
-          imports: [],
-          lastModifiedBy: null,
-        },
-      ],
-    }],
+    modules: [
+      {
+        path: "src",
+        description: "source",
+        files: [
+          {
+            path: "src/routes/players.ts",
+            description: "players route",
+            exports: [{ name: "playersRouter", signature: "Router", description: "" }],
+            imports: [{ from: "src/contracts", names: ["Player"] }],
+            lastModifiedBy: null,
+          },
+          {
+            path: "src/contracts.ts",
+            description: "contracts",
+            exports: [{ name: "Player", signature: "interface Player", description: "" }],
+            imports: [],
+            lastModifiedBy: null,
+          },
+        ],
+      },
+    ],
   };
 
   it("generates a valid TaskDigest", () => {

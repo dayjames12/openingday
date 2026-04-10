@@ -27,7 +27,7 @@ function GateRow({ gate }: { gate: DashboardGateEntry }) {
   const layerColor = layerColors[gate.layer] ?? "text-[var(--text-muted)]";
   const failReason =
     !gate.pass && gate.issues.length > 0
-      ? gate.issues[0]?.note ?? gate.issues[0]?.rule ?? "unknown"
+      ? (gate.issues[0]?.note ?? gate.issues[0]?.rule ?? "unknown")
       : null;
 
   return (
@@ -62,7 +62,11 @@ export function GatesPanel({ gates }: GatesPanelProps) {
       {gates.length === 0 ? (
         <p className="text-xs text-[var(--text-muted)]">No gate results yet</p>
       ) : (
-        <div>{gates.map((g, i) => <GateRow key={`${g.taskId}-${g.layer}-${i}`} gate={g} />)}</div>
+        <div>
+          {gates.map((g, i) => (
+            <GateRow key={`${g.taskId}-${g.layer}-${i}`} gate={g} />
+          ))}
+        </div>
       )}
     </div>
   );

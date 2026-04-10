@@ -24,7 +24,10 @@ export function parseContractResponse(text: string): string {
   }
 
   // Validate it looks like TypeScript types
-  if (!source.includes("export") || (!source.includes("interface") && !source.includes("type") && !source.includes("enum"))) {
+  if (
+    !source.includes("export") ||
+    (!source.includes("interface") && !source.includes("type") && !source.includes("enum"))
+  ) {
     return "";
   }
 

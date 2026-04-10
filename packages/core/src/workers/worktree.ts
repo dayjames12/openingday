@@ -27,7 +27,8 @@ export async function listWorktrees(repoDir: string): Promise<WorktreeInfo[]> {
   let current: Partial<WorktreeInfo> = {};
   for (const line of stdout.split("\n")) {
     if (line.startsWith("worktree ")) current.path = line.slice("worktree ".length);
-    else if (line.startsWith("branch refs/heads/")) current.branch = line.slice("branch refs/heads/".length);
+    else if (line.startsWith("branch refs/heads/"))
+      current.branch = line.slice("branch refs/heads/".length);
     else if (line === "") {
       if (current.path) trees.push({ path: current.path, branch: current.branch ?? "HEAD" });
       current = {};
@@ -36,7 +37,10 @@ export async function listWorktrees(repoDir: string): Promise<WorktreeInfo[]> {
   return trees;
 }
 
-export async function mergeWorktree(repoDir: string, branch: string): Promise<{ success: boolean; error?: string }> {
+export async function mergeWorktree(
+  repoDir: string,
+  branch: string,
+): Promise<{ success: boolean; error?: string }> {
   try {
     await exec("git", ["merge", branch, "--no-edit"], { cwd: repoDir });
     return { success: true };

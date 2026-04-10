@@ -74,7 +74,9 @@ export function preflightCheck(
           warnings.push(`New file "${touchPath}" will be created in existing directory`);
         } else {
           // File not in repo AND parent dir doesn't exist — likely wrong path
-          blockers.push(`Touch file "${touchPath}" not found in repo map and parent directory doesn't exist (brownfield mode)`);
+          blockers.push(
+            `Touch file "${touchPath}" not found in repo map and parent directory doesn't exist (brownfield mode)`,
+          );
         }
       } else {
         // Greenfield: missing touch file is a warning — files will be created
@@ -111,9 +113,7 @@ export function preflightCheck(
     if (other.status !== "in_progress") continue;
     const overlap = task.touches.filter((f) => other.touches.includes(f));
     if (overlap.length > 0) {
-      warnings.push(
-        `File conflict with in-progress task ${other.id}: ${overlap.join(", ")}`,
-      );
+      warnings.push(`File conflict with in-progress task ${other.id}: ${overlap.join(", ")}`);
     }
   }
 

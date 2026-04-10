@@ -6,7 +6,10 @@ const TTL = 5 * 60 * 1000; // 5 minutes
 export function getCachedContext(taskId: string): EnrichedContextPackage | null {
   const entry = cache.get(taskId);
   if (!entry) return null;
-  if (Date.now() - entry.timestamp > TTL) { cache.delete(taskId); return null; }
+  if (Date.now() - entry.timestamp > TTL) {
+    cache.delete(taskId);
+    return null;
+  }
   return entry.ctx;
 }
 

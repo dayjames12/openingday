@@ -23,9 +23,7 @@ export async function inspectWorktreeOutput(
   const interfacesModified = parseInterfaceChanges(diff);
 
   // 4. Detect new test files
-  const testsAdded = filesChanged.filter(
-    (f) => f.endsWith(".test.ts") || f.endsWith(".spec.ts"),
-  );
+  const testsAdded = filesChanged.filter((f) => f.endsWith(".test.ts") || f.endsWith(".spec.ts"));
 
   // 5. Run tests if env is available and a test runner is configured
   let testResults = { pass: 0, fail: 0 };
@@ -52,11 +50,7 @@ export async function inspectWorktreeOutput(
 
 async function getChangedFiles(worktreePath: string): Promise<string[]> {
   try {
-    const { stdout } = await exec(
-      "git",
-      ["diff", "--name-only", "HEAD"],
-      { cwd: worktreePath },
-    );
+    const { stdout } = await exec("git", ["diff", "--name-only", "HEAD"], { cwd: worktreePath });
     // Also check for untracked files that were added
     const { stdout: untrackedOut } = await exec(
       "git",
@@ -74,19 +68,17 @@ async function getChangedFiles(worktreePath: string): Promise<string[]> {
 async function getFullDiff(worktreePath: string): Promise<string> {
   try {
     // Staged + unstaged changes against HEAD
-    const { stdout } = await exec(
-      "git",
-      ["diff", "HEAD"],
-      { cwd: worktreePath, maxBuffer: 10 * 1024 * 1024 },
-    );
+    const { stdout } = await exec("git", ["diff", "HEAD"], {
+      cwd: worktreePath,
+      maxBuffer: 10 * 1024 * 1024,
+    });
     return stdout;
   } catch {
     return "";
   }
 }
 
-const EXPORT_RE =
-  /^([+-])export\s+(?:function|const|class|type|interface|enum)\s+(\w+)/;
+const EXPORT_RE = /^([+-])export\s+(?:function|const|class|type|interface|enum)\s+(\w+)/;
 
 /**
  * Parse a unified diff to find export signature changes.

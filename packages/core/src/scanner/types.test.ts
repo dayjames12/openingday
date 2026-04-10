@@ -17,18 +17,22 @@ describe("scanner types", () => {
         infra: "sst",
       },
       deps: ["hono", "electrodb"],
-      modules: [{
-        p: "packages/core",
-        d: "core logic",
-        fc: 12,
-        k: ["auth", "db"],
-        files: [{
-          p: "packages/core/src/auth.ts",
-          ex: [{ n: "auth", s: "() => void" }],
-          im: [{ f: "./types", n: ["User"] }],
-          loc: 45,
-        }],
-      }],
+      modules: [
+        {
+          p: "packages/core",
+          d: "core logic",
+          fc: 12,
+          k: ["auth", "db"],
+          files: [
+            {
+              p: "packages/core/src/auth.ts",
+              ex: [{ n: "auth", s: "() => void" }],
+              im: [{ f: "./types", n: ["User"] }],
+              loc: 45,
+            },
+          ],
+        },
+      ],
     };
     expect(map.v).toBe(1);
     expect(map.env.pm).toBe("pnpm");

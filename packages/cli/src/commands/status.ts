@@ -16,9 +16,7 @@ export function registerStatus(program: Command): void {
     .action(async (opts: { cost?: boolean }) => {
       const storage = new DiskStorage(".openingday");
       if (!(await storage.exists())) {
-        console.log(
-          chalk.red("No project found. Run `openingday init --from <spec>` first."),
-        );
+        console.log(chalk.red("No project found. Run `openingday init --from <spec>` first."));
         return;
       }
 
@@ -47,7 +45,11 @@ export function registerStatus(program: Command): void {
       console.log(`  Total: ${allTasks.length}`);
 
       if (failed > 0) {
-        console.log(chalk.yellow("  Tip: Failed tasks may need higher budget. Edit .openingday/project.json budgets.perTask.usd"));
+        console.log(
+          chalk.yellow(
+            "  Tip: Failed tasks may need higher budget. Edit .openingday/project.json budgets.perTask.usd",
+          ),
+        );
       }
 
       if (opts.cost) {
@@ -59,12 +61,9 @@ export function registerStatus(program: Command): void {
         console.log(
           `  Spent: ${budget.totalSpent} / ${budget.projectBudget} (${budget.percentage.toFixed(1)}%)`,
         );
-        if (budget.atWarning)
-          console.log(chalk.yellow("  WARNING: Approaching budget limit"));
-        if (budget.atLimit)
-          console.log(chalk.red("  LIMIT: Budget exhausted"));
-        if (breakers.reason)
-          console.log(chalk.red(`  Circuit breaker: ${breakers.reason}`));
+        if (budget.atWarning) console.log(chalk.yellow("  WARNING: Approaching budget limit"));
+        if (budget.atLimit) console.log(chalk.red("  LIMIT: Budget exhausted"));
+        if (breakers.reason) console.log(chalk.red(`  Circuit breaker: ${breakers.reason}`));
       }
     });
 }

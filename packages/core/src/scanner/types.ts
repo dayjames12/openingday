@@ -13,32 +13,32 @@ export interface EnvConfig {
 }
 
 export interface RepoFile {
-  p: string;           // path
-  ex: RepoExport[];    // exports
-  im: RepoImport[];    // imports
-  loc: number;         // lines of code
+  p: string; // path
+  ex: RepoExport[]; // exports
+  im: RepoImport[]; // imports
+  loc: number; // lines of code
 }
 
 export interface RepoExport {
-  n: string;           // name
-  s: string;           // signature
+  n: string; // name
+  s: string; // signature
 }
 
 export interface RepoImport {
-  f: string;           // from
-  n: string[];         // names
+  f: string; // from
+  n: string[]; // names
 }
 
 export interface RepoModule {
-  p: string;           // path
-  d: string;           // description (wire-mode terse)
-  fc: number;          // file count
-  k: string[];         // keywords
+  p: string; // path
+  d: string; // description (wire-mode terse)
+  fc: number; // file count
+  k: string[]; // keywords
   files: RepoFile[];
 }
 
 export interface RepoMap {
-  v: number;           // version
+  v: number; // version
   scannedAt: string;
   depth: ScanDepth;
   env: EnvConfig;
@@ -48,8 +48,8 @@ export interface RepoMap {
 
 // Landscape = compressed index for worker context (~200 tokens)
 export interface Landscape {
-  mc: number;          // module count
-  fc: number;          // total file count
+  mc: number; // module count
+  fc: number; // total file count
   modules: { p: string; fc: number; k: string[] }[];
 }
 

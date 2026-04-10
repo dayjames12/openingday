@@ -5,13 +5,7 @@ import { tmpdir } from "node:os";
 import { DiskStorage } from "./storage/disk.js";
 import { Orchestrator } from "./orchestrator.js";
 import type { SpawnFn } from "./orchestrator.js";
-import type {
-  ProjectConfig,
-  ProjectState,
-  WorkTree,
-  CodeTree,
-  WorkerOutput,
-} from "./types.js";
+import type { ProjectConfig, ProjectState, WorkTree, CodeTree, WorkerOutput } from "./types.js";
 import type { SpawnResult } from "./workers/spawner.js";
 
 function makeConfig(): ProjectConfig {

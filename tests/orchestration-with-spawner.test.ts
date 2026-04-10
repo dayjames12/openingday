@@ -127,7 +127,11 @@ function makeCodeTree(): CodeTree {
             description: "Database connection layer",
             exports: [
               { name: "createPool", signature: "() => Pool", description: "Create DB pool" },
-              { name: "query", signature: "(sql: string) => Promise<Row[]>", description: "Run query" },
+              {
+                name: "query",
+                signature: "(sql: string) => Promise<Row[]>",
+                description: "Run query",
+              },
             ],
             imports: [],
             lastModifiedBy: null,
@@ -136,7 +140,11 @@ function makeCodeTree(): CodeTree {
             path: "src/services/user-service.ts",
             description: "User CRUD service",
             exports: [
-              { name: "UserService", signature: "class UserService", description: "User operations" },
+              {
+                name: "UserService",
+                signature: "class UserService",
+                description: "User operations",
+              },
             ],
             imports: [{ from: "src/services/db.ts", names: ["query"] }],
             lastModifiedBy: null,
@@ -189,7 +197,7 @@ describe("multi-cycle orchestration with mock spawner", () => {
       };
       return {
         output,
-        costUsd: 0.10,
+        costUsd: 0.1,
         sessionId: `mock-${opts.taskId}`,
         needsInspection: false,
       } satisfies SpawnResult;

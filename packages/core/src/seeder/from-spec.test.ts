@@ -81,7 +81,13 @@ describe("from-spec", () => {
                 {
                   path: "src/config.ts",
                   description: "Configuration",
-                  exports: [{ name: "config", signature: "const config: Config", description: "App config" }],
+                  exports: [
+                    {
+                      name: "config",
+                      signature: "const config: Config",
+                      description: "App config",
+                    },
+                  ],
                   imports: [],
                   lastModifiedBy: null,
                 },
@@ -135,17 +141,38 @@ describe("from-spec", () => {
     it("warns on short task descriptions", () => {
       const response = JSON.stringify({
         workTree: {
-          milestones: [{
-            id: "m1", name: "M1", description: "M1", dependencies: [],
-            slices: [{
-              id: "m1-s1", name: "S1", description: "S1", parentMilestoneId: "m1",
-              tasks: [{
-                id: "t1", name: "T1", description: "Short",
-                status: "pending", dependencies: [], touches: ["a.ts"], reads: [],
-                worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "m1-s1",
-              }],
-            }],
-          }],
+          milestones: [
+            {
+              id: "m1",
+              name: "M1",
+              description: "M1",
+              dependencies: [],
+              slices: [
+                {
+                  id: "m1-s1",
+                  name: "S1",
+                  description: "S1",
+                  parentMilestoneId: "m1",
+                  tasks: [
+                    {
+                      id: "t1",
+                      name: "T1",
+                      description: "Short",
+                      status: "pending",
+                      dependencies: [],
+                      touches: ["a.ts"],
+                      reads: [],
+                      worker: null,
+                      tokenSpend: 0,
+                      attemptCount: 0,
+                      gateResults: [],
+                      parentSliceId: "m1-s1",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         codeTree: { modules: [] },
       });
@@ -157,17 +184,38 @@ describe("from-spec", () => {
     it("warns on empty touches", () => {
       const response = JSON.stringify({
         workTree: {
-          milestones: [{
-            id: "m1", name: "M1", description: "M1", dependencies: [],
-            slices: [{
-              id: "m1-s1", name: "S1", description: "S1", parentMilestoneId: "m1",
-              tasks: [{
-                id: "t1", name: "T1", description: "A sufficiently long description here",
-                status: "pending", dependencies: [], touches: [], reads: [],
-                worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "m1-s1",
-              }],
-            }],
-          }],
+          milestones: [
+            {
+              id: "m1",
+              name: "M1",
+              description: "M1",
+              dependencies: [],
+              slices: [
+                {
+                  id: "m1-s1",
+                  name: "S1",
+                  description: "S1",
+                  parentMilestoneId: "m1",
+                  tasks: [
+                    {
+                      id: "t1",
+                      name: "T1",
+                      description: "A sufficiently long description here",
+                      status: "pending",
+                      dependencies: [],
+                      touches: [],
+                      reads: [],
+                      worker: null,
+                      tokenSpend: 0,
+                      attemptCount: 0,
+                      gateResults: [],
+                      parentSliceId: "m1-s1",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         codeTree: { modules: [] },
       });
@@ -179,30 +227,62 @@ describe("from-spec", () => {
     it("warns on independent tasks touching the same file", () => {
       const response = JSON.stringify({
         workTree: {
-          milestones: [{
-            id: "m1", name: "M1", description: "M1", dependencies: [],
-            slices: [{
-              id: "m1-s1", name: "S1", description: "S1", parentMilestoneId: "m1",
-              tasks: [
+          milestones: [
+            {
+              id: "m1",
+              name: "M1",
+              description: "M1",
+              dependencies: [],
+              slices: [
                 {
-                  id: "t1", name: "T1", description: "Add feature A in src/shared.ts — exports featureA",
-                  status: "pending", dependencies: [], touches: ["src/shared.ts"], reads: [],
-                  worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "m1-s1",
-                },
-                {
-                  id: "t2", name: "T2", description: "Add feature B in src/shared.ts — exports featureB",
-                  status: "pending", dependencies: [], touches: ["src/shared.ts"], reads: [],
-                  worker: null, tokenSpend: 0, attemptCount: 0, gateResults: [], parentSliceId: "m1-s1",
+                  id: "m1-s1",
+                  name: "S1",
+                  description: "S1",
+                  parentMilestoneId: "m1",
+                  tasks: [
+                    {
+                      id: "t1",
+                      name: "T1",
+                      description: "Add feature A in src/shared.ts — exports featureA",
+                      status: "pending",
+                      dependencies: [],
+                      touches: ["src/shared.ts"],
+                      reads: [],
+                      worker: null,
+                      tokenSpend: 0,
+                      attemptCount: 0,
+                      gateResults: [],
+                      parentSliceId: "m1-s1",
+                    },
+                    {
+                      id: "t2",
+                      name: "T2",
+                      description: "Add feature B in src/shared.ts — exports featureB",
+                      status: "pending",
+                      dependencies: [],
+                      touches: ["src/shared.ts"],
+                      reads: [],
+                      worker: null,
+                      tokenSpend: 0,
+                      attemptCount: 0,
+                      gateResults: [],
+                      parentSliceId: "m1-s1",
+                    },
+                  ],
                 },
               ],
-            }],
-          }],
+            },
+          ],
         },
         codeTree: { modules: [] },
       });
 
       const { warnings } = parseSeederResponse(response);
-      expect(warnings.some((w) => w.message.includes("both touch") && w.message.includes("no dependency"))).toBe(true);
+      expect(
+        warnings.some(
+          (w) => w.message.includes("both touch") && w.message.includes("no dependency"),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -211,7 +291,15 @@ describe("from-spec", () => {
       v: 1,
       scannedAt: "2026-04-08T00:00:00Z",
       depth: "standard" as const,
-      env: { pm: "pnpm" as const, test: "vitest" as const, lint: "eslint" as const, ts: true, monorepo: false, workspaces: [], infra: "none" as const },
+      env: {
+        pm: "pnpm" as const,
+        test: "vitest" as const,
+        lint: "eslint" as const,
+        ts: true,
+        monorepo: false,
+        workspaces: [],
+        infra: "none" as const,
+      },
       deps: [],
       modules: [
         {
@@ -220,8 +308,18 @@ describe("from-spec", () => {
           fc: 2,
           k: ["scanner"],
           files: [
-            { p: "packages/core/src/scanner/detect.ts", ex: [{ n: "detectEnv", s: "(dir: string) => Promise<EnvConfig>" }], im: [], loc: 50 },
-            { p: "packages/core/src/scanner/scan.ts", ex: [{ n: "scanRepo", s: "(dir: string) => Promise<RepoMap>" }], im: [], loc: 80 },
+            {
+              p: "packages/core/src/scanner/detect.ts",
+              ex: [{ n: "detectEnv", s: "(dir: string) => Promise<EnvConfig>" }],
+              im: [],
+              loc: 50,
+            },
+            {
+              p: "packages/core/src/scanner/scan.ts",
+              ex: [{ n: "scanRepo", s: "(dir: string) => Promise<RepoMap>" }],
+              im: [],
+              loc: 80,
+            },
           ],
         },
       ],

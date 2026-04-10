@@ -1,4 +1,10 @@
-import type { SpawnFn, EnrichedContextPackage, WorkerOutput, StageResult, StageFeedback } from "../types.js";
+import type {
+  SpawnFn,
+  EnrichedContextPackage,
+  WorkerOutput,
+  StageResult,
+  StageFeedback,
+} from "../types.js";
 import type { EnvConfig } from "../scanner/types.js";
 import type { SpawnResult } from "../workers/spawner.js";
 import { inspectWorktreeOutput } from "../workers/inspect.js";
@@ -154,7 +160,12 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     const breakCheck = shouldBreak(tracker, "review", reviewResult.feedback, []);
 
     if (breakCheck.break) {
-      stages.push({ stage: "review", passed: false, feedback: reviewResult.feedback, loopCount: 1 });
+      stages.push({
+        stage: "review",
+        passed: false,
+        feedback: reviewResult.feedback,
+        loopCount: 1,
+      });
       return { workerOutput, spawnResult, stages, allPassed: false, stageResults };
     }
 

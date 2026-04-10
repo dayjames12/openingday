@@ -12,10 +12,7 @@ export interface SimulationResult {
  * Simulate execution of the work tree to find missing dependencies and optimize order.
  * Walks tasks in dependency order, checking context sufficiency at each step.
  */
-export function simulateExecution(
-  workTree: WorkTree,
-  codeTree: CodeTree,
-): SimulationResult {
+export function simulateExecution(workTree: WorkTree, codeTree: CodeTree): SimulationResult {
   const allTasks = getAllTasks(workTree);
   const codeFiles = new Set(getAllFiles(codeTree).map((f) => f.path));
   const warnings: string[] = [];
@@ -44,7 +41,9 @@ export function simulateExecution(
         if (!hasTransitiveDep(taskDeps, task.id, writer)) {
           addedDependencies.push([task.id, writer]);
           deps.add(writer);
-          warnings.push(`Added dependency: "${task.id}" now depends on "${writer}" (reads "${readFile}")`);
+          warnings.push(
+            `Added dependency: "${task.id}" now depends on "${writer}" (reads "${readFile}")`,
+          );
         }
       }
     }
@@ -52,13 +51,18 @@ export function simulateExecution(
     // Check for reads that reference files not in code tree and not produced by any task
     for (const readFile of task.reads) {
       if (!codeFiles.has(readFile) && !touchMap.has(readFile)) {
-        warnings.push(`Task "${task.id}" reads "${readFile}" which is not in code tree and not produced by any task`);
+        warnings.push(
+          `Task "${task.id}" reads "${readFile}" which is not in code tree and not produced by any task`,
+        );
       }
     }
   }
 
   // Topological sort for execution order
-  const executionOrder = topologicalSort(allTasks.map((t) => t.id), taskDeps);
+  const executionOrder = topologicalSort(
+    allTasks.map((t) => t.id),
+    taskDeps,
+  );
 
   return {
     executionOrder,
@@ -95,10 +99,7 @@ function hasTransitiveDep(
  * Topological sort using Kahn's algorithm.
  * Returns tasks in valid execution order.
  */
-function topologicalSort(
-  taskIds: string[],
-  taskDeps: Map<string, Set<string>>,
-): string[] {
+function topologicalSort(taskIds: string[], taskDeps: Map<string, Set<string>>): string[] {
   const inDegree = new Map<string, number>();
   const adjacency = new Map<string, string[]>();
 

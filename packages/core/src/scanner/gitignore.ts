@@ -19,9 +19,10 @@ export async function ensureGitignore(dir: string): Promise<void> {
 
   if (content.includes(".openingday/*")) return;
 
-  const updated = content.endsWith("\n") || content === ""
-    ? content + GITIGNORE_BLOCK
-    : content + "\n" + GITIGNORE_BLOCK;
+  const updated =
+    content.endsWith("\n") || content === ""
+      ? content + GITIGNORE_BLOCK
+      : content + "\n" + GITIGNORE_BLOCK;
 
   await writeFile(gitignorePath, updated, "utf-8");
 }

@@ -10,6 +10,7 @@ vi.mock("../safety/loops.js", () => ({
     stageLoopIds: [],
     totalLoops: 0,
   })),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   recordLoop: vi.fn((tracker: any, stage: string) => ({
     ...tracker,
     stageLoopIds: [...tracker.stageLoopIds, `${stage}-${tracker.totalLoops + 1}`],
@@ -20,6 +21,7 @@ vi.mock("../safety/loops.js", () => ({
 
 // Mock child_process for git diff
 vi.mock("node:child_process", () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   execFile: vi.fn((_cmd: string, _args: string[], _opts: any, cb: any) => {
     cb(null, { stdout: "mock-diff", stderr: "" });
   }),
@@ -66,7 +68,9 @@ describe("runFeedbackLoop", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    spawn = vi.fn().mockResolvedValue({ output: {}, costUsd: 0, sessionId: "s1" }) as unknown as SpawnFn;
+    spawn = vi
+      .fn()
+      .mockResolvedValue({ output: {}, costUsd: 0, sessionId: "s1" }) as unknown as SpawnFn;
     baseOptions = {
       stage: "compile",
       spawn,

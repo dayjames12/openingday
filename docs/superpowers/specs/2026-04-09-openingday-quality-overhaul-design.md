@@ -30,6 +30,7 @@ Heavy validation between seeding and first dispatch. Three phases.
 Parse spec for domain entities. Generate shared contracts file committed to repo BEFORE any worker runs.
 
 Output: `src/contracts.ts` (or project-appropriate path) containing:
+
 - All domain interfaces/types referenced in spec
 - Extracted from spec's domain language exactly (no generic substitution)
 - For brownfield: existing types extracted + spec additions merged
@@ -39,6 +40,7 @@ Every subsequent task gets contracts file in `reads` automatically. Workers NEVE
 ### Phase C: Execution Plan Simulation (AI, one-time)
 
 Walk through tasks in planned order:
+
 - For each task: "given what previous tasks produce, does this task have enough context?"
 - Flag missing dependency links (e.g., test task doesn't depend on implementation task)
 - Flag tasks that write to files other tasks read without dependency
@@ -93,7 +95,17 @@ Only after all stages pass. Merge worktree, generate task completion digest, ref
 All feedback to workers is wire-mode compressed:
 
 ```json
-{"stage":"compile","errors":[{"f":"src/routes/players.ts","l":12,"e":"Property 'team' does not exist on type 'Player'","fix":"Import Player from contracts.ts, not local definition"}]}
+{
+  "stage": "compile",
+  "errors": [
+    {
+      "f": "src/routes/players.ts",
+      "l": 12,
+      "e": "Property 'team' does not exist on type 'Player'",
+      "fix": "Import Player from contracts.ts, not local definition"
+    }
+  ]
+}
 ```
 
 Worker gets targeted, actionable feedback. Not raw 500-line tsc dump.
@@ -101,6 +113,7 @@ Worker gets targeted, actionable feedback. Not raw 500-line tsc dump.
 ### Re-Evaluation at Max 5
 
 At 5 loops in any stage, orchestrator stops and evaluates:
+
 - AI analyzes full error history for task
 - Decides: split into subtasks? provide more context? different approach?
 - If auto-fixable: does it
@@ -112,17 +125,17 @@ Workers see real code, not just signatures.
 
 ### Context Package (Enriched)
 
-| Context | Before | After |
-|---------|--------|-------|
-| Task description | ~200 chars | Full task spec + acceptance criteria |
-| Contracts file | Didn't exist | Full source of shared types |
-| Files being modified | Signatures `{n, sig}` | **Full file contents** |
-| Dependency files | Signatures | **Full contents** for direct imports |
-| Dependent files | Signatures | Signatures (don't modify these) |
-| Repo landscape | Module names + keywords | Same |
-| Previous task output | Nothing | AI-digested completion summaries |
-| Spec excerpt | Nothing | Relevant spec section for this task |
-| Memory | Institutional notes | Same + failure context from retries |
+| Context              | Before                  | After                                |
+| -------------------- | ----------------------- | ------------------------------------ |
+| Task description     | ~200 chars              | Full task spec + acceptance criteria |
+| Contracts file       | Didn't exist            | Full source of shared types          |
+| Files being modified | Signatures `{n, sig}`   | **Full file contents**               |
+| Dependency files     | Signatures              | **Full contents** for direct imports |
+| Dependent files      | Signatures              | Signatures (don't modify these)      |
+| Repo landscape       | Module names + keywords | Same                                 |
+| Previous task output | Nothing                 | AI-digested completion summaries     |
+| Spec excerpt         | Nothing                 | Relevant spec section for this task  |
+| Memory               | Institutional notes     | Same + failure context from retries  |
 
 **Large file handling:** If file > 300 lines, include: first 50 lines + exports section + section around where changes go. Don't send entire 3000-line file.
 
@@ -133,7 +146,13 @@ Workers see real code, not just signatures.
 After each task merges, orchestrator generates wire-mode digest:
 
 ```json
-{"task":"m2-s1-t1","did":"created GET /players in src/routes/players.ts","ex":["playersRouter"],"im":["Player from contracts","store"],"pattern":"Router, json array response, no wrapper"}
+{
+  "task": "m2-s1-t1",
+  "did": "created GET /players in src/routes/players.ts",
+  "ex": ["playersRouter"],
+  "im": ["Player from contracts", "store"],
+  "pattern": "Router, json array response, no wrapper"
+}
 ```
 
 Stored in `.openingday/digests/`. All prior digests included in next worker's context.
@@ -142,37 +161,38 @@ Stored in `.openingday/digests/`. All prior digests included in next worker's co
 
 ### Per-Stage (innermost)
 
-| Cap | Value | Action |
-|-----|-------|--------|
-| Max iterations | 5 | Re-evaluate |
-| Same error consecutive | 3 | Break, re-evaluate |
-| Wall-clock timeout | 10 min | Break, fail stage |
-| Stage token budget | task_budget / 4 | Break, fail stage |
-| Identical diff two loops | 2 | Stuck, break |
+| Cap                      | Value           | Action             |
+| ------------------------ | --------------- | ------------------ |
+| Max iterations           | 5               | Re-evaluate        |
+| Same error consecutive   | 3               | Break, re-evaluate |
+| Wall-clock timeout       | 10 min          | Break, fail stage  |
+| Stage token budget       | task_budget / 4 | Break, fail stage  |
+| Identical diff two loops | 2               | Stuck, break       |
 
 ### Per-Task (middle)
 
-| Cap | Value | Action |
-|-----|-------|--------|
-| Total token budget | $2 default | Fail task |
-| Wall-clock timeout | 30 min | Fail task |
-| Total stage loops combined | 15 | Fail task |
-| Re-evaluations | 3 | Escalate to human |
-| Loop IDs created | 50 | Hard kill task |
+| Cap                        | Value      | Action            |
+| -------------------------- | ---------- | ----------------- |
+| Total token budget         | $2 default | Fail task         |
+| Wall-clock timeout         | 30 min     | Fail task         |
+| Total stage loops combined | 15         | Fail task         |
+| Re-evaluations             | 3          | Escalate to human |
+| Loop IDs created           | 50         | Hard kill task    |
 
 ### Per-Project (outermost)
 
-| Cap | Value | Action |
-|-----|-------|--------|
-| Project budget | $50 default | Hard kill |
-| Consecutive task failures | 5 | Circuit breaker, pause |
-| No-progress timeout | 40 min | Auto-pause |
-| Total workers spawned | 50 | Stop dispatching |
-| Manual kill | CLI/dashboard | Immediate stop |
+| Cap                       | Value         | Action                 |
+| ------------------------- | ------------- | ---------------------- |
+| Project budget            | $50 default   | Hard kill              |
+| Consecutive task failures | 5             | Circuit breaker, pause |
+| No-progress timeout       | 40 min        | Auto-pause             |
+| Total workers spawned     | 50            | Stop dispatching       |
+| Manual kill               | CLI/dashboard | Immediate stop         |
 
 ### Global Watchdog Timer
 
 Independent process-level check:
+
 - No task completed in 20 min + workers active → log warning
 - No task completed in 40 min + workers active → auto-pause project
 
@@ -191,6 +211,7 @@ Wire-mode summaries of what each completed task produced. Next worker sees all p
 ### Milestone Integration Check
 
 Between milestones:
+
 1. Run `tsc` on full project (not just worktree)
 2. Run full test suite
 3. AI reviews: all modules integrate? Types consistent? No duplicate logic?
@@ -280,6 +301,7 @@ Safety at every level. Quality at every stage. No blind workers. No type drift. 
 ## What Changes vs What's New
 
 **New modules:**
+
 - `packages/core/src/spring-training/` — structural validation, contract generation, execution simulation
 - `packages/core/src/stages/` — compile, test, review stage runners with feedback loops
 - `packages/core/src/stages/feedback.ts` — AI error digest generation
@@ -287,6 +309,7 @@ Safety at every level. Quality at every stage. No blind workers. No type drift. 
 - `packages/core/src/safety/watchdog.ts` — global watchdog timer
 
 **Major modifications:**
+
 - `orchestrator.ts` — replace single-pass with staged pipeline
 - `context-builder.ts` — include full file contents, contracts, digests, spec excerpts
 - `seeder/from-spec.ts` — enforce 6 rules, one-owner-per-file, tests-with-impl, contracts-first
@@ -297,6 +320,7 @@ Safety at every level. Quality at every stage. No blind workers. No type drift. 
 - `gates/pipeline.ts` — becomes the review stage, integrated into staged flow
 
 **Removed/replaced:**
+
 - Separate "gate after merge" model → gates are now stages BEFORE merge
 - Preflight as separate step → absorbed into spring training
 - One-shot worker model → multi-stage with feedback

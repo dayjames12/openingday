@@ -45,19 +45,15 @@ export function registerDashboard(program: Command): void {
       });
 
       // Spawn API server
-      const apiServer = spawn(
-        "npx",
-        ["tsx", resolve(dashboardDir, "src", "api", "server.ts")],
-        {
-          env: {
-            ...process.env,
-            OPENINGDAY_STATE_DIR: stateDir,
-            PORT: opts.port,
-          },
-          stdio: "pipe",
-          cwd: dashboardDir,
+      const apiServer = spawn("npx", ["tsx", resolve(dashboardDir, "src", "api", "server.ts")], {
+        env: {
+          ...process.env,
+          OPENINGDAY_STATE_DIR: stateDir,
+          PORT: opts.port,
         },
-      );
+        stdio: "pipe",
+        cwd: dashboardDir,
+      });
       children.push(apiServer);
 
       apiServer.stdout?.on("data", (data: Buffer) => {
@@ -73,17 +69,13 @@ export function registerDashboard(program: Command): void {
       });
 
       // Spawn Vite dev server
-      const viteServer = spawn(
-        "npx",
-        ["vite", "--port", opts.vitePort],
-        {
-          env: {
-            ...process.env,
-          },
-          stdio: "pipe",
-          cwd: dashboardDir,
+      const viteServer = spawn("npx", ["vite", "--port", opts.vitePort], {
+        env: {
+          ...process.env,
         },
-      );
+        stdio: "pipe",
+        cwd: dashboardDir,
+      });
       children.push(viteServer);
 
       viteServer.stdout?.on("data", (data: Buffer) => {
@@ -101,9 +93,7 @@ export function registerDashboard(program: Command): void {
       });
 
       console.log(chalk.green(`API server:  http://localhost:${opts.port}`));
-      console.log(
-        chalk.green(`Dashboard:   http://localhost:${opts.vitePort}`),
-      );
+      console.log(chalk.green(`Dashboard:   http://localhost:${opts.vitePort}`));
       console.log();
       console.log(chalk.gray("Press Ctrl+C to stop"));
 

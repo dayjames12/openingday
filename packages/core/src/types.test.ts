@@ -45,9 +45,7 @@ describe("types", () => {
           description: "Creates JWT auth middleware",
         },
       ],
-      imports: [
-        { from: "core/auth/types", names: ["AuthOpts", "Middleware"] },
-      ],
+      imports: [{ from: "core/auth/types", names: ["AuthOpts", "Middleware"] }],
       lastModifiedBy: null,
     };
     expect(file.exports).toHaveLength(1);
@@ -109,7 +107,12 @@ describe("types", () => {
     const feedback: StageFeedback = {
       stage: "compile",
       errors: [
-        { f: "src/routes/players.ts", l: 12, e: "Property 'team' does not exist", fix: "Import Player from contracts.ts" },
+        {
+          f: "src/routes/players.ts",
+          l: 12,
+          e: "Property 'team' does not exist",
+          fix: "Import Player from contracts.ts",
+        },
       ],
     };
     expect(feedback.stage).toBe("compile");
@@ -123,7 +126,10 @@ describe("types", () => {
       passed: false,
       loops: 2,
       feedback: [
-        { stage: "test", errors: [{ f: "test.ts", l: 5, e: "Expected 200 got 404", fix: "Register route" }] },
+        {
+          stage: "test",
+          errors: [{ f: "test.ts", l: 5, e: "Expected 200 got 404", fix: "Register route" }],
+        },
       ],
     };
     expect(result.passed).toBe(false);

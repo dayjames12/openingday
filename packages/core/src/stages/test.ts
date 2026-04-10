@@ -17,22 +17,17 @@ export function runTests(worktreePath: string, env: EnvConfig): Promise<TestRunR
   const args = ["test"];
 
   return new Promise((resolve) => {
-    execFile(
-      cmd,
-      args,
-      { cwd: worktreePath, timeout: 300_000 },
-      (error, stdout, stderr) => {
-        if (error) {
-          const err = error as Error & { code?: number; stdout?: string; stderr?: string };
-          resolve({
-            exitCode: typeof err.code === "number" ? err.code : 1,
-            output: (err.stdout ?? stdout ?? "") + (err.stderr ?? stderr ?? ""),
-          });
-        } else {
-          resolve({ exitCode: 0, output: (stdout ?? "") + (stderr ?? "") });
-        }
-      },
-    );
+    execFile(cmd, args, { cwd: worktreePath, timeout: 300_000 }, (error, stdout, stderr) => {
+      if (error) {
+        const err = error as Error & { code?: number; stdout?: string; stderr?: string };
+        resolve({
+          exitCode: typeof err.code === "number" ? err.code : 1,
+          output: (err.stdout ?? stdout ?? "") + (err.stderr ?? stderr ?? ""),
+        });
+      } else {
+        resolve({ exitCode: 0, output: (stdout ?? "") + (stderr ?? "") });
+      }
+    });
   });
 }
 
@@ -67,20 +62,24 @@ export async function runTestStage(
   if (testResult.exitCode === 0) {
     // Check for "no tests found" even on exit 0 (some runners don't fail)
     if (isNoTestsFound(testResult.output)) {
-      const implFiles = taskTouches.filter((f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."));
+      const implFiles = taskTouches.filter(
+        (f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."),
+      );
       return {
         stage: "test",
         passed: false,
         loops: 0,
-        feedback: [{
-          stage: "test",
-          errors: implFiles.map((f) => ({
-            f,
-            l: 0,
-            e: "No tests found for this file",
-            fix: `Write tests for ${f} — cover main exports and edge cases`,
-          })),
-        }],
+        feedback: [
+          {
+            stage: "test",
+            errors: implFiles.map((f) => ({
+              f,
+              l: 0,
+              e: "No tests found for this file",
+              fix: `Write tests for ${f} — cover main exports and edge cases`,
+            })),
+          },
+        ],
       };
     }
     return {
@@ -93,20 +92,24 @@ export async function runTestStage(
 
   // Check for "no tests found" on failure too
   if (isNoTestsFound(testResult.output)) {
-    const implFiles = taskTouches.filter((f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."));
+    const implFiles = taskTouches.filter(
+      (f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."),
+    );
     return {
       stage: "test",
       passed: false,
       loops: 0,
-      feedback: [{
-        stage: "test",
-        errors: implFiles.map((f) => ({
-          f,
-          l: 0,
-          e: "No tests found for this file",
-          fix: `Write tests for ${f} — cover main exports and edge cases`,
-        })),
-      }],
+      feedback: [
+        {
+          stage: "test",
+          errors: implFiles.map((f) => ({
+            f,
+            l: 0,
+            e: "No tests found for this file",
+            fix: `Write tests for ${f} — cover main exports and edge cases`,
+          })),
+        },
+      ],
     };
   }
 
@@ -117,7 +120,9 @@ export async function runTestStage(
   } catch {
     feedback = {
       stage: "test",
-      errors: [{ f: "unknown", l: 0, e: testResult.output.slice(0, 500), fix: "Fix failing tests" }],
+      errors: [
+        { f: "unknown", l: 0, e: testResult.output.slice(0, 500), fix: "Fix failing tests" },
+      ],
     };
   }
 

@@ -15,7 +15,9 @@ export function parseFeedbackResponse(text: string, stage: StageType): StageFeed
       jsonStr = fenceMatch[1]!.trim();
     }
 
-    const parsed = JSON.parse(jsonStr) as { errors: { f: string; l: number; e: string; fix: string }[] };
+    const parsed = JSON.parse(jsonStr) as {
+      errors: { f: string; l: number; e: string; fix: string }[];
+    };
     return {
       stage,
       errors: (parsed.errors ?? []).map((e) => ({
@@ -68,7 +70,14 @@ export async function digestCompileErrors(
     if (!resultMsg || resultMsg.subtype !== "success") {
       return {
         stage: "compile",
-        errors: [{ f: "unknown", l: 0, e: rawOutput.slice(0, 500), fix: "Fix TypeScript compilation errors" }],
+        errors: [
+          {
+            f: "unknown",
+            l: 0,
+            e: rawOutput.slice(0, 500),
+            fix: "Fix TypeScript compilation errors",
+          },
+        ],
       };
     }
 
@@ -141,7 +150,9 @@ export function digestReviewIssues(rawReview: string): StageFeedback {
       jsonStr = fenceMatch[1]!.trim();
     }
 
-    const parsed = JSON.parse(jsonStr) as { issues: { f: string; l: number; e: string; fix: string }[] };
+    const parsed = JSON.parse(jsonStr) as {
+      issues: { f: string; l: number; e: string; fix: string }[];
+    };
     return {
       stage: "review",
       errors: (parsed.issues ?? []).map((i) => ({
@@ -154,7 +165,14 @@ export function digestReviewIssues(rawReview: string): StageFeedback {
   } catch {
     return {
       stage: "review",
-      errors: [{ f: "unknown", l: 0, e: `Failed to parse review response: ${rawReview.slice(0, 200)}`, fix: "Re-run review" }],
+      errors: [
+        {
+          f: "unknown",
+          l: 0,
+          e: `Failed to parse review response: ${rawReview.slice(0, 200)}`,
+          fix: "Re-run review",
+        },
+      ],
     };
   }
 }

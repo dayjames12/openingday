@@ -22,7 +22,10 @@ export function parseReviewResponse(text: string): { passed: boolean; feedback: 
       jsonStr = fenceMatch[1]!.trim();
     }
 
-    const parsed = JSON.parse(jsonStr) as { approved: boolean; issues: { f: string; l: number; e: string; fix: string }[] };
+    const parsed = JSON.parse(jsonStr) as {
+      approved: boolean;
+      issues: { f: string; l: number; e: string; fix: string }[];
+    };
 
     if (parsed.approved && (!parsed.issues || parsed.issues.length === 0)) {
       return { passed: true, feedback: [] };
@@ -45,10 +48,19 @@ export function parseReviewResponse(text: string): { passed: boolean; feedback: 
   } catch {
     return {
       passed: false,
-      feedback: [{
-        stage: "review",
-        errors: [{ f: "unknown", l: 0, e: "Review response was not parseable JSON", fix: "Re-run review" }],
-      }],
+      feedback: [
+        {
+          stage: "review",
+          errors: [
+            {
+              f: "unknown",
+              l: 0,
+              e: "Review response was not parseable JSON",
+              fix: "Re-run review",
+            },
+          ],
+        },
+      ],
     };
   }
 }
@@ -91,10 +103,14 @@ export async function runReviewStage(
       stage: "review",
       passed: false,
       loops: 0,
-      feedback: [{
-        stage: "review",
-        errors: [{ f: "unknown", l: 0, e: "AI reviewer failed to produce result", fix: "Retry review" }],
-      }],
+      feedback: [
+        {
+          stage: "review",
+          errors: [
+            { f: "unknown", l: 0, e: "AI reviewer failed to produce result", fix: "Retry review" },
+          ],
+        },
+      ],
     };
   }
 

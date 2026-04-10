@@ -21,8 +21,10 @@ describe("incremental refresh", () => {
   it("updates changed file in existing map", async () => {
     const map = await scanRepo(dir, "lite");
     // Modify the file
-    await writeFile(join(dir, "src", "auth.ts"),
-      "export function login() {}\nexport function logout() {}\n");
+    await writeFile(
+      join(dir, "src", "auth.ts"),
+      "export function login() {}\nexport function logout() {}\n",
+    );
 
     const updated = await refreshFiles(map, dir, ["src/auth.ts"]);
     const authFile = updated.modules.flatMap((m) => m.files).find((f) => f.p === "src/auth.ts");

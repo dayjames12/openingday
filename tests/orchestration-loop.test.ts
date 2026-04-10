@@ -31,17 +31,10 @@ import {
 } from "../packages/core/src/trees/work-tree.js";
 
 // Code tree
-import {
-  createCodeTree,
-  addModule,
-  addFile,
-} from "../packages/core/src/trees/code-tree.js";
+import { createCodeTree, addModule, addFile } from "../packages/core/src/trees/code-tree.js";
 
 // Linker
-import {
-  getActiveFileLocks,
-  detectFileConflicts,
-} from "../packages/core/src/trees/linker.js";
+import { getActiveFileLocks, detectFileConflicts } from "../packages/core/src/trees/linker.js";
 
 // Wire mode
 import { toWirePrompt, fromWireResponse } from "../packages/core/src/wire/wire.js";
@@ -68,10 +61,7 @@ import {
 } from "../packages/core/src/workers/pool.js";
 
 // Gates
-import {
-  runGatePipeline,
-  createDefaultPipeline,
-} from "../packages/core/src/gates/pipeline.js";
+import { runGatePipeline, createDefaultPipeline } from "../packages/core/src/gates/pipeline.js";
 
 // Budget
 import {
@@ -211,7 +201,14 @@ describe("orchestration loop: seed -> dispatch -> execute -> gate -> advance", (
     //                     mock the execution, parse response.
     // ================================================================
 
-    const ctx = buildContext(workTree, codeTree, config, "t1", "Project uses PostgreSQL", "Follow ESLint rules");
+    const ctx = buildContext(
+      workTree,
+      codeTree,
+      config,
+      "t1",
+      "Project uses PostgreSQL",
+      "Follow ESLint rules",
+    );
     expect(ctx).not.toBeNull();
     expect(ctx!.task.name).toBe("Database layer");
     expect(ctx!.task.description).toBe("Implement database connection pool and query helper");

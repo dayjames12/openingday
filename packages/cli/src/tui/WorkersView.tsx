@@ -19,7 +19,8 @@ export function WorkersView({
   return (
     <Box flexDirection="column" paddingLeft={1}>
       <Text bold>
-        {" "}Active Workers ({activeTasks.length}/{maxWorkers})
+        {" "}
+        Active Workers ({activeTasks.length}/{maxWorkers})
       </Text>
       <Text> </Text>
       {activeTasks.length === 0 ? (
@@ -40,17 +41,13 @@ export function WorkersView({
         ))
       )}
       {/* Show idle slots */}
-      {Array.from({ length: Math.max(0, maxWorkers - activeTasks.length) }).map(
-        (_, i) => (
-          <Text key={`idle-${String(i)}`} color="gray">
-            {"○"} slot-{activeTasks.length + i + 1}  idle
-          </Text>
-        ),
-      )}
+      {Array.from({ length: Math.max(0, maxWorkers - activeTasks.length) }).map((_, i) => (
+        <Text key={`idle-${String(i)}`} color="gray">
+          {"○"} slot-{activeTasks.length + i + 1} idle
+        </Text>
+      ))}
       <Text> </Text>
-      <Text color="gray">
-        {" "}Total spawned: {state.totalWorkersSpawned}
-      </Text>
+      <Text color="gray"> Total spawned: {state.totalWorkersSpawned}</Text>
     </Box>
   );
 }

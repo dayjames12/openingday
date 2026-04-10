@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { toWirePrompt, fromWireResponse, toWireResponse, toEnrichedWirePrompt } from "./wire.js";
-import type { ContextPackage, WireResponse, WorkerOutput, EnrichedContextPackage } from "../types.js";
+import type {
+  ContextPackage,
+  WireResponse,
+  WorkerOutput,
+  EnrichedContextPackage,
+} from "../types.js";
 
 describe("wire", () => {
   const sampleContext: ContextPackage = {
@@ -14,7 +19,11 @@ describe("wire", () => {
         path: "src/auth/middleware.ts",
         description: "JWT middleware",
         exports: [
-          { name: "authMiddleware", signature: "(opts: AuthOpts) => Middleware", description: "MW" },
+          {
+            name: "authMiddleware",
+            signature: "(opts: AuthOpts) => Middleware",
+            description: "MW",
+          },
         ],
         imports: [{ from: "src/auth/types", names: ["AuthOpts"] }],
         lastModifiedBy: null,
@@ -24,9 +33,7 @@ describe("wire", () => {
       {
         path: "src/auth/types.ts",
         description: "Auth types",
-        exports: [
-          { name: "AuthOpts", signature: "interface AuthOpts", description: "Options" },
-        ],
+        exports: [{ name: "AuthOpts", signature: "interface AuthOpts", description: "Options" }],
         imports: [],
         lastModifiedBy: null,
       },
@@ -180,7 +187,13 @@ describe("wire", () => {
       const ctx: EnrichedContextPackage = {
         task: { name: "test", description: "test task", acceptanceCriteria: ["pass tests"] },
         interfaces: [
-          { path: "src/a.ts", description: "file a", exports: [{ name: "fn", signature: "() => void", description: "" }], imports: [], lastModifiedBy: null },
+          {
+            path: "src/a.ts",
+            description: "file a",
+            exports: [{ name: "fn", signature: "() => void", description: "" }],
+            imports: [],
+            lastModifiedBy: null,
+          },
         ],
         above: [],
         below: [],

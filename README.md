@@ -118,6 +118,7 @@ Worker implements → tsc check (loop) → test run (loop) → AI review (loop) 
 - **Merge** — only after all three stages pass. Clean fast-forward into main worktree.
 
 **Safety nets:**
+
 - Max 5 loops per stage — circuit breaker trips on the 6th
 - Watchdog timer per task — kills stuck workers
 - Task completion digests — compressed learnings fed to subsequent workers
@@ -157,6 +158,7 @@ SPEC → Spring Training → Seed Trees → Staged Dispatch → Quality Loops �
 ```
 
 **Dual Tree** — Two JSON trees drive the system:
+
 - **Work Tree**: milestones → slices → tasks. Each task fits in one context window.
 - **Code Tree**: modules → files → exports. Defines what code should exist.
 - **The Link**: every task declares which files it `touches` and `reads`, enabling conflict detection.
@@ -203,19 +205,19 @@ State lives in `.openingday/` as JSON — no database, fully portable:
 
 ## CLI Reference
 
-| Command | Description |
-|---------|-------------|
-| `openingday new` | Interactive project creation |
-| `openingday init --from <spec\|repo>` | CLI project init from spec or repo |
-| `openingday spring-training [--fix]` | Validate plan: structure, contracts, simulation |
-| `openingday run [--step] [--dry-run]` | Dispatch the roster (staged pipeline) |
-| `openingday pause` | Graceful stop |
-| `openingday resume` | Continue execution |
-| `openingday kill` | Hard stop |
-| `openingday watch` | Live terminal dashboard |
-| `openingday status [--cost]` | Project state and spend |
-| `openingday tree [--code]` | Print work or code tree |
-| `openingday dashboard [--port <n>]` | Web dashboard (default: 5173) |
+| Command                               | Description                                     |
+| ------------------------------------- | ----------------------------------------------- |
+| `openingday new`                      | Interactive project creation                    |
+| `openingday init --from <spec\|repo>` | CLI project init from spec or repo              |
+| `openingday spring-training [--fix]`  | Validate plan: structure, contracts, simulation |
+| `openingday run [--step] [--dry-run]` | Dispatch the roster (staged pipeline)           |
+| `openingday pause`                    | Graceful stop                                   |
+| `openingday resume`                   | Continue execution                              |
+| `openingday kill`                     | Hard stop                                       |
+| `openingday watch`                    | Live terminal dashboard                         |
+| `openingday status [--cost]`          | Project state and spend                         |
+| `openingday tree [--code]`            | Print work or code tree                         |
+| `openingday dashboard [--port <n>]`   | Web dashboard (default: 5173)                   |
 
 ## Configuration
 

@@ -3,7 +3,7 @@ import type { WatchdogState } from "../types.js";
 
 export type WatchdogAction = "continue" | "warn" | "pause";
 
-const WARN_THRESHOLD_MS = 20 * 60 * 1000;  // 20 minutes
+const WARN_THRESHOLD_MS = 20 * 60 * 1000; // 20 minutes
 const PAUSE_THRESHOLD_MS = 40 * 60 * 1000; // 40 minutes
 
 export interface Watchdog {

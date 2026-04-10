@@ -61,7 +61,14 @@ export async function runCompileStage(
     // If AI digest fails, create a raw feedback entry
     feedback = {
       stage: "compile",
-      errors: [{ f: "unknown", l: 0, e: tscResult.output.slice(0, 500), fix: "Fix TypeScript compilation errors" }],
+      errors: [
+        {
+          f: "unknown",
+          l: 0,
+          e: tscResult.output.slice(0, 500),
+          fix: "Fix TypeScript compilation errors",
+        },
+      ],
     };
   }
 

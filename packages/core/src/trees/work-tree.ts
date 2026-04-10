@@ -1,10 +1,4 @@
-import type {
-  WorkTree,
-  WorkMilestone,
-  WorkSlice,
-  WorkTask,
-  TaskStatus,
-} from "../types.js";
+import type { WorkTree, WorkMilestone, WorkSlice, WorkTask, TaskStatus } from "../types.js";
 
 // === Internal Helper ===
 
@@ -12,10 +6,7 @@ import type {
  * Maps over every task in the tree, applying `fn`. If `fn` returns null the
  * task is removed from its slice.
  */
-function mapTasks(
-  tree: WorkTree,
-  fn: (task: WorkTask) => WorkTask | null,
-): WorkTree {
+function mapTasks(tree: WorkTree, fn: (task: WorkTask) => WorkTask | null): WorkTree {
   return {
     milestones: tree.milestones.map((m) => ({
       ...m,
@@ -131,36 +122,19 @@ export function getTask(tree: WorkTree, taskId: string): WorkTask | null {
 
 // === Task Updates ===
 
-export function updateTaskStatus(
-  tree: WorkTree,
-  taskId: string,
-  status: TaskStatus,
-): WorkTree {
-  return mapTasks(tree, (t) =>
-    t.id === taskId ? { ...t, status } : t,
-  );
+export function updateTaskStatus(tree: WorkTree, taskId: string, status: TaskStatus): WorkTree {
+  return mapTasks(tree, (t) => (t.id === taskId ? { ...t, status } : t));
 }
 
-export function updateTask(
-  tree: WorkTree,
-  taskId: string,
-  updates: Partial<WorkTask>,
-): WorkTree {
-  return mapTasks(tree, (t) =>
-    t.id === taskId ? { ...t, ...updates } : t,
-  );
+export function updateTask(tree: WorkTree, taskId: string, updates: Partial<WorkTask>): WorkTree {
+  return mapTasks(tree, (t) => (t.id === taskId ? { ...t, ...updates } : t));
 }
 
 // === Scheduling ===
 
-export function getReadyTasks(
-  tree: WorkTree,
-  activeFileLocks: string[],
-): WorkTask[] {
+export function getReadyTasks(tree: WorkTree, activeFileLocks: string[]): WorkTask[] {
   const allTasks = getAllTasks(tree);
-  const completedIds = new Set(
-    allTasks.filter((t) => t.status === "complete").map((t) => t.id),
-  );
+  const completedIds = new Set(allTasks.filter((t) => t.status === "complete").map((t) => t.id));
   const lockSet = new Set(activeFileLocks);
 
   return allTasks.filter((t) => {
@@ -217,9 +191,7 @@ export function splitTask(
             if (t.dependencies.includes(taskId)) {
               return {
                 ...t,
-                dependencies: t.dependencies.map((d) =>
-                  d === taskId ? lastNewId : d,
-                ),
+                dependencies: t.dependencies.map((d) => (d === taskId ? lastNewId : d)),
               };
             }
             return t;

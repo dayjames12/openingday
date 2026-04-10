@@ -51,12 +51,16 @@ export function validateStructure(
   for (const task of allTasks) {
     for (const touchPath of task.touches) {
       if (!codeFiles.has(touchPath) && !repoFiles.has(touchPath)) {
-        blockers.push(`Task "${task.id}": touch file "${touchPath}" not found in code tree or repo map`);
+        blockers.push(
+          `Task "${task.id}": touch file "${touchPath}" not found in code tree or repo map`,
+        );
       }
     }
     for (const readPath of task.reads) {
       if (!codeFiles.has(readPath) && !repoFiles.has(readPath)) {
-        warnings.push(`Task "${task.id}": read file "${readPath}" not found in code tree or repo map`);
+        warnings.push(
+          `Task "${task.id}": read file "${readPath}" not found in code tree or repo map`,
+        );
       }
     }
   }
@@ -79,7 +83,9 @@ export function validateStructure(
         const b = taskIds[j]!;
         // Check full transitive dependency chain
         if (!hasTransitiveDep(taskDeps, a, b) && !hasTransitiveDep(taskDeps, b, a)) {
-          blockers.push(`one-owner violation: tasks "${a}" and "${b}" both touch "${file}" with no dependency chain`);
+          blockers.push(
+            `one-owner violation: tasks "${a}" and "${b}" both touch "${file}" with no dependency chain`,
+          );
         }
       }
     }
@@ -104,14 +110,20 @@ export function validateStructure(
   // Check: description quality (> 20 chars with file path)
   for (const task of allTasks) {
     if (task.description.length < 20) {
-      warnings.push(`Task "${task.id}": description too short (${task.description.length} chars, need 20+)`);
+      warnings.push(
+        `Task "${task.id}": description too short (${task.description.length} chars, need 20+)`,
+      );
     }
   }
 
   // Check: tests-with-impl (implementation tasks should have test files)
   for (const task of allTasks) {
-    const hasImplFile = task.touches.some((f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."));
-    const hasTestFile = task.touches.some((f) => f.includes(".test.") || f.includes("__tests__") || f.includes(".spec."));
+    const hasImplFile = task.touches.some(
+      (f) => !f.includes(".test.") && !f.includes("__tests__") && !f.includes(".spec."),
+    );
+    const hasTestFile = task.touches.some(
+      (f) => f.includes(".test.") || f.includes("__tests__") || f.includes(".spec."),
+    );
     if (hasImplFile && !hasTestFile) {
       warnings.push(`Task "${task.id}": implementation task has no test files in touches`);
     }

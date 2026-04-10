@@ -1,25 +1,50 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getCachedReadyTasks, setCachedReadyTasks, invalidateReadinessCache } from "./readiness-cache.js";
+import {
+  getCachedReadyTasks,
+  setCachedReadyTasks,
+  invalidateReadinessCache,
+} from "./readiness-cache.js";
 import type { WorkTree, WorkTask } from "../types.js";
 
 function makeTree(milestoneCount: number, taskStatus: string = "pending"): WorkTree {
   return {
     milestones: Array.from({ length: milestoneCount }, (_, i) => ({
-      id: `m${i}`, name: `M${i}`, description: "", dependencies: [],
-      slices: [{
-        id: `s${i}`, name: `S${i}`, description: "", parentMilestoneId: `m${i}`,
-        tasks: [{ ...makeTask(`t-m${i}`), status: taskStatus as "pending" | "in_progress" | "complete" | "failed" | "paused" }],
-      }],
+      id: `m${i}`,
+      name: `M${i}`,
+      description: "",
+      dependencies: [],
+      slices: [
+        {
+          id: `s${i}`,
+          name: `S${i}`,
+          description: "",
+          parentMilestoneId: `m${i}`,
+          tasks: [
+            {
+              ...makeTask(`t-m${i}`),
+              status: taskStatus as "pending" | "in_progress" | "complete" | "failed" | "paused",
+            },
+          ],
+        },
+      ],
     })),
   };
 }
 
 function makeTask(id: string): WorkTask {
   return {
-    id, name: id, description: "", status: "pending",
-    dependencies: [], touches: [], reads: [],
-    worker: null, tokenSpend: 0, attemptCount: 0,
-    gateResults: [], parentSliceId: "s1",
+    id,
+    name: id,
+    description: "",
+    status: "pending",
+    dependencies: [],
+    touches: [],
+    reads: [],
+    worker: null,
+    tokenSpend: 0,
+    attemptCount: 0,
+    gateResults: [],
+    parentSliceId: "s1",
   };
 }
 

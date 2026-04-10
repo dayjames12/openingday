@@ -26,9 +26,8 @@ function MetricCard({
 
 export function CostsPanel({ costs }: CostsPanelProps) {
   const categoryEntries = Object.entries(costs.spendByCategory);
-  const maxCategorySpend = categoryEntries.length > 0
-    ? Math.max(...categoryEntries.map(([, v]) => v))
-    : 0;
+  const maxCategorySpend =
+    categoryEntries.length > 0 ? Math.max(...categoryEntries.map(([, v]) => v)) : 0;
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded-lg p-3 overflow-auto h-full">
@@ -46,11 +45,7 @@ export function CostsPanel({ costs }: CostsPanelProps) {
         <MetricCard
           label="Projected"
           value={`$${costs.projectedTotalUsd.toFixed(2)}`}
-          sub={
-            costs.projectedTotalUsd > costs.projectBudgetUsd
-              ? "over budget"
-              : "within budget"
-          }
+          sub={costs.projectedTotalUsd > costs.projectBudgetUsd ? "over budget" : "within budget"}
           color={
             costs.projectedTotalUsd > costs.projectBudgetUsd
               ? "text-[var(--accent-red)]"
@@ -89,7 +84,9 @@ export function CostsPanel({ costs }: CostsPanelProps) {
               <div key={name}>
                 <div className="flex justify-between text-xs mb-0.5">
                   <span className="text-[var(--text-secondary)] truncate">{name}</span>
-                  <span className="text-[var(--text-muted)] tabular-nums">${amount.toFixed(3)}</span>
+                  <span className="text-[var(--text-muted)] tabular-nums">
+                    ${amount.toFixed(3)}
+                  </span>
                 </div>
                 <div className="h-1 bg-[var(--bg-primary)] rounded-full overflow-hidden">
                   <div

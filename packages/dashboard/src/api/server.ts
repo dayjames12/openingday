@@ -112,10 +112,7 @@ function buildWorkTree(raw: RawWorkTree | null): DashboardMilestone[] {
   }));
 }
 
-function buildWorkers(
-  pool: RawWorkerPool | null,
-  workTree: RawWorkTree | null,
-): DashboardWorker[] {
+function buildWorkers(pool: RawWorkerPool | null, workTree: RawWorkTree | null): DashboardWorker[] {
   if (!pool?.sessions) return [];
   const taskNameMap = new Map<string, string>();
   if (workTree?.milestones) {
@@ -139,9 +136,7 @@ function buildWorkers(
     }));
 }
 
-async function buildGates(
-  workTree: RawWorkTree | null,
-): Promise<DashboardGateEntry[]> {
+async function buildGates(workTree: RawWorkTree | null): Promise<DashboardGateEntry[]> {
   const entries: DashboardGateEntry[] = [];
   const gatesDir = join(STATE_DIR, "gates");
 
@@ -234,9 +229,8 @@ function buildCosts(
   }
   const completedTasks = allTasks.filter((t) => t.status === "complete").length;
   const completionRatio = allTasks.length > 0 ? completedTasks / allTasks.length : 0;
-  const projectedTotalUsd = completionRatio > 0.05
-    ? totalSpentUsd / completionRatio
-    : totalSpentUsd;
+  const projectedTotalUsd =
+    completionRatio > 0.05 ? totalSpentUsd / completionRatio : totalSpentUsd;
 
   return {
     totalSpentUsd,

@@ -15,10 +15,20 @@ function buildWorkTree() {
   tree = addMilestone(tree, { id: "m1", name: "M1", description: "", dependencies: [] });
   tree = addSlice(tree, "m1", { id: "s1", name: "S1", description: "" });
   tree = addTask(tree, "s1", {
-    id: "t1", name: "Task 1", description: "", dependencies: [], touches: ["a.ts"], reads: [],
+    id: "t1",
+    name: "Task 1",
+    description: "",
+    dependencies: [],
+    touches: ["a.ts"],
+    reads: [],
   });
   tree = addTask(tree, "s1", {
-    id: "t2", name: "Task 2", description: "", dependencies: [], touches: ["b.ts"], reads: [],
+    id: "t2",
+    name: "Task 2",
+    description: "",
+    dependencies: [],
+    touches: ["b.ts"],
+    reads: [],
   });
   return tree;
 }

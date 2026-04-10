@@ -52,11 +52,7 @@ describe("gate pipeline", () => {
   describe("treeCheckGate", () => {
     it("passes when all changed files are declared", () => {
       const gate = treeCheckGate(["a.ts", "b.ts"]);
-      const result = gate.run(
-        makeOutput({ filesChanged: ["a.ts"] }),
-        emptyWorkTree,
-        emptyCodeTree,
-      );
+      const result = gate.run(makeOutput({ filesChanged: ["a.ts"] }), emptyWorkTree, emptyCodeTree);
       expect(result.pass).toBe(true);
     });
 

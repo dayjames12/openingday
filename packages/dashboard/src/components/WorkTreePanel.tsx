@@ -6,11 +6,11 @@ interface WorkTreePanelProps {
 }
 
 const statusIcons: Record<string, string> = {
-  pending: "\u25CB",    // ○
+  pending: "\u25CB", // ○
   in_progress: "\u27F3", // ⟳
-  complete: "\u2713",    // ✓
-  failed: "\u2717",      // ✗
-  paused: "\u23F8",      // ⏸
+  complete: "\u2713", // ✓
+  failed: "\u2717", // ✗
+  paused: "\u23F8", // ⏸
 };
 
 const statusTextColors: Record<string, string> = {

@@ -26,7 +26,11 @@ describe("runTests", () => {
     const { execFile } = await import("node:child_process");
     const mockExec = vi.mocked(execFile);
     mockExec.mockImplementation((_cmd: string, _args: unknown, _opts: unknown, cb: unknown) => {
-      (cb as (err: null, stdout: string, stderr: string) => void)(null, "Tests passed\n 5 passed", "");
+      (cb as (err: null, stdout: string, stderr: string) => void)(
+        null,
+        "Tests passed\n 5 passed",
+        "",
+      );
       return {} as ReturnType<typeof execFile>;
     });
 
@@ -38,7 +42,11 @@ describe("runTests", () => {
     const { execFile } = await import("node:child_process");
     const mockExec = vi.mocked(execFile);
     mockExec.mockImplementation((_cmd: string, _args: unknown, _opts: unknown, cb: unknown) => {
-      const error = new Error("tests failed") as Error & { code: number; stdout: string; stderr: string };
+      const error = new Error("tests failed") as Error & {
+        code: number;
+        stdout: string;
+        stderr: string;
+      };
       error.code = 1;
       error.stdout = "FAIL src/__tests__/players.test.ts\n  Expected 200, received 404";
       error.stderr = "";
@@ -58,10 +66,19 @@ describe("test StageResult shape", () => {
       stage: "test",
       passed: false,
       loops: 0,
-      feedback: [{
-        stage: "test",
-        errors: [{ f: "src/routes/players.ts", l: 0, e: "No tests found", fix: "Write tests for this module" }],
-      }],
+      feedback: [
+        {
+          stage: "test",
+          errors: [
+            {
+              f: "src/routes/players.ts",
+              l: 0,
+              e: "No tests found",
+              fix: "Write tests for this module",
+            },
+          ],
+        },
+      ],
     };
     expect(result.feedback[0]!.errors[0]!.e).toContain("No tests");
   });

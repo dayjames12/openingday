@@ -16,37 +16,38 @@
 
 ### `packages/core/src/` — New & Modified
 
-| File | Responsibility |
-|------|---------------|
-| `src/scanner/types.ts` | Create — RepoMap, RepoModule, RepoFile, EnvConfig types (wire-mode field names) |
-| `src/scanner/detect.ts` | Create — Auto-detect pm, test runner, linter, ts, monorepo, infra, deps |
-| `src/scanner/scan.ts` | Create — Tiered scanner: lite/standard/deep. Builds RepoMap from filesystem |
-| `src/scanner/deep.ts` | Create — AI summary generation for deep tier |
-| `src/scanner/gitignore.ts` | Create — Auto-add .openingday rules to .gitignore |
-| `src/scanner/incremental.ts` | Create — Partial rescan of changed files, merge into existing map |
-| `src/context/context-builder.ts` | Modify — Add repoMap param, add landscape + relevant fields |
-| `src/wire/wire.ts` | Modify — Add landscape + relevant to WirePrompt |
-| `src/types.ts` | Modify — Add landscape/relevant to ContextPackage + WirePrompt |
-| `src/orchestrator.ts` | Modify — Incremental map refresh after task merge |
-| `src/seeder/from-spec.ts` | Modify — Accept repoMap for brownfield planning |
-| `src/storage/interface.ts` | Modify — Add readRepoMap/writeRepoMap methods |
-| `src/storage/disk.ts` | Modify — Implement repo map read/write |
-| `src/index.ts` | Modify — Export scanner modules |
+| File                             | Responsibility                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------- |
+| `src/scanner/types.ts`           | Create — RepoMap, RepoModule, RepoFile, EnvConfig types (wire-mode field names) |
+| `src/scanner/detect.ts`          | Create — Auto-detect pm, test runner, linter, ts, monorepo, infra, deps         |
+| `src/scanner/scan.ts`            | Create — Tiered scanner: lite/standard/deep. Builds RepoMap from filesystem     |
+| `src/scanner/deep.ts`            | Create — AI summary generation for deep tier                                    |
+| `src/scanner/gitignore.ts`       | Create — Auto-add .openingday rules to .gitignore                               |
+| `src/scanner/incremental.ts`     | Create — Partial rescan of changed files, merge into existing map               |
+| `src/context/context-builder.ts` | Modify — Add repoMap param, add landscape + relevant fields                     |
+| `src/wire/wire.ts`               | Modify — Add landscape + relevant to WirePrompt                                 |
+| `src/types.ts`                   | Modify — Add landscape/relevant to ContextPackage + WirePrompt                  |
+| `src/orchestrator.ts`            | Modify — Incremental map refresh after task merge                               |
+| `src/seeder/from-spec.ts`        | Modify — Accept repoMap for brownfield planning                                 |
+| `src/storage/interface.ts`       | Modify — Add readRepoMap/writeRepoMap methods                                   |
+| `src/storage/disk.ts`            | Modify — Implement repo map read/write                                          |
+| `src/index.ts`                   | Modify — Export scanner modules                                                 |
 
 ### `packages/cli/src/`
 
-| File | Responsibility |
-|------|---------------|
-| `src/commands/scan.ts` | Create — `openingday scan` command |
-| `src/commands/init.ts` | Modify — Add scan + auto-setup on init |
-| `src/commands/new.ts` | Modify — Add scan tier selection + auto-setup |
-| `src/index.ts` | Modify — Register scan command |
+| File                   | Responsibility                                |
+| ---------------------- | --------------------------------------------- |
+| `src/commands/scan.ts` | Create — `openingday scan` command            |
+| `src/commands/init.ts` | Modify — Add scan + auto-setup on init        |
+| `src/commands/new.ts`  | Modify — Add scan tier selection + auto-setup |
+| `src/index.ts`         | Modify — Register scan command                |
 
 ---
 
 ## Task 1: RepoMap Types
 
 **Files:**
+
 - Create: `packages/core/src/scanner/types.ts`
 - Test: `packages/core/src/scanner/types.test.ts`
 
@@ -73,18 +74,22 @@ describe("scanner types", () => {
         infra: "sst",
       },
       deps: ["hono", "electrodb"],
-      modules: [{
-        p: "packages/core",
-        d: "core logic",
-        fc: 12,
-        k: ["auth", "db"],
-        files: [{
-          p: "packages/core/src/auth.ts",
-          ex: [{ n: "auth", s: "() => void" }],
-          im: [{ f: "./types", n: ["User"] }],
-          loc: 45,
-        }],
-      }],
+      modules: [
+        {
+          p: "packages/core",
+          d: "core logic",
+          fc: 12,
+          k: ["auth", "db"],
+          files: [
+            {
+              p: "packages/core/src/auth.ts",
+              ex: [{ n: "auth", s: "() => void" }],
+              im: [{ f: "./types", n: ["User"] }],
+              loc: 45,
+            },
+          ],
+        },
+      ],
     };
     expect(map.v).toBe(1);
     expect(map.env.pm).toBe("pnpm");
@@ -122,32 +127,32 @@ export interface EnvConfig {
 }
 
 export interface RepoFile {
-  p: string;           // path
-  ex: RepoExport[];    // exports
-  im: RepoImport[];    // imports
-  loc: number;         // lines of code
+  p: string; // path
+  ex: RepoExport[]; // exports
+  im: RepoImport[]; // imports
+  loc: number; // lines of code
 }
 
 export interface RepoExport {
-  n: string;           // name
-  s: string;           // signature
+  n: string; // name
+  s: string; // signature
 }
 
 export interface RepoImport {
-  f: string;           // from
-  n: string[];         // names
+  f: string; // from
+  n: string[]; // names
 }
 
 export interface RepoModule {
-  p: string;           // path
-  d: string;           // description (wire-mode terse)
-  fc: number;          // file count
-  k: string[];         // keywords
+  p: string; // path
+  d: string; // description (wire-mode terse)
+  fc: number; // file count
+  k: string[]; // keywords
   files: RepoFile[];
 }
 
 export interface RepoMap {
-  v: number;           // version
+  v: number; // version
   scannedAt: string;
   depth: ScanDepth;
   env: EnvConfig;
@@ -157,8 +162,8 @@ export interface RepoMap {
 
 // Landscape = compressed index for worker context (~200 tokens)
 export interface Landscape {
-  mc: number;          // module count
-  fc: number;          // total file count
+  mc: number; // module count
+  fc: number; // total file count
   modules: { p: string; fc: number; k: string[] }[];
 }
 
@@ -185,6 +190,7 @@ git commit -m "feat: add wire-mode repo map types"
 ## Task 2: Environment Auto-Detection
 
 **Files:**
+
 - Create: `packages/core/src/scanner/detect.ts`
 - Test: `packages/core/src/scanner/detect.test.ts`
 
@@ -252,10 +258,13 @@ describe("detect", () => {
   });
 
   it("reads deps from package.json", async () => {
-    await writeFile(join(dir, "package.json"), JSON.stringify({
-      dependencies: { "hono": "^4.0.0", "electrodb": "^3.0.0" },
-      devDependencies: { "vitest": "^4.0.0" },
-    }));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({
+        dependencies: { hono: "^4.0.0", electrodb: "^3.0.0" },
+        devDependencies: { vitest: "^4.0.0" },
+      }),
+    );
     const deps = await detectDeps(dir);
     expect(deps).toContain("hono");
     expect(deps).toContain("electrodb");
@@ -278,11 +287,20 @@ import { join } from "node:path";
 import type { EnvConfig } from "./types.js";
 
 async function exists(path: string): Promise<boolean> {
-  try { await access(path); return true; } catch { return false; }
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function readJson(path: string): Promise<any> {
-  try { return JSON.parse(await readFile(path, "utf-8")); } catch { return null; }
+  try {
+    return JSON.parse(await readFile(path, "utf-8"));
+  } catch {
+    return null;
+  }
 }
 
 export async function detectEnv(dir: string): Promise<EnvConfig> {
@@ -294,9 +312,18 @@ export async function detectEnv(dir: string): Promise<EnvConfig> {
 
   // Test runner
   let test: EnvConfig["test"] = "none";
-  if (await exists(join(dir, "vitest.config.ts")) || await exists(join(dir, "vitest.config.js"))) test = "vitest";
-  else if (await exists(join(dir, "jest.config.js")) || await exists(join(dir, "jest.config.ts"))) test = "jest";
-  else if (await exists(join(dir, ".mocharc.yml")) || await exists(join(dir, ".mocharc.json"))) test = "mocha";
+  if (
+    (await exists(join(dir, "vitest.config.ts"))) ||
+    (await exists(join(dir, "vitest.config.js")))
+  )
+    test = "vitest";
+  else if (
+    (await exists(join(dir, "jest.config.js"))) ||
+    (await exists(join(dir, "jest.config.ts")))
+  )
+    test = "jest";
+  else if ((await exists(join(dir, ".mocharc.yml"))) || (await exists(join(dir, ".mocharc.json"))))
+    test = "mocha";
   else {
     const pkg = await readJson(join(dir, "package.json"));
     if (pkg?.devDependencies?.vitest || pkg?.dependencies?.vitest) test = "vitest";
@@ -305,8 +332,15 @@ export async function detectEnv(dir: string): Promise<EnvConfig> {
 
   // Linter
   let lint: EnvConfig["lint"] = "none";
-  if (await exists(join(dir, "eslint.config.js")) || await exists(join(dir, "eslint.config.mjs")) || await exists(join(dir, ".eslintrc.json")) || await exists(join(dir, ".eslintrc.js"))) lint = "eslint";
-  else if (await exists(join(dir, "biome.json")) || await exists(join(dir, "biome.jsonc"))) lint = "biome";
+  if (
+    (await exists(join(dir, "eslint.config.js"))) ||
+    (await exists(join(dir, "eslint.config.mjs"))) ||
+    (await exists(join(dir, ".eslintrc.json"))) ||
+    (await exists(join(dir, ".eslintrc.js")))
+  )
+    lint = "eslint";
+  else if ((await exists(join(dir, "biome.json"))) || (await exists(join(dir, "biome.jsonc"))))
+    lint = "biome";
 
   // TypeScript
   const ts = await exists(join(dir, "tsconfig.json"));
@@ -327,15 +361,21 @@ export async function detectEnv(dir: string): Promise<EnvConfig> {
     const pkg = await readJson(join(dir, "package.json"));
     if (pkg?.workspaces) {
       monorepo = true;
-      workspaces = Array.isArray(pkg.workspaces) ? pkg.workspaces : pkg.workspaces.packages ?? [];
+      workspaces = Array.isArray(pkg.workspaces) ? pkg.workspaces : (pkg.workspaces.packages ?? []);
     }
   }
-  if (await exists(join(dir, "turbo.json")) || await exists(join(dir, "lerna.json"))) monorepo = true;
+  if ((await exists(join(dir, "turbo.json"))) || (await exists(join(dir, "lerna.json"))))
+    monorepo = true;
 
   // Infrastructure
   let infra: EnvConfig["infra"] = "none";
-  if (await exists(join(dir, "sst.config.ts")) || await exists(join(dir, "sst.config.js"))) infra = "sst";
-  else if (await exists(join(dir, "serverless.yml")) || await exists(join(dir, "serverless.ts"))) infra = "serverless";
+  if ((await exists(join(dir, "sst.config.ts"))) || (await exists(join(dir, "sst.config.js"))))
+    infra = "sst";
+  else if (
+    (await exists(join(dir, "serverless.yml"))) ||
+    (await exists(join(dir, "serverless.ts")))
+  )
+    infra = "serverless";
   else if (await exists(join(dir, "cdk.json"))) infra = "cdk";
   else if (await exists(join(dir, "terraform"))) infra = "terraform";
   else if (await exists(join(dir, "Dockerfile"))) infra = "docker";
@@ -370,6 +410,7 @@ git commit -m "feat: add environment auto-detection for pm, test, lint, ts, mono
 ## Task 3: Gitignore Auto-Setup
 
 **Files:**
+
 - Create: `packages/core/src/scanner/gitignore.ts`
 - Test: `packages/core/src/scanner/gitignore.test.ts`
 
@@ -449,9 +490,10 @@ export async function ensureGitignore(dir: string): Promise<void> {
 
   if (content.includes(".openingday/*")) return;
 
-  const updated = content.endsWith("\n") || content === ""
-    ? content + GITIGNORE_BLOCK
-    : content + "\n" + GITIGNORE_BLOCK;
+  const updated =
+    content.endsWith("\n") || content === ""
+      ? content + GITIGNORE_BLOCK
+      : content + "\n" + GITIGNORE_BLOCK;
 
   await writeFile(gitignorePath, updated, "utf-8");
 }
@@ -474,6 +516,7 @@ git commit -m "feat: add auto-gitignore for .openingday with repo-map exception"
 ## Task 4: Tiered Repo Scanner
 
 **Files:**
+
 - Create: `packages/core/src/scanner/scan.ts`
 - Test: `packages/core/src/scanner/scan.test.ts`
 
@@ -493,16 +536,24 @@ describe("tiered scanner", () => {
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "od-scan-"));
     // Create a mini project
-    await writeFile(join(dir, "package.json"), JSON.stringify({
-      name: "test", dependencies: { hono: "^4.0.0" },
-    }));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({
+        name: "test",
+        dependencies: { hono: "^4.0.0" },
+      }),
+    );
     await writeFile(join(dir, "tsconfig.json"), "{}");
     await writeFile(join(dir, "pnpm-lock.yaml"), "");
     await mkdir(join(dir, "src"), { recursive: true });
-    await writeFile(join(dir, "src", "auth.ts"),
-      'export function login(user: string): boolean { return true; }\nexport interface User { id: string; }\n');
-    await writeFile(join(dir, "src", "api.ts"),
-      'import { login } from "./auth";\nexport function handler() { login("x"); }\n');
+    await writeFile(
+      join(dir, "src", "auth.ts"),
+      "export function login(user: string): boolean { return true; }\nexport interface User { id: string; }\n",
+    );
+    await writeFile(
+      join(dir, "src", "api.ts"),
+      'import { login } from "./auth";\nexport function handler() { login("x"); }\n',
+    );
   });
 
   afterEach(async () => {
@@ -554,20 +605,43 @@ Expected: FAIL
 // packages/core/src/scanner/scan.ts
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
-import type { RepoMap, RepoModule, RepoFile, RepoExport, RepoImport, ScanDepth, EnvConfig } from "./types.js";
+import type {
+  RepoMap,
+  RepoModule,
+  RepoFile,
+  RepoExport,
+  RepoImport,
+  ScanDepth,
+  EnvConfig,
+} from "./types.js";
 import { detectEnv, detectDeps } from "./detect.js";
 import { extractExports, extractImports } from "../seeder/from-repo.js";
 
 const IGNORED_DIRS = new Set([
-  "node_modules", "dist", ".git", ".openingday", "coverage",
-  ".next", ".nuxt", ".output", "build", "out", ".turbo", ".cache",
+  "node_modules",
+  "dist",
+  ".git",
+  ".openingday",
+  "coverage",
+  ".next",
+  ".nuxt",
+  ".output",
+  "build",
+  "out",
+  ".turbo",
+  ".cache",
 ]);
 
 export async function scanRepo(dir: string, depth: ScanDepth = "standard"): Promise<RepoMap> {
   // Env detection (standard + deep only)
   let env: EnvConfig = {
-    pm: "npm", test: "none", lint: "none", ts: false,
-    monorepo: false, workspaces: [], infra: "none",
+    pm: "npm",
+    test: "none",
+    lint: "none",
+    ts: false,
+    monorepo: false,
+    workspaces: [],
+    infra: "none",
   };
   let deps: string[] = [];
 
@@ -662,7 +736,11 @@ function extractKeywords(exportNames: string[]): string[] {
 }
 
 // Build landscape from RepoMap (compressed index for worker context)
-export function buildLandscape(map: RepoMap): { mc: number; fc: number; modules: { p: string; fc: number; k: string[] }[] } {
+export function buildLandscape(map: RepoMap): {
+  mc: number;
+  fc: number;
+  modules: { p: string; fc: number; k: string[] }[];
+} {
   return {
     mc: map.modules.length,
     fc: map.modules.reduce((sum, m) => sum + m.fc, 0),
@@ -717,6 +795,7 @@ git commit -m "feat: add tiered repo scanner with landscape and relevant file ex
 ## Task 5: Incremental Map Refresh
 
 **Files:**
+
 - Create: `packages/core/src/scanner/incremental.ts`
 - Test: `packages/core/src/scanner/incremental.test.ts`
 
@@ -747,8 +826,10 @@ describe("incremental refresh", () => {
   it("updates changed file in existing map", async () => {
     const map = await scanRepo(dir, "lite");
     // Modify the file
-    await writeFile(join(dir, "src", "auth.ts"),
-      "export function login() {}\nexport function logout() {}\n");
+    await writeFile(
+      join(dir, "src", "auth.ts"),
+      "export function login() {}\nexport function logout() {}\n",
+    );
 
     const updated = await refreshFiles(map, dir, ["src/auth.ts"]);
     const authFile = updated.modules.flatMap((m) => m.files).find((f) => f.p === "src/auth.ts");
@@ -792,10 +873,12 @@ export async function refreshFiles(
   repoDir: string,
   changedPaths: string[],
 ): Promise<RepoMap> {
-  const updatedModules = [...map.modules.map((m) => ({
-    ...m,
-    files: [...m.files],
-  }))];
+  const updatedModules = [
+    ...map.modules.map((m) => ({
+      ...m,
+      files: [...m.files],
+    })),
+  ];
 
   for (const relPath of changedPaths) {
     const fullPath = join(repoDir, relPath);
@@ -873,6 +956,7 @@ git commit -m "feat: add incremental repo map refresh for changed files"
 ## Task 6: Storage Layer — RepoMap Read/Write
 
 **Files:**
+
 - Modify: `packages/core/src/storage/interface.ts`
 - Modify: `packages/core/src/storage/disk.ts`
 - Modify: `packages/core/src/storage/disk.test.ts`
@@ -884,9 +968,20 @@ Add to existing `disk.test.ts`:
 ```ts
 it("reads and writes repo map", async () => {
   const map = {
-    v: 1, scannedAt: "2026-04-08T10:00:00Z", depth: "standard" as const,
-    env: { pm: "pnpm" as const, test: "vitest" as const, lint: "eslint" as const, ts: true, monorepo: false, workspaces: [], infra: "none" as const },
-    deps: ["hono"], modules: [],
+    v: 1,
+    scannedAt: "2026-04-08T10:00:00Z",
+    depth: "standard" as const,
+    env: {
+      pm: "pnpm" as const,
+      test: "vitest" as const,
+      lint: "eslint" as const,
+      ts: true,
+      monorepo: false,
+      workspaces: [],
+      infra: "none" as const,
+    },
+    deps: ["hono"],
+    modules: [],
   };
   await storage.writeRepoMap(map);
   const read = await storage.readRepoMap();
@@ -908,12 +1003,14 @@ Expected: FAIL — readRepoMap/writeRepoMap don't exist
 - [ ] **Step 3: Update storage interface and disk implementation**
 
 Read both files. Add to `Storage` interface:
+
 ```ts
 readRepoMap(): Promise<RepoMap | null>;
 writeRepoMap(map: RepoMap): Promise<void>;
 ```
 
 Add to `DiskStorage`:
+
 ```ts
 async readRepoMap(): Promise<RepoMap | null> {
   try { return await this.readJson(this.path("repo-map.json")); }
@@ -943,6 +1040,7 @@ git commit -m "feat: add repo map read/write to storage layer"
 ## Task 7: Integrate Repo Map into Context Builder + Wire Mode + Types
 
 **Files:**
+
 - Modify: `packages/core/src/types.ts`
 - Modify: `packages/core/src/context/context-builder.ts`
 - Modify: `packages/core/src/wire/wire.ts`
@@ -950,12 +1048,14 @@ git commit -m "feat: add repo map read/write to storage layer"
 - [ ] **Step 1: Update ContextPackage and WirePrompt types**
 
 Read `packages/core/src/types.ts`. Add to `ContextPackage`:
+
 ```ts
 landscape: { mc: number; fc: number; modules: { p: string; fc: number; k: string[] }[] };
 relevant: { p: string; ex: { n: string; s: string }[]; im: { f: string; n: string[] }[]; loc: number }[];
 ```
 
 Add to `WirePrompt`:
+
 ```ts
 landscape: { mc: number; fc: number; modules: { p: string; fc: number; k: string[] }[] };
 relevant: Record<string, { exports: { n: string; sig: string }[] }>;
@@ -977,10 +1077,11 @@ export function buildContext(
   memory: string,
   rules: string,
   repoMap?: RepoMap | null,
-): ContextPackage | null
+): ContextPackage | null;
 ```
 
 Inside the function, after existing above/below resolution:
+
 ```ts
 const landscape = repoMap ? buildLandscape(repoMap) : { mc: 0, fc: 0, modules: [] };
 const relevant = repoMap ? findRelevantFiles(repoMap, task.touches, task.reads) : [];
@@ -1021,6 +1122,7 @@ git commit -m "feat: integrate repo map into context builder and wire mode"
 ## Task 8: Integrate into Orchestrator + Seeder
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator.ts`
 - Modify: `packages/core/src/seeder/from-spec.ts`
 
@@ -1029,22 +1131,29 @@ git commit -m "feat: integrate repo map into context builder and wire mode"
 Read `packages/core/src/orchestrator.ts`. Changes:
 
 1. In `runOneCycle`, read repo map from storage after reading codeTree:
+
 ```ts
 const repoMap = await this.storage.readRepoMap();
 ```
 
 2. Pass repoMap to buildContext:
+
 ```ts
 const context = buildContext(workTree, codeTree, config, task.id, memory, "", repoMap);
 ```
 
 3. After task passes gates and merges, do incremental refresh:
+
 ```ts
 import { refreshFiles } from "./scanner/incremental.js";
 
 // After applyWorkerResult:
 if (repoMap && result.output.filesChanged.length > 0) {
-  const updatedMap = await refreshFiles(repoMap, this.options.repoDir ?? ".", result.output.filesChanged);
+  const updatedMap = await refreshFiles(
+    repoMap,
+    this.options.repoDir ?? ".",
+    result.output.filesChanged,
+  );
   await this.storage.writeRepoMap(updatedMap);
 }
 ```
@@ -1060,10 +1169,11 @@ export async function seedFromSpec(
   cwd: string,
   budgetUsd?: number,
   repoMap?: RepoMap | null,
-): Promise<SeederOutput | null>
+): Promise<SeederOutput | null>;
 ```
 
 In `buildSeederPrompt`, if repoMap provided, append compressed map summary to prompt:
+
 ```ts
 export function buildSeederPrompt(specText: string, projectName: string, repoMap?: RepoMap | null): string {
   let prompt = /* existing prompt */;
@@ -1092,6 +1202,7 @@ git commit -m "feat: orchestrator uses repo map for context + incremental refres
 ## Task 9: CLI — Scan Command + Update Init/New
 
 **Files:**
+
 - Create: `packages/cli/src/commands/scan.ts`
 - Modify: `packages/cli/src/commands/init.ts`
 - Modify: `packages/cli/src/commands/new.ts`
@@ -1122,7 +1233,9 @@ export const scanCommand = new Command("scan")
 
     const totalFiles = map.modules.reduce((sum, m) => sum + m.fc, 0);
     console.log(chalk.green(`✓ ${map.modules.length} modules, ${totalFiles} files`));
-    console.log(`  pm: ${map.env.pm} | test: ${map.env.test} | lint: ${map.env.lint} | ts: ${map.env.ts}`);
+    console.log(
+      `  pm: ${map.env.pm} | test: ${map.env.test} | lint: ${map.env.lint} | ts: ${map.env.ts}`,
+    );
     if (map.env.monorepo) console.log(`  monorepo: ${map.env.workspaces.join(", ")}`);
     if (map.env.infra !== "none") console.log(`  infra: ${map.env.infra}`);
   });
@@ -1188,6 +1301,7 @@ git commit -m "feat: add scan command, wire repo map into init and new"
 ## Task 10: Update Core Exports + Final Verification
 
 **Files:**
+
 - Modify: `packages/core/src/index.ts`
 
 - [ ] **Step 1: Add scanner exports to barrel**
@@ -1200,7 +1314,17 @@ export { scanRepo, buildLandscape, findRelevantFiles } from "./scanner/scan.js";
 export { detectEnv, detectDeps } from "./scanner/detect.js";
 export { ensureGitignore } from "./scanner/gitignore.js";
 export { refreshFiles } from "./scanner/incremental.js";
-export type { RepoMap, RepoModule, RepoFile, RepoExport, RepoImport, EnvConfig, ScanDepth, Landscape, RelevantFiles } from "./scanner/types.js";
+export type {
+  RepoMap,
+  RepoModule,
+  RepoFile,
+  RepoExport,
+  RepoImport,
+  EnvConfig,
+  ScanDepth,
+  Landscape,
+  RelevantFiles,
+} from "./scanner/types.js";
 ```
 
 - [ ] **Step 2: Typecheck**

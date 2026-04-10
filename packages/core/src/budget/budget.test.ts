@@ -114,7 +114,12 @@ describe("budget", () => {
       tree = addMilestone(tree, { id: "m1", name: "M1", description: "", dependencies: [] });
       tree = addSlice(tree, "m1", { id: "s1", name: "S1", description: "" });
       tree = addTask(tree, "s1", {
-        id: "t1", name: "T1", description: "", dependencies: [], touches: [], reads: [],
+        id: "t1",
+        name: "T1",
+        description: "",
+        dependencies: [],
+        touches: [],
+        reads: [],
       });
 
       const config = defaultConfig("test", "spec.md");
@@ -133,13 +138,28 @@ describe("budget", () => {
       tree = addSlice(tree, "m1", { id: "s1", name: "S1", description: "" });
       // Add 3 tasks and fail them all (consecutiveFailuresSlice = 3)
       tree = addTask(tree, "s1", {
-        id: "t1", name: "T1", description: "", dependencies: [], touches: [], reads: [],
+        id: "t1",
+        name: "T1",
+        description: "",
+        dependencies: [],
+        touches: [],
+        reads: [],
       });
       tree = addTask(tree, "s1", {
-        id: "t2", name: "T2", description: "", dependencies: [], touches: [], reads: [],
+        id: "t2",
+        name: "T2",
+        description: "",
+        dependencies: [],
+        touches: [],
+        reads: [],
       });
       tree = addTask(tree, "s1", {
-        id: "t3", name: "T3", description: "", dependencies: [], touches: [], reads: [],
+        id: "t3",
+        name: "T3",
+        description: "",
+        dependencies: [],
+        touches: [],
+        reads: [],
       });
       tree = updateTaskStatus(tree, "t1", "failed");
       tree = updateTaskStatus(tree, "t2", "failed");
@@ -157,13 +177,28 @@ describe("budget", () => {
       tree = addMilestone(tree, { id: "m1", name: "M1", description: "", dependencies: [] });
       tree = addSlice(tree, "m1", { id: "s1", name: "S1", description: "" });
       tree = addTask(tree, "s1", {
-        id: "t1", name: "T1", description: "", dependencies: [], touches: [], reads: [],
+        id: "t1",
+        name: "T1",
+        description: "",
+        dependencies: [],
+        touches: [],
+        reads: [],
       });
       tree = addTask(tree, "s1", {
-        id: "t2", name: "T2", description: "", dependencies: [], touches: [], reads: [],
+        id: "t2",
+        name: "T2",
+        description: "",
+        dependencies: [],
+        touches: [],
+        reads: [],
       });
       tree = addTask(tree, "s1", {
-        id: "t3", name: "T3", description: "", dependencies: [], touches: [], reads: [],
+        id: "t3",
+        name: "T3",
+        description: "",
+        dependencies: [],
+        touches: [],
+        reads: [],
       });
       tree = updateTaskStatus(tree, "t1", "failed");
       tree = updateTaskStatus(tree, "t2", "complete"); // breaks the streak
@@ -185,7 +220,12 @@ describe("budget", () => {
       for (let i = 1; i <= 5; i++) {
         const sliceId = i <= 2 ? "s1" : "s2";
         tree = addTask(tree, sliceId, {
-          id: `t${i}`, name: `T${i}`, description: "", dependencies: [], touches: [], reads: [],
+          id: `t${i}`,
+          name: `T${i}`,
+          description: "",
+          dependencies: [],
+          touches: [],
+          reads: [],
         });
         tree = updateTaskStatus(tree, `t${i}`, "failed");
       }
@@ -203,13 +243,23 @@ describe("budget", () => {
 
       // 1 complete, 4 failed = 20% efficiency (threshold is 50%)
       tree = addTask(tree, "s1", {
-        id: "t1", name: "T1", description: "", dependencies: [], touches: [], reads: [],
+        id: "t1",
+        name: "T1",
+        description: "",
+        dependencies: [],
+        touches: [],
+        reads: [],
       });
       tree = updateTaskStatus(tree, "t1", "complete");
 
       for (let i = 2; i <= 5; i++) {
         tree = addTask(tree, "s1", {
-          id: `t${i}`, name: `T${i}`, description: "", dependencies: [], touches: [], reads: [],
+          id: `t${i}`,
+          name: `T${i}`,
+          description: "",
+          dependencies: [],
+          touches: [],
+          reads: [],
         });
         tree = updateTaskStatus(tree, `t${i}`, "failed");
       }

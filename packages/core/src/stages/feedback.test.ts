@@ -5,7 +5,8 @@ import { digestReviewIssues, parseFeedbackResponse } from "./feedback.js";
 describe("feedback digester", () => {
   describe("digestReviewIssues", () => {
     it("converts raw review issues to StageFeedback", () => {
-      const rawReview = '{"issues":[{"f":"src/index.ts","l":5,"e":"Wrong type","fix":"Use Player from contracts"}]}';
+      const rawReview =
+        '{"issues":[{"f":"src/index.ts","l":5,"e":"Wrong type","fix":"Use Player from contracts"}]}';
       const result = digestReviewIssues(rawReview);
       expect(result.stage).toBe("review");
       expect(result.errors).toHaveLength(1);

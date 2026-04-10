@@ -13,38 +13,41 @@
 ## File Structure
 
 ### New Files (Part 1: Orchestrator Split)
-| File | Responsibility |
-|------|---------------|
-| `packages/core/src/pipeline/file-reader.ts` | Read + truncate file contents for enriched context |
-| `packages/core/src/pipeline/file-reader.test.ts` | Unit tests for file reading + truncation |
-| `packages/core/src/pipeline/feedback-loop.ts` | Run compile/test stages in retry loop with AI feedback |
-| `packages/core/src/pipeline/feedback-loop.test.ts` | Unit tests for loop behavior, stuck detection |
-| `packages/core/src/pipeline/stage-runner.ts` | Sequence full staged pipeline for a task |
-| `packages/core/src/pipeline/stage-runner.test.ts` | Unit tests for pipeline sequencing |
+
+| File                                               | Responsibility                                         |
+| -------------------------------------------------- | ------------------------------------------------------ |
+| `packages/core/src/pipeline/file-reader.ts`        | Read + truncate file contents for enriched context     |
+| `packages/core/src/pipeline/file-reader.test.ts`   | Unit tests for file reading + truncation               |
+| `packages/core/src/pipeline/feedback-loop.ts`      | Run compile/test stages in retry loop with AI feedback |
+| `packages/core/src/pipeline/feedback-loop.test.ts` | Unit tests for loop behavior, stuck detection          |
+| `packages/core/src/pipeline/stage-runner.ts`       | Sequence full staged pipeline for a task               |
+| `packages/core/src/pipeline/stage-runner.test.ts`  | Unit tests for pipeline sequencing                     |
 
 ### New Files (Part 2: Prompt Templates)
-| File | Responsibility |
-|------|---------------|
-| `packages/core/src/prompts/partials/role.ts` | Shared agent role framing |
-| `packages/core/src/prompts/partials/output-format.ts` | Wire response schema + format instructions |
-| `packages/core/src/prompts/partials/constraints.ts` | Budget, safety rules |
-| `packages/core/src/prompts/partials/index.ts` | Re-export all partials |
-| `packages/core/src/prompts/feedback.ts` | Compile/test digestion prompt templates |
-| `packages/core/src/prompts/review.ts` | Code review prompt template |
-| `packages/core/src/prompts/contracts.ts` | Contract extraction prompt template |
-| `packages/core/src/prompts/quality.ts` | Quality gate prompt template |
-| `packages/core/src/prompts/worker.ts` | Worker spawn prompt template (migrate from spawner.ts) |
+
+| File                                                  | Responsibility                                         |
+| ----------------------------------------------------- | ------------------------------------------------------ |
+| `packages/core/src/prompts/partials/role.ts`          | Shared agent role framing                              |
+| `packages/core/src/prompts/partials/output-format.ts` | Wire response schema + format instructions             |
+| `packages/core/src/prompts/partials/constraints.ts`   | Budget, safety rules                                   |
+| `packages/core/src/prompts/partials/index.ts`         | Re-export all partials                                 |
+| `packages/core/src/prompts/feedback.ts`               | Compile/test digestion prompt templates                |
+| `packages/core/src/prompts/review.ts`                 | Code review prompt template                            |
+| `packages/core/src/prompts/contracts.ts`              | Contract extraction prompt template                    |
+| `packages/core/src/prompts/quality.ts`                | Quality gate prompt template                           |
+| `packages/core/src/prompts/worker.ts`                 | Worker spawn prompt template (migrate from spawner.ts) |
 
 ### Modified Files
-| File | Change |
-|------|--------|
-| `packages/core/src/orchestrator.ts` | Slim to ~120 lines, delegate to pipeline modules |
-| `packages/core/src/stages/feedback.ts` | Import prompt from `prompts/feedback.ts` |
-| `packages/core/src/stages/review.ts` | Import prompt from `prompts/review.ts` |
-| `packages/core/src/spring-training/contracts.ts` | Import prompt from `prompts/contracts.ts` |
-| `packages/core/src/gates/quality.ts` | Import prompt from `prompts/quality.ts` |
-| `packages/core/src/workers/spawner.ts` | Import prompt from `prompts/worker.ts` |
-| `packages/core/src/index.ts` | Export new pipeline + prompt modules |
+
+| File                                             | Change                                           |
+| ------------------------------------------------ | ------------------------------------------------ |
+| `packages/core/src/orchestrator.ts`              | Slim to ~120 lines, delegate to pipeline modules |
+| `packages/core/src/stages/feedback.ts`           | Import prompt from `prompts/feedback.ts`         |
+| `packages/core/src/stages/review.ts`             | Import prompt from `prompts/review.ts`           |
+| `packages/core/src/spring-training/contracts.ts` | Import prompt from `prompts/contracts.ts`        |
+| `packages/core/src/gates/quality.ts`             | Import prompt from `prompts/quality.ts`          |
+| `packages/core/src/workers/spawner.ts`           | Import prompt from `prompts/worker.ts`           |
+| `packages/core/src/index.ts`                     | Export new pipeline + prompt modules             |
 
 ---
 
@@ -53,6 +56,7 @@
 The `SpawnFn` type is currently defined in `orchestrator.ts`. Both `pipeline/feedback-loop.ts` and `pipeline/stage-runner.ts` need it. Importing from orchestrator would create a circular dependency. Move it to `types.ts` first.
 
 **Files:**
+
 - Modify: `packages/core/src/types.ts`
 - Modify: `packages/core/src/orchestrator.ts`
 
@@ -76,6 +80,7 @@ export type SpawnFn = (options: {
 In `packages/core/src/orchestrator.ts`, remove the `SpawnFn` type definition and import it:
 
 Replace:
+
 ```typescript
 export type SpawnFn = (options: {
   taskId: string;
@@ -86,6 +91,7 @@ export type SpawnFn = (options: {
 ```
 
 With:
+
 ```typescript
 export type { SpawnFn } from "./types.js";
 ```
@@ -117,6 +123,7 @@ git commit -m "refactor: move SpawnFn type to types.ts to avoid circular imports
 ## Task 1: Extract file-reader module
 
 **Files:**
+
 - Create: `packages/core/src/pipeline/file-reader.ts`
 - Create: `packages/core/src/pipeline/file-reader.test.ts`
 
@@ -221,10 +228,9 @@ export async function readFileContents(
 
       if (lines.length > truncateThreshold) {
         const first = lines.slice(0, PREVIEW_LINES).join("\n");
-        const exportLines = lines
-          .filter((l) => l.startsWith("export "))
-          .join("\n");
-        contents[filePath] = `${first}\n\n// ... (${lines.length} lines total, truncated) ...\n\n// Exports:\n${exportLines}`;
+        const exportLines = lines.filter((l) => l.startsWith("export ")).join("\n");
+        contents[filePath] =
+          `${first}\n\n// ... (${lines.length} lines total, truncated) ...\n\n// Exports:\n${exportLines}`;
       } else {
         contents[filePath] = content;
       }
@@ -255,6 +261,7 @@ git commit -m "feat(pipeline): extract file-reader module from orchestrator"
 ## Task 2: Extract feedback-loop module
 
 **Files:**
+
 - Create: `packages/core/src/pipeline/feedback-loop.ts`
 - Create: `packages/core/src/pipeline/feedback-loop.test.ts`
 
@@ -313,7 +320,8 @@ describe("runFeedbackLoop", () => {
   });
 
   it("retries with feedback when stage fails then passes", async () => {
-    const stageFn = vi.fn<[], Promise<StageResult>>()
+    const stageFn = vi
+      .fn<[], Promise<StageResult>>()
       .mockResolvedValueOnce({
         stage: "compile",
         passed: false,
@@ -327,8 +335,18 @@ describe("runFeedbackLoop", () => {
         feedback: [],
       });
     const spawnFn: SpawnFn = vi.fn().mockResolvedValue({
-      output: { status: "complete", filesChanged: [], interfacesModified: [], testsAdded: [], testResults: { pass: 0, fail: 0 }, notes: "", tokensUsed: 0 },
-      costUsd: 0, sessionId: "s1", needsInspection: false,
+      output: {
+        status: "complete",
+        filesChanged: [],
+        interfacesModified: [],
+        testsAdded: [],
+        testResults: { pass: 0, fail: 0 },
+        notes: "",
+        tokensUsed: 0,
+      },
+      costUsd: 0,
+      sessionId: "s1",
+      needsInspection: false,
     });
 
     const result = await runFeedbackLoop({
@@ -355,8 +373,18 @@ describe("runFeedbackLoop", () => {
       feedback: [{ stage: "test", errors: [{ f: "a.ts", l: 1, e: "err", fix: "fix" }] }],
     });
     const spawnFn: SpawnFn = vi.fn().mockResolvedValue({
-      output: { status: "complete", filesChanged: [], interfacesModified: [], testsAdded: [], testResults: { pass: 0, fail: 0 }, notes: "", tokensUsed: 0 },
-      costUsd: 0, sessionId: "s1", needsInspection: false,
+      output: {
+        status: "complete",
+        filesChanged: [],
+        interfacesModified: [],
+        testsAdded: [],
+        testResults: { pass: 0, fail: 0 },
+        notes: "",
+        tokensUsed: 0,
+      },
+      costUsd: 0,
+      sessionId: "s1",
+      needsInspection: false,
     });
 
     const result = await runFeedbackLoop({
@@ -375,7 +403,10 @@ describe("runFeedbackLoop", () => {
   });
 
   it("detects stuck loop via safety module", async () => {
-    const sameError = { stage: "compile" as const, errors: [{ f: "a.ts", l: 1, e: "same error", fix: "same fix" }] };
+    const sameError = {
+      stage: "compile" as const,
+      errors: [{ f: "a.ts", l: 1, e: "same error", fix: "same fix" }],
+    };
     const stageFn = vi.fn<[], Promise<StageResult>>().mockResolvedValue({
       stage: "compile",
       passed: false,
@@ -383,8 +414,18 @@ describe("runFeedbackLoop", () => {
       feedback: [sameError],
     });
     const spawnFn: SpawnFn = vi.fn().mockResolvedValue({
-      output: { status: "complete", filesChanged: [], interfacesModified: [], testsAdded: [], testResults: { pass: 0, fail: 0 }, notes: "", tokensUsed: 0 },
-      costUsd: 0, sessionId: "s1", needsInspection: false,
+      output: {
+        status: "complete",
+        filesChanged: [],
+        interfacesModified: [],
+        testsAdded: [],
+        testResults: { pass: 0, fail: 0 },
+        notes: "",
+        tokensUsed: 0,
+      },
+      costUsd: 0,
+      sessionId: "s1",
+      needsInspection: false,
     });
 
     const result = await runFeedbackLoop({
@@ -445,7 +486,8 @@ export interface FeedbackLoopResult {
  * respawn worker with feedback, re-run stage. Repeat until passed or safety cap.
  */
 export async function runFeedbackLoop(options: FeedbackLoopOptions): Promise<FeedbackLoopResult> {
-  const { stage, runStage, spawn, taskId, worktreePath, context, taskBudget, maxIterations } = options;
+  const { stage, runStage, spawn, taskId, worktreePath, context, taskBudget, maxIterations } =
+    options;
 
   let tracker = createLoopTracker(taskId);
   const errorHistory: StageFeedback[] = [];
@@ -468,7 +510,8 @@ export async function runFeedbackLoop(options: FeedbackLoopOptions): Promise<Fee
     // Check safety caps
     const breakCheck = shouldBreak(tracker, stage, errorHistory, diffHistory);
     if (breakCheck.break) {
-      stuckDetected = breakCheck.reason.includes("Same error") || breakCheck.reason.includes("Identical diff");
+      stuckDetected =
+        breakCheck.reason.includes("Same error") || breakCheck.reason.includes("Identical diff");
       break;
     }
 
@@ -476,7 +519,8 @@ export async function runFeedbackLoop(options: FeedbackLoopOptions): Promise<Fee
     const feedbackJson = JSON.stringify(stageResult.feedback);
     const feedbackContext: EnrichedContextPackage = {
       ...context,
-      memory: context.memory + `\n${stage.toUpperCase()} FEEDBACK (loop ${iterations}):\n${feedbackJson}`,
+      memory:
+        context.memory + `\n${stage.toUpperCase()} FEEDBACK (loop ${iterations}):\n${feedbackJson}`,
     };
 
     await spawn({
@@ -528,6 +572,7 @@ git commit -m "feat(pipeline): extract feedback-loop module from orchestrator"
 ## Task 3: Extract stage-runner module
 
 **Files:**
+
 - Create: `packages/core/src/pipeline/stage-runner.ts`
 - Create: `packages/core/src/pipeline/stage-runner.test.ts`
 
@@ -600,7 +645,9 @@ describe("runStagedPipeline", () => {
     });
 
     expect(result.workerOutput.status).toBe("complete");
-    expect(result.stages).toContainEqual(expect.objectContaining({ stage: "implement", passed: true }));
+    expect(result.stages).toContainEqual(
+      expect.objectContaining({ stage: "implement", passed: true }),
+    );
     expect(spawn).toHaveBeenCalledTimes(1);
   });
 
@@ -658,12 +705,7 @@ Expected: FAIL — module not found
 
 ```typescript
 // packages/core/src/pipeline/stage-runner.ts
-import type {
-  EnrichedContextPackage,
-  WorkerOutput,
-  StageResult,
-  StageFeedback,
-} from "../types.js";
+import type { EnrichedContextPackage, WorkerOutput, StageResult, StageFeedback } from "../types.js";
 import type { EnvConfig } from "../scanner/types.js";
 import type { SpawnFn } from "../types.js";
 import type { SpawnResult } from "../workers/spawner.js";
@@ -713,8 +755,15 @@ export interface PipelineResult {
  */
 export async function runStagedPipeline(options: PipelineOptions): Promise<PipelineResult> {
   const {
-    taskId, taskTouches, worktreePath, context, taskBudget,
-    env, spawn, contracts, specExcerpt,
+    taskId,
+    taskTouches,
+    worktreePath,
+    context,
+    taskBudget,
+    env,
+    spawn,
+    contracts,
+    specExcerpt,
   } = options;
 
   const stages: StageOutcome[] = [];
@@ -834,9 +883,20 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
         budgetUsd: taskBudget / 4,
       });
 
-      const retryReview = await runReviewStage(worktreePath, diff, contracts, specExcerpt, taskBudget);
+      const retryReview = await runReviewStage(
+        worktreePath,
+        diff,
+        contracts,
+        specExcerpt,
+        taskBudget,
+      );
       stageResults.push(retryReview);
-      stages.push({ stage: "review", passed: retryReview.passed, feedback: retryReview.feedback, loopCount: 1 });
+      stages.push({
+        stage: "review",
+        passed: retryReview.passed,
+        feedback: retryReview.feedback,
+        loopCount: 1,
+      });
 
       if (!retryReview.passed) {
         allPassed = false;
@@ -868,6 +928,7 @@ git commit -m "feat(pipeline): extract stage-runner module from orchestrator"
 ## Task 4: Slim orchestrator to coordinator
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator.ts`
 
 - [ ] **Step 1: Run existing orchestrator tests to establish baseline**
@@ -893,10 +954,7 @@ import {
 } from "./workers/pool.js";
 import type { WorkerPool } from "./workers/pool.js";
 import { buildEnrichedContext } from "./context/context-builder.js";
-import {
-  runGatePipeline,
-  createDefaultPipeline,
-} from "./gates/pipeline.js";
+import { runGatePipeline, createDefaultPipeline } from "./gates/pipeline.js";
 import { getAllTasks, getTask, updateTaskStatus, updateTask } from "./trees/work-tree.js";
 import {
   transition,
@@ -904,15 +962,8 @@ import {
   incrementWorkersSpawned,
   isTerminal,
 } from "./state/state-machine.js";
-import {
-  getProjectBudgetStatus,
-  checkCircuitBreakers,
-} from "./budget/budget.js";
-import {
-  createWorktree,
-  removeWorktree,
-  mergeWorktree,
-} from "./workers/worktree.js";
+import { getProjectBudgetStatus, checkCircuitBreakers } from "./budget/budget.js";
+import { createWorktree, removeWorktree, mergeWorktree } from "./workers/worktree.js";
 import { preflightCheck } from "./preflight/check.js";
 import { generateDigest } from "./digests/generator.js";
 import { createWatchdog, createWatchdogState } from "./safety/watchdog.js";
@@ -976,7 +1027,13 @@ export class Orchestrator {
 
     // 2. Terminal/paused check
     if (isTerminal(state.status)) {
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: state.status === "complete", isPaused: false };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: state.status === "complete",
+        isPaused: false,
+      };
     }
     if (state.status === "paused") {
       return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true };
@@ -987,7 +1044,14 @@ export class Orchestrator {
     if (watchdogAction === "pause") {
       state = transition(state, "paused");
       await this.storage.writeProjectState(state);
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true, error: "Watchdog: no progress for 40 minutes" };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: false,
+        isPaused: true,
+        error: "Watchdog: no progress for 40 minutes",
+      };
     }
     if (watchdogAction === "warn") {
       await this.storage.appendMemory("Watchdog warning: no task completed in 20 minutes");
@@ -997,25 +1061,48 @@ export class Orchestrator {
     if (circuitStatus.reason) {
       state = transition(state, "paused");
       await this.storage.writeProjectState(state);
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true, error: `Circuit breaker: ${circuitStatus.reason}` };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: false,
+        isPaused: true,
+        error: `Circuit breaker: ${circuitStatus.reason}`,
+      };
     }
 
     const budgetStatus = getProjectBudgetStatus(state, config);
     if (budgetStatus.atLimit) {
       state = transition(state, "paused");
       await this.storage.writeProjectState(state);
-      return { dispatched: 0, completed: 0, failed: 0, isComplete: false, isPaused: true, error: "Budget limit reached" };
+      return {
+        dispatched: 0,
+        completed: 0,
+        failed: 0,
+        isComplete: false,
+        isPaused: true,
+        error: "Budget limit reached",
+      };
     }
 
     // 4. Spring training
     if (!this.springTrainingDone && !this.options.skipSpringTraining && this.options.specText) {
       try {
-        const stResult = await runSpringTraining(this.storage, this.options.specText, repoMap, this.options.repoDir);
+        const stResult = await runSpringTraining(
+          this.storage,
+          this.options.specText,
+          repoMap,
+          this.options.repoDir,
+        );
         if (!stResult.valid) {
-          await this.storage.appendMemory(`Spring training blockers: ${stResult.blockers.join("; ")}`);
+          await this.storage.appendMemory(
+            `Spring training blockers: ${stResult.blockers.join("; ")}`,
+          );
         }
         if (stResult.warnings.length > 0) {
-          await this.storage.appendMemory(`Spring training warnings: ${stResult.warnings.join("; ")}`);
+          await this.storage.appendMemory(
+            `Spring training warnings: ${stResult.warnings.join("; ")}`,
+          );
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -1034,7 +1121,9 @@ export class Orchestrator {
     // 6. Plan spawns + check completion
     const spawnDecision = planSpawns(workTree, this.pool, config, state);
     const allTasks = getAllTasks(workTree);
-    const allDone = allTasks.length === 0 || allTasks.every((t) => t.status === "complete" || t.status === "failed");
+    const allDone =
+      allTasks.length === 0 ||
+      allTasks.every((t) => t.status === "complete" || t.status === "failed");
 
     if (allDone && getActiveCount(this.pool) === 0 && !spawnDecision.canSpawn) {
       state = transition(state, "complete");
@@ -1056,20 +1145,37 @@ export class Orchestrator {
       if (!preflight.canProceed) {
         workTree = updateTaskStatus(workTree, task.id, "failed");
         failed++;
-        await this.storage.appendMemory(`Task ${task.id} blocked by preflight: ${preflight.blockers.join("; ")}`);
+        await this.storage.appendMemory(
+          `Task ${task.id} blocked by preflight: ${preflight.blockers.join("; ")}`,
+        );
         continue;
       }
       if (preflight.warnings.length > 0) {
-        await this.storage.appendMemory(`Task ${task.id} preflight warnings: ${preflight.warnings.join("; ")}`);
+        await this.storage.appendMemory(
+          `Task ${task.id} preflight warnings: ${preflight.warnings.join("; ")}`,
+        );
       }
 
       // Build enriched context
       let context = getCachedContext(task.id);
       if (!context) {
-        const fileContents = await readFileContents(this.options.repoDir ?? ".", task.touches, task.reads);
+        const fileContents = await readFileContents(
+          this.options.repoDir ?? ".",
+          task.touches,
+          task.reads,
+        );
         context = buildEnrichedContext(
-          workTree, codeTree, config, task.id, memory, "",
-          repoMap, contracts, digests, this.options.specText ?? "", fileContents,
+          workTree,
+          codeTree,
+          config,
+          task.id,
+          memory,
+          "",
+          repoMap,
+          contracts,
+          digests,
+          this.options.specText ?? "",
+          fileContents,
         );
         if (!context) continue;
         setCachedContext(task.id, context);
@@ -1120,7 +1226,13 @@ export class Orchestrator {
           const gatePipeline = createDefaultPipeline(task.touches, undefined, {
             worktreePath: worktreePath !== "." ? worktreePath : undefined,
           });
-          const gateResults = await runGatePipeline(gatePipeline, pipeline.workerOutput, workTree, codeTree, worktreePath !== "." ? worktreePath : undefined);
+          const gateResults = await runGatePipeline(
+            gatePipeline,
+            pipeline.workerOutput,
+            workTree,
+            codeTree,
+            worktreePath !== "." ? worktreePath : undefined,
+          );
           for (const gr of gateResults.results) {
             await this.storage.writeGateResult(task.id, gr);
           }
@@ -1135,10 +1247,14 @@ export class Orchestrator {
             const mergeResult = await mergeWorktree(this.options.repoDir, worktreeBranch);
             if (!mergeResult.success) {
               workTree = updateTaskStatus(workTree, task.id, "failed");
-              workTree = updateTask(workTree, task.id, { attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1 });
+              workTree = updateTask(workTree, task.id, {
+                attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+              });
               this.pool = completeWorker(this.pool, sessionId, "failed");
               failed++;
-              await this.storage.appendMemory(`Task ${task.id} merge conflict: ${mergeResult.error}`);
+              await this.storage.appendMemory(
+                `Task ${task.id} merge conflict: ${mergeResult.error}`,
+              );
               continue;
             }
           }
@@ -1153,28 +1269,42 @@ export class Orchestrator {
           invalidateContext(task.id);
 
           if (repoMap && pipeline.workerOutput.filesChanged.length > 0) {
-            const updatedMap = await refreshFiles(repoMap, this.options.repoDir ?? ".", pipeline.workerOutput.filesChanged);
+            const updatedMap = await refreshFiles(
+              repoMap,
+              this.options.repoDir ?? ".",
+              pipeline.workerOutput.filesChanged,
+            );
             await this.storage.writeRepoMap(updatedMap);
           }
 
           this.watchdog.reset();
         } else {
           workTree = updateTaskStatus(workTree, task.id, "failed");
-          workTree = updateTask(workTree, task.id, { attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1 });
+          workTree = updateTask(workTree, task.id, {
+            attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+          });
           this.pool = completeWorker(this.pool, sessionId, "failed");
           failed++;
-          await this.storage.appendMemory(`Task ${task.id} failed staged pipeline at ${new Date().toISOString()}`);
+          await this.storage.appendMemory(
+            `Task ${task.id} failed staged pipeline at ${new Date().toISOString()}`,
+          );
         }
       } catch (err) {
         workTree = updateTaskStatus(workTree, task.id, "failed");
-        workTree = updateTask(workTree, task.id, { attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1 });
+        workTree = updateTask(workTree, task.id, {
+          attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+        });
         this.pool = completeWorker(this.pool, sessionId, "failed");
         failed++;
         const message = err instanceof Error ? err.message : String(err);
         await this.storage.appendMemory(`Task ${task.id} spawn error: ${message}`);
       } finally {
         if (this.options.repoDir && worktreePath !== ".") {
-          try { await removeWorktree(this.options.repoDir, worktreePath); } catch { /* cleanup non-fatal */ }
+          try {
+            await removeWorktree(this.options.repoDir, worktreePath);
+          } catch {
+            /* cleanup non-fatal */
+          }
         }
       }
     }
@@ -1210,6 +1340,7 @@ git commit -m "refactor(orchestrator): slim to coordinator using pipeline module
 ## Task 5: Create prompt partials
 
 **Files:**
+
 - Create: `packages/core/src/prompts/partials/role.ts`
 - Create: `packages/core/src/prompts/partials/output-format.ts`
 - Create: `packages/core/src/prompts/partials/constraints.ts`
@@ -1259,7 +1390,9 @@ export function reviewFormat(): string {
  * Quality review output format.
  */
 export function qualityFormat(): string {
-  return outputFormat('"pass":bool,"issues":[{"rule":string,"file":string,"note":string,"severity":"high"|"low"}]');
+  return outputFormat(
+    '"pass":bool,"issues":[{"rule":string,"file":string,"note":string,"severity":"high"|"low"}]',
+  );
 }
 ```
 
@@ -1309,6 +1442,7 @@ git commit -m "feat(prompts): add wire-mode prompt partials — role, output-for
 ## Task 6: Create feedback prompt template + migrate stages/feedback.ts
 
 **Files:**
+
 - Create: `packages/core/src/prompts/feedback.ts`
 - Modify: `packages/core/src/stages/feedback.ts`
 
@@ -1381,7 +1515,14 @@ export async function digestCompileErrors(
     if (!resultMsg || resultMsg.subtype !== "success") {
       return {
         stage: "compile",
-        errors: [{ f: "unknown", l: 0, e: rawOutput.slice(0, 500), fix: "Fix TypeScript compilation errors" }],
+        errors: [
+          {
+            f: "unknown",
+            l: 0,
+            e: rawOutput.slice(0, 500),
+            fix: "Fix TypeScript compilation errors",
+          },
+        ],
       };
     }
 
@@ -1444,6 +1585,7 @@ export async function digestTestFailures(
 ```
 
 Add import at top of `stages/feedback.ts`:
+
 ```typescript
 import { feedbackPrompt } from "../prompts/feedback.js";
 ```
@@ -1466,6 +1608,7 @@ git commit -m "feat(prompts): add feedback template, migrate stages/feedback.ts 
 ## Task 7: Create review prompt template + migrate stages/review.ts
 
 **Files:**
+
 - Create: `packages/core/src/prompts/review.ts`
 - Modify: `packages/core/src/stages/review.ts`
 
@@ -1532,6 +1675,7 @@ git commit -m "feat(prompts): add review template, migrate stages/review.ts to w
 ## Task 8: Create contracts prompt template + migrate spring-training/contracts.ts
 
 **Files:**
+
 - Create: `packages/core/src/prompts/contracts.ts`
 - Modify: `packages/core/src/spring-training/contracts.ts`
 
@@ -1587,6 +1731,7 @@ export function contractPrompt(args: ContractPromptArgs): string {
 Replace `buildContractPrompt` function in `packages/core/src/spring-training/contracts.ts`:
 
 Add import:
+
 ```typescript
 import { contractPrompt } from "../prompts/contracts.js";
 ```
@@ -1617,6 +1762,7 @@ git commit -m "feat(prompts): add contracts template, migrate spring-training/co
 ## Task 9: Create quality prompt template + migrate gates/quality.ts
 
 **Files:**
+
 - Create: `packages/core/src/prompts/quality.ts`
 - Modify: `packages/core/src/gates/quality.ts`
 
@@ -1649,6 +1795,7 @@ export function qualityPrompt(args: QualityPromptArgs): string {
 - [ ] **Step 2: Migrate gates/quality.ts to use template**
 
 Add import in `packages/core/src/gates/quality.ts`:
+
 ```typescript
 import { qualityPrompt } from "../prompts/quality.js";
 ```
@@ -1679,6 +1826,7 @@ git commit -m "feat(prompts): add quality template, migrate gates/quality.ts to 
 ## Task 10: Create worker prompt template + migrate workers/spawner.ts
 
 **Files:**
+
 - Create: `packages/core/src/prompts/worker.ts`
 - Modify: `packages/core/src/workers/spawner.ts`
 
@@ -1732,6 +1880,7 @@ COMMON PITFALLS — avoid these:
 - [ ] **Step 2: Migrate workers/spawner.ts to use template**
 
 In `packages/core/src/workers/spawner.ts`, add import:
+
 ```typescript
 import { workerSystemPrompt } from "../prompts/worker.js";
 ```
@@ -1762,6 +1911,7 @@ git commit -m "feat(prompts): add worker template, migrate workers/spawner.ts to
 ## Task 11: Update index.ts exports + final validation
 
 **Files:**
+
 - Modify: `packages/core/src/index.ts`
 
 - [ ] **Step 1: Add exports for new modules**
@@ -1778,7 +1928,12 @@ export type { PipelineOptions, PipelineResult, StageOutcome } from "./pipeline/s
 
 // Prompt Templates
 export { agentRole } from "./prompts/partials/role.js";
-export { outputFormat, errorListFormat, reviewFormat, qualityFormat } from "./prompts/partials/output-format.js";
+export {
+  outputFormat,
+  errorListFormat,
+  reviewFormat,
+  qualityFormat,
+} from "./prompts/partials/output-format.js";
 export { constraints, digestConstraints } from "./prompts/partials/constraints.js";
 export { feedbackPrompt } from "./prompts/feedback.js";
 export type { FeedbackPromptArgs } from "./prompts/feedback.js";

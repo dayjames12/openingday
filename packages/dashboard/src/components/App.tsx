@@ -11,9 +11,7 @@ export function App() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[var(--bg-primary)]">
-        <p className="text-sm text-[var(--text-muted)] animate-pulse">
-          Connecting to project...
-        </p>
+        <p className="text-sm text-[var(--text-muted)] animate-pulse">Connecting to project...</p>
       </div>
     );
   }
@@ -46,10 +44,7 @@ export function App() {
 
       <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-3 p-3 min-h-0">
         <WorkTreePanel milestones={state.workTree} />
-        <WorkersPanel
-          workers={state.workers}
-          maxConcurrent={state.config.maxConcurrentWorkers}
-        />
+        <WorkersPanel workers={state.workers} maxConcurrent={state.config.maxConcurrentWorkers} />
         <GatesPanel gates={state.gates} />
         <CostsPanel costs={state.costs} />
       </div>

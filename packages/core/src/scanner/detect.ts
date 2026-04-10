@@ -3,7 +3,12 @@ import { join } from "node:path";
 import type { EnvConfig } from "./types.js";
 
 async function exists(path: string): Promise<boolean> {
-  try { await access(path); return true; } catch { return false; }
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function readJson(path: string): Promise<Record<string, unknown> | null> {
@@ -14,7 +19,9 @@ async function readJson(path: string): Promise<Record<string, unknown> | null> {
       return parsed as Record<string, unknown>;
     }
     return null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export async function detectEnv(dir: string): Promise<EnvConfig> {
@@ -26,9 +33,18 @@ export async function detectEnv(dir: string): Promise<EnvConfig> {
 
   // Test runner
   let test: EnvConfig["test"] = "none";
-  if (await exists(join(dir, "vitest.config.ts")) || await exists(join(dir, "vitest.config.js"))) test = "vitest";
-  else if (await exists(join(dir, "jest.config.js")) || await exists(join(dir, "jest.config.ts"))) test = "jest";
-  else if (await exists(join(dir, ".mocharc.yml")) || await exists(join(dir, ".mocharc.json"))) test = "mocha";
+  if (
+    (await exists(join(dir, "vitest.config.ts"))) ||
+    (await exists(join(dir, "vitest.config.js")))
+  )
+    test = "vitest";
+  else if (
+    (await exists(join(dir, "jest.config.js"))) ||
+    (await exists(join(dir, "jest.config.ts")))
+  )
+    test = "jest";
+  else if ((await exists(join(dir, ".mocharc.yml"))) || (await exists(join(dir, ".mocharc.json"))))
+    test = "mocha";
   else {
     const pkg = await readJson(join(dir, "package.json"));
     const devDeps = pkg?.devDependencies as Record<string, unknown> | undefined;
@@ -39,8 +55,15 @@ export async function detectEnv(dir: string): Promise<EnvConfig> {
 
   // Linter
   let lint: EnvConfig["lint"] = "none";
-  if (await exists(join(dir, "eslint.config.js")) || await exists(join(dir, "eslint.config.mjs")) || await exists(join(dir, ".eslintrc.json")) || await exists(join(dir, ".eslintrc.js"))) lint = "eslint";
-  else if (await exists(join(dir, "biome.json")) || await exists(join(dir, "biome.jsonc"))) lint = "biome";
+  if (
+    (await exists(join(dir, "eslint.config.js"))) ||
+    (await exists(join(dir, "eslint.config.mjs"))) ||
+    (await exists(join(dir, ".eslintrc.json"))) ||
+    (await exists(join(dir, ".eslintrc.js")))
+  )
+    lint = "eslint";
+  else if ((await exists(join(dir, "biome.json"))) || (await exists(join(dir, "biome.jsonc"))))
+    lint = "biome";
 
   // TypeScript
   const ts = await exists(join(dir, "tsconfig.json"));
@@ -69,12 +92,18 @@ export async function detectEnv(dir: string): Promise<EnvConfig> {
       }
     }
   }
-  if (await exists(join(dir, "turbo.json")) || await exists(join(dir, "lerna.json"))) monorepo = true;
+  if ((await exists(join(dir, "turbo.json"))) || (await exists(join(dir, "lerna.json"))))
+    monorepo = true;
 
   // Infrastructure
   let infra: EnvConfig["infra"] = "none";
-  if (await exists(join(dir, "sst.config.ts")) || await exists(join(dir, "sst.config.js"))) infra = "sst";
-  else if (await exists(join(dir, "serverless.yml")) || await exists(join(dir, "serverless.ts"))) infra = "serverless";
+  if ((await exists(join(dir, "sst.config.ts"))) || (await exists(join(dir, "sst.config.js"))))
+    infra = "sst";
+  else if (
+    (await exists(join(dir, "serverless.yml"))) ||
+    (await exists(join(dir, "serverless.ts")))
+  )
+    infra = "serverless";
   else if (await exists(join(dir, "cdk.json"))) infra = "cdk";
   else if (await exists(join(dir, "terraform"))) infra = "terraform";
   else if (await exists(join(dir, "Dockerfile"))) infra = "docker";

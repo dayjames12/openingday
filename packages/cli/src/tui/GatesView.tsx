@@ -32,9 +32,7 @@ export function GatesView({
 
   // Sort by timestamp descending, take last 8
   entries.sort(
-    (a, b) =>
-      new Date(b.result.timestamp).getTime() -
-      new Date(a.result.timestamp).getTime(),
+    (a, b) => new Date(b.result.timestamp).getTime() - new Date(a.result.timestamp).getTime(),
   );
   const recent = entries.slice(0, 8);
 
@@ -44,7 +42,8 @@ export function GatesView({
   return (
     <Box flexDirection="column" paddingLeft={1}>
       <Text bold>
-        {" "}Gate History{" "}
+        {" "}
+        Gate History{" "}
         <Text color="gray">
           ({passed}p {failed}f)
         </Text>
@@ -55,11 +54,7 @@ export function GatesView({
       ) : (
         recent.map((entry, i) => (
           <Text key={String(i)}>
-            {entry.result.pass ? (
-              <Text color="green">{"✓"}</Text>
-            ) : (
-              <Text color="red">{"✗"}</Text>
-            )}
+            {entry.result.pass ? <Text color="green">{"✓"}</Text> : <Text color="red">{"✗"}</Text>}
             <Text> {entry.taskName}</Text>
             <Text color="gray"> {entry.result.layer}</Text>
           </Text>

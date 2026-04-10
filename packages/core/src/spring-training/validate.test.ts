@@ -2,7 +2,17 @@ import { describe, it, expect } from "vitest";
 import { validateStructure } from "./validate.js";
 import type { WorkTree, CodeTree } from "../types.js";
 
-function makeWorkTree(tasks: { id: string; desc: string; deps: string[]; touches: string[]; reads: string[]; sliceId: string; milestoneId: string }[]): WorkTree {
+function makeWorkTree(
+  tasks: {
+    id: string;
+    desc: string;
+    deps: string[];
+    touches: string[];
+    reads: string[];
+    sliceId: string;
+    milestoneId: string;
+  }[],
+): WorkTree {
   const milestoneMap = new Map<string, { id: string; slices: Map<string, typeof tasks> }>();
   for (const t of tasks) {
     if (!milestoneMap.has(t.milestoneId)) {
@@ -47,24 +57,34 @@ function makeWorkTree(tasks: { id: string; desc: string; deps: string[]; touches
 
 function makeCodeTree(files: string[]): CodeTree {
   return {
-    modules: [{
-      path: "src",
-      description: "source",
-      files: files.map((p) => ({
-        path: p,
-        description: p,
-        exports: [],
-        imports: [],
-        lastModifiedBy: null,
-      })),
-    }],
+    modules: [
+      {
+        path: "src",
+        description: "source",
+        files: files.map((p) => ({
+          path: p,
+          description: p,
+          exports: [],
+          imports: [],
+          lastModifiedBy: null,
+        })),
+      },
+    ],
   };
 }
 
 describe("validateStructure", () => {
   it("passes valid structure", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create players route in src/routes/players.ts", deps: [], touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create players route in src/routes/players.ts",
+        deps: [],
+        touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts", "src/__tests__/players.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -74,7 +94,15 @@ describe("validateStructure", () => {
 
   it("blocks on missing file in code tree", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/routes/players.ts", deps: [], touches: ["src/routes/players.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/routes/players.ts",
+        deps: [],
+        touches: ["src/routes/players.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree([]);
     const result = validateStructure(wt, ct);
@@ -83,8 +111,24 @@ describe("validateStructure", () => {
 
   it("blocks on independent tasks touching same file", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/routes/players.ts with tests", deps: [], touches: ["src/routes/players.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
-      { id: "t2", desc: "Update route in src/routes/players.ts with tests", deps: [], touches: ["src/routes/players.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/routes/players.ts with tests",
+        deps: [],
+        touches: ["src/routes/players.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
+      {
+        id: "t2",
+        desc: "Update route in src/routes/players.ts with tests",
+        deps: [],
+        touches: ["src/routes/players.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts"]);
     const result = validateStructure(wt, ct);
@@ -94,8 +138,24 @@ describe("validateStructure", () => {
 
   it("allows dependent tasks touching same file", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/routes/players.ts with tests", deps: [], touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
-      { id: "t2", desc: "Add validation to src/routes/players.ts with tests", deps: ["t1"], touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/routes/players.ts with tests",
+        deps: [],
+        touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
+      {
+        id: "t2",
+        desc: "Add validation to src/routes/players.ts with tests",
+        deps: ["t1"],
+        touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts", "src/__tests__/players.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -104,8 +164,24 @@ describe("validateStructure", () => {
 
   it("blocks on circular dependencies", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/a.ts with test", deps: ["t2"], touches: ["src/a.ts", "src/a.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
-      { id: "t2", desc: "Create route in src/b.ts with test", deps: ["t1"], touches: ["src/b.ts", "src/b.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/a.ts with test",
+        deps: ["t2"],
+        touches: ["src/a.ts", "src/a.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
+      {
+        id: "t2",
+        desc: "Create route in src/b.ts with test",
+        deps: ["t1"],
+        touches: ["src/b.ts", "src/b.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/a.ts", "src/b.ts", "src/a.test.ts", "src/b.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -115,7 +191,15 @@ describe("validateStructure", () => {
 
   it("warns on short description", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "short", deps: [], touches: ["src/a.ts", "src/a.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "short",
+        deps: [],
+        touches: ["src/a.ts", "src/a.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/a.ts", "src/a.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -124,7 +208,15 @@ describe("validateStructure", () => {
 
   it("warns on impl task without test files in touches", () => {
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create players route in src/routes/players.ts", deps: [], touches: ["src/routes/players.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create players route in src/routes/players.ts",
+        deps: [],
+        touches: ["src/routes/players.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts"]);
     const result = validateStructure(wt, ct);
@@ -134,7 +226,15 @@ describe("validateStructure", () => {
   it("blocks when context estimate exceeds 150k", () => {
     // Indirectly tested — would need a massive tree. Validate the check exists.
     const wt = makeWorkTree([
-      { id: "t1", desc: "Create route in src/routes/players.ts with tests", deps: [], touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"], reads: [], sliceId: "s1", milestoneId: "m1" },
+      {
+        id: "t1",
+        desc: "Create route in src/routes/players.ts with tests",
+        deps: [],
+        touches: ["src/routes/players.ts", "src/__tests__/players.test.ts"],
+        reads: [],
+        sliceId: "s1",
+        milestoneId: "m1",
+      },
     ]);
     const ct = makeCodeTree(["src/routes/players.ts", "src/__tests__/players.test.ts"]);
     const result = validateStructure(wt, ct);
@@ -144,13 +244,15 @@ describe("validateStructure", () => {
 
   it("warns when milestone has no tasks", () => {
     const wt: WorkTree = {
-      milestones: [{
-        id: "m1",
-        name: "Empty",
-        description: "empty milestone",
-        dependencies: [],
-        slices: [],
-      }],
+      milestones: [
+        {
+          id: "m1",
+          name: "Empty",
+          description: "empty milestone",
+          dependencies: [],
+          slices: [],
+        },
+      ],
     };
     const ct = makeCodeTree([]);
     const result = validateStructure(wt, ct);

@@ -163,10 +163,7 @@ describe("code-tree", () => {
 
     const deps = getDependents(tree, "src/auth/types.ts");
     expect(deps).toHaveLength(2);
-    expect(deps.map((f) => f.path).sort()).toEqual([
-      "src/auth/middleware.ts",
-      "src/auth/utils.ts",
-    ]);
+    expect(deps.map((f) => f.path).sort()).toEqual(["src/auth/middleware.ts", "src/auth/utils.ts"]);
   });
 
   it("getDependencies finds files that a given file imports from", () => {
@@ -196,10 +193,7 @@ describe("code-tree", () => {
 
     const deps = getDependencies(tree, "src/auth/middleware.ts");
     expect(deps).toHaveLength(2);
-    expect(deps.map((f) => f.path).sort()).toEqual([
-      "src/auth/config.ts",
-      "src/auth/types.ts",
-    ]);
+    expect(deps.map((f) => f.path).sort()).toEqual(["src/auth/config.ts", "src/auth/types.ts"]);
   });
 
   it("getDependencies returns empty for nonexistent file", () => {

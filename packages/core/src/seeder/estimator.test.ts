@@ -32,16 +32,18 @@ function buildTestTrees(): { workTree: WorkTree; codeTree: CodeTree } {
     path: "src/auth/middleware.ts",
     description: "JWT middleware",
     exports: [
-      { name: "authMiddleware", signature: "(opts: AuthOpts) => Middleware", description: "Main auth middleware" },
+      {
+        name: "authMiddleware",
+        signature: "(opts: AuthOpts) => Middleware",
+        description: "Main auth middleware",
+      },
     ],
     imports: [{ from: "./types.js", names: ["AuthOpts"] }],
   });
   codeTree = addFile(codeTree, "src/auth", {
     path: "src/auth/types.ts",
     description: "Auth types",
-    exports: [
-      { name: "AuthOpts", signature: "interface AuthOpts", description: "Auth options" },
-    ],
+    exports: [{ name: "AuthOpts", signature: "interface AuthOpts", description: "Auth options" }],
     imports: [],
   });
 

@@ -12,7 +12,9 @@ import type {
  * This minimizes token usage while preserving all necessary information.
  */
 export function toWirePrompt(ctx: ContextPackage): WirePrompt {
-  const fileMap = (files: CodeFile[]): Record<string, { exports: { n: string; sig: string }[] }> => {
+  const fileMap = (
+    files: CodeFile[],
+  ): Record<string, { exports: { n: string; sig: string }[] }> => {
     const result: Record<string, { exports: { n: string; sig: string }[] }> = {};
     for (const file of files) {
       result[file.path] = {
@@ -31,7 +33,7 @@ export function toWirePrompt(ctx: ContextPackage): WirePrompt {
     budget: ctx.budget.softLimit,
     landscape: ctx.landscape,
     relevant: Object.fromEntries(
-      ctx.relevant.map((f) => [f.p, { exports: f.ex.map((e) => ({ n: e.n, sig: e.s })) }])
+      ctx.relevant.map((f) => [f.p, { exports: f.ex.map((e) => ({ n: e.n, sig: e.s })) }]),
     ),
   };
 }

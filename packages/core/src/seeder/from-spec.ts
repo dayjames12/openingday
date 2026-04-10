@@ -17,7 +17,11 @@ export interface SeederOutput {
  * Build a prompt that instructs the AI to generate a work tree and code tree
  * from a project specification.
  */
-export function buildSeederPrompt(specText: string, projectName: string, repoMap?: RepoMap | null): string {
+export function buildSeederPrompt(
+  specText: string,
+  projectName: string,
+  repoMap?: RepoMap | null,
+): string {
   let base = `You are a project planner for "${projectName}".
 
 Given the following specification, generate a JSON object with two keys: "workTree" and "codeTree".
@@ -166,7 +170,7 @@ For each task's "touches" array:
 - If the file does NOT exist → you are CREATING it. Place it in an existing directory.
 - Never create directories that duplicate existing module structure.`;
 
-    const filePaths = repoMap.modules.flatMap(m => m.files.map(f => f.p)).join("\n");
+    const filePaths = repoMap.modules.flatMap((m) => m.files.map((f) => f.p)).join("\n");
     base += `\n\nEXISTING FILE PATHS (use these exactly):\n${filePaths}\n`;
   }
 
@@ -184,7 +188,10 @@ export interface SeederWarning {
   message: string;
 }
 
-export function parseSeederResponse(text: string): { output: SeederOutput | null; warnings: SeederWarning[] } {
+export function parseSeederResponse(text: string): {
+  output: SeederOutput | null;
+  warnings: SeederWarning[];
+} {
   const warnings: SeederWarning[] = [];
 
   try {
@@ -223,7 +230,10 @@ export function parseSeederResponse(text: string): { output: SeederOutput | null
     const fileTaskMap = new Map<string, string[]>();
     for (const task of allTasks) {
       if (task.description.length < 10) {
-        warnings.push({ taskId: task.id, message: `Description too short (${task.description.length} chars)` });
+        warnings.push({
+          taskId: task.id,
+          message: `Description too short (${task.description.length} chars)`,
+        });
       }
       if (task.touches.length === 0) {
         warnings.push({ taskId: task.id, message: "No files in touches" });

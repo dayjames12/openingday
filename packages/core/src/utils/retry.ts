@@ -11,7 +11,11 @@ export const DEFAULT_RETRY: RetryConfig = {
 };
 
 export function isRateLimitError(err: Error): boolean {
-  return err.message?.includes("429") || err.message?.includes("rate_limit") || err.message?.includes("Rate limit");
+  return (
+    err.message?.includes("429") ||
+    err.message?.includes("rate_limit") ||
+    err.message?.includes("Rate limit")
+  );
 }
 
 export async function withRetry<T>(
@@ -31,7 +35,7 @@ export async function withRetry<T>(
         const delay = isRL
           ? Math.max(30000, config.baseDelayMs * Math.pow(2, attempt - 1))
           : Math.min(config.baseDelayMs * Math.pow(2, attempt - 1), config.maxDelayMs);
-        await new Promise(r => setTimeout(r, delay));
+        await new Promise((r) => setTimeout(r, delay));
       }
     }
   }

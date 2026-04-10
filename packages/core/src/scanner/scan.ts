@@ -5,15 +5,30 @@ import { detectEnv, detectDeps } from "./detect.js";
 import { extractExports, extractImports } from "../seeder/from-repo.js";
 
 const IGNORED_DIRS = new Set([
-  "node_modules", "dist", ".git", ".openingday", "coverage",
-  ".next", ".nuxt", ".output", "build", "out", ".turbo", ".cache",
+  "node_modules",
+  "dist",
+  ".git",
+  ".openingday",
+  "coverage",
+  ".next",
+  ".nuxt",
+  ".output",
+  "build",
+  "out",
+  ".turbo",
+  ".cache",
 ]);
 
 export async function scanRepo(dir: string, depth: ScanDepth = "standard"): Promise<RepoMap> {
   // Env detection (standard + deep only)
   let env: EnvConfig = {
-    pm: "npm", test: "none", lint: "none", ts: false,
-    monorepo: false, workspaces: [], infra: "none",
+    pm: "npm",
+    test: "none",
+    lint: "none",
+    ts: false,
+    monorepo: false,
+    workspaces: [],
+    infra: "none",
   };
   let deps: string[] = [];
 
@@ -112,7 +127,11 @@ function extractKeywords(exportNames: string[]): string[] {
 }
 
 // Build landscape from RepoMap (compressed index for worker context)
-export function buildLandscape(map: RepoMap): { mc: number; fc: number; modules: { p: string; fc: number; k: string[] }[] } {
+export function buildLandscape(map: RepoMap): {
+  mc: number;
+  fc: number;
+  modules: { p: string; fc: number; k: string[] }[];
+} {
   return {
     mc: map.modules.length,
     fc: map.modules.reduce((sum, m) => sum + m.fc, 0),

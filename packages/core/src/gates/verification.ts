@@ -12,11 +12,31 @@ const exec = promisify(execFile);
 const DANGEROUS_PATTERNS = [
   { pattern: /\beval\s*\(/, rule: "no-eval", note: "eval() is a code injection risk" },
   { pattern: /\bexec\s*\(/, rule: "no-exec", note: "exec() can run arbitrary commands" },
-  { pattern: /child_process/, rule: "no-child-process", note: "child_process import is a security risk" },
-  { pattern: /\bFunction\s*\(/, rule: "no-function-constructor", note: "Function() constructor is equivalent to eval" },
-  { pattern: /process\.env\b/, rule: "env-access", note: "Direct process.env access — prefer config injection" },
-  { pattern: /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY/, rule: "no-private-keys", note: "Private key detected in source" },
-  { pattern: /(?:password|secret|token)\s*[:=]\s*["'][^"']{8,}/, rule: "no-hardcoded-secrets", note: "Possible hardcoded secret" },
+  {
+    pattern: /child_process/,
+    rule: "no-child-process",
+    note: "child_process import is a security risk",
+  },
+  {
+    pattern: /\bFunction\s*\(/,
+    rule: "no-function-constructor",
+    note: "Function() constructor is equivalent to eval",
+  },
+  {
+    pattern: /process\.env\b/,
+    rule: "env-access",
+    note: "Direct process.env access — prefer config injection",
+  },
+  {
+    pattern: /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY/,
+    rule: "no-private-keys",
+    note: "Private key detected in source",
+  },
+  {
+    pattern: /(?:password|secret|token)\s*[:=]\s*["'][^"']{8,}/,
+    rule: "no-hardcoded-secrets",
+    note: "Possible hardcoded secret",
+  },
 ];
 
 /**

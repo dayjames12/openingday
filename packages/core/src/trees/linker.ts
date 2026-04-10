@@ -27,28 +27,20 @@ export function resolveTaskReads(
 ): CodeFile[] {
   const task = getTask(workTree, taskId);
   if (!task) return [];
-  return task.reads
-    .map((path) => getFile(codeTree, path))
-    .filter((f): f is CodeFile => f !== null);
+  return task.reads.map((path) => getFile(codeTree, path)).filter((f): f is CodeFile => f !== null);
 }
 
 /**
  * Find all tasks that touch a given file.
  */
-export function findTasksTouchingFile(
-  workTree: WorkTree,
-  filePath: string,
-): WorkTask[] {
+export function findTasksTouchingFile(workTree: WorkTree, filePath: string): WorkTask[] {
   return getAllTasks(workTree).filter((t) => t.touches.includes(filePath));
 }
 
 /**
  * Find all tasks that read a given file.
  */
-export function findTasksReadingFile(
-  workTree: WorkTree,
-  filePath: string,
-): WorkTask[] {
+export function findTasksReadingFile(workTree: WorkTree, filePath: string): WorkTask[] {
   return getAllTasks(workTree).filter((t) => t.reads.includes(filePath));
 }
 
@@ -56,9 +48,7 @@ export function findTasksReadingFile(
  * Detect file conflicts: files that multiple incomplete tasks touch.
  * Returns a map of file path -> array of task IDs.
  */
-export function detectFileConflicts(
-  workTree: WorkTree,
-): Map<string, string[]> {
+export function detectFileConflicts(workTree: WorkTree): Map<string, string[]> {
   const fileToTasks = new Map<string, string[]>();
   const activeTasks = getAllTasks(workTree).filter(
     (t) => t.status === "pending" || t.status === "in_progress",

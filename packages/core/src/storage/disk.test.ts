@@ -151,9 +151,7 @@ describe("DiskStorage", () => {
                   description: "Creates JWT auth middleware",
                 },
               ],
-              imports: [
-                { from: "src/auth/types", names: ["AuthOpts", "Middleware"] },
-              ],
+              imports: [{ from: "src/auth/types", names: ["AuthOpts", "Middleware"] }],
               lastModifiedBy: null,
             },
           ],
@@ -294,9 +292,20 @@ describe("DiskStorage", () => {
 
   it("reads and writes repo map", async () => {
     const map = {
-      v: 1, scannedAt: "2026-04-08T10:00:00Z", depth: "standard" as const,
-      env: { pm: "pnpm" as const, test: "vitest" as const, lint: "eslint" as const, ts: true, monorepo: false, workspaces: [], infra: "none" as const },
-      deps: ["hono"], modules: [],
+      v: 1,
+      scannedAt: "2026-04-08T10:00:00Z",
+      depth: "standard" as const,
+      env: {
+        pm: "pnpm" as const,
+        test: "vitest" as const,
+        lint: "eslint" as const,
+        ts: true,
+        monorepo: false,
+        workspaces: [],
+        infra: "none" as const,
+      },
+      deps: ["hono"],
+      modules: [],
     };
     await storage.writeRepoMap(map);
     const read = await storage.readRepoMap();

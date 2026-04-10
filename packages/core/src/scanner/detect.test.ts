@@ -58,10 +58,13 @@ describe("detect", () => {
   });
 
   it("reads deps from package.json", async () => {
-    await writeFile(join(dir, "package.json"), JSON.stringify({
-      dependencies: { "hono": "^4.0.0", "electrodb": "^3.0.0" },
-      devDependencies: { "vitest": "^4.0.0" },
-    }));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({
+        dependencies: { hono: "^4.0.0", electrodb: "^3.0.0" },
+        devDependencies: { vitest: "^4.0.0" },
+      }),
+    );
     const deps = await detectDeps(dir);
     expect(deps).toContain("hono");
     expect(deps).toContain("electrodb");

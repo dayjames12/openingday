@@ -53,14 +53,8 @@ describe("loadStandards", () => {
     );
 
     const result = await loadStandards(["child"], dir);
-    expect(result.rules.security).toEqual([
-      "no_secrets_in_code",
-      "input_validation",
-    ]);
-    expect(result.rules.performance).toEqual([
-      "lazy_loading",
-      "code_splitting",
-    ]);
+    expect(result.rules.security).toEqual(["no_secrets_in_code", "input_validation"]);
+    expect(result.rules.performance).toEqual(["lazy_loading", "code_splitting"]);
   });
 
   it("deduplicates rules when same category appears in parent and child", async () => {
@@ -86,11 +80,7 @@ describe("loadStandards", () => {
     );
 
     const result = await loadStandards(["extended"], dir);
-    expect(result.rules.testing).toEqual([
-      "unit_tests",
-      "integration_tests",
-      "e2e_tests",
-    ]);
+    expect(result.rules.testing).toEqual(["unit_tests", "integration_tests", "e2e_tests"]);
   });
 
   it("does not load the same file twice in a diamond dependency", async () => {

@@ -114,7 +114,13 @@ describe("integration: full project lifecycle", () => {
     codeTree = addFile(codeTree, "src/auth", {
       path: "src/auth/middleware.ts",
       description: "JWT middleware",
-      exports: [{ name: "authMiddleware", signature: "(opts: AuthOpts) => Middleware", description: "JWT MW" }],
+      exports: [
+        {
+          name: "authMiddleware",
+          signature: "(opts: AuthOpts) => Middleware",
+          description: "JWT MW",
+        },
+      ],
       imports: [{ from: "src/auth/types.ts", names: ["AuthOpts"] }],
     });
     codeTree = addFile(codeTree, "src/auth", {
@@ -259,7 +265,14 @@ describe("integration: full project lifecycle", () => {
       const workerOutput = fromWireResponse({
         s: "ok",
         changed: ["src/auth/middleware.ts"],
-        iface: [{ f: "src/auth/middleware.ts", e: "authMiddleware", b: "() => void", a: "(opts: AuthOpts) => Middleware" }],
+        iface: [
+          {
+            f: "src/auth/middleware.ts",
+            e: "authMiddleware",
+            b: "() => void",
+            a: "(opts: AuthOpts) => Middleware",
+          },
+        ],
         tests: { p: 4, f: 0 },
         t: 5000,
         n: "Implemented JWT middleware",
@@ -378,9 +391,30 @@ describe("integration: full project lifecycle", () => {
 
     // Split the big task
     workTree = splitTask(workTree, "big-task", [
-      { id: "sub-1", name: "Sub 1", description: "Part A", dependencies: [], touches: ["a.ts"], reads: [] },
-      { id: "sub-2", name: "Sub 2", description: "Part B", dependencies: ["sub-1"], touches: ["b.ts"], reads: [] },
-      { id: "sub-3", name: "Sub 3", description: "Part C", dependencies: ["sub-2"], touches: ["c.ts"], reads: [] },
+      {
+        id: "sub-1",
+        name: "Sub 1",
+        description: "Part A",
+        dependencies: [],
+        touches: ["a.ts"],
+        reads: [],
+      },
+      {
+        id: "sub-2",
+        name: "Sub 2",
+        description: "Part B",
+        dependencies: ["sub-1"],
+        touches: ["b.ts"],
+        reads: [],
+      },
+      {
+        id: "sub-3",
+        name: "Sub 3",
+        description: "Part C",
+        dependencies: ["sub-2"],
+        touches: ["c.ts"],
+        reads: [],
+      },
     ]);
 
     // Verify split
@@ -413,7 +447,12 @@ describe("integration: full project lifecycle", () => {
     workTree = addMilestone(workTree, { id: "m1", name: "M1", description: "", dependencies: [] });
     workTree = addSlice(workTree, "m1", { id: "s1", name: "S1", description: "" });
     workTree = addTask(workTree, "s1", {
-      id: "t1", name: "T1", description: "", dependencies: [], touches: ["a.ts"], reads: [],
+      id: "t1",
+      name: "T1",
+      description: "",
+      dependencies: [],
+      touches: ["a.ts"],
+      reads: [],
     });
 
     const codeTree = createCodeTree();
@@ -477,8 +516,12 @@ describe("integration: full project lifecycle", () => {
     // Create and fail 5 tasks (project circuit breaker threshold)
     for (let i = 1; i <= 5; i++) {
       workTree = addTask(workTree, "s1", {
-        id: `t${i}`, name: `T${i}`, description: "",
-        dependencies: [], touches: [], reads: [],
+        id: `t${i}`,
+        name: `T${i}`,
+        description: "",
+        dependencies: [],
+        touches: [],
+        reads: [],
       });
       workTree = updateTaskStatus(workTree, `t${i}`, "failed");
     }
@@ -501,11 +544,20 @@ describe("integration: full project lifecycle", () => {
     await storage.writeProjectState(state);
 
     let workTree = createWorkTree();
-    workTree = addMilestone(workTree, { id: "m1", name: "M1", description: "Test", dependencies: [] });
+    workTree = addMilestone(workTree, {
+      id: "m1",
+      name: "M1",
+      description: "Test",
+      dependencies: [],
+    });
     workTree = addSlice(workTree, "m1", { id: "s1", name: "S1", description: "Test" });
     workTree = addTask(workTree, "s1", {
-      id: "t1", name: "T1", description: "Test task",
-      dependencies: [], touches: ["a.ts"], reads: [],
+      id: "t1",
+      name: "T1",
+      description: "Test task",
+      dependencies: [],
+      touches: ["a.ts"],
+      reads: [],
     });
     await storage.writeWorkTree(workTree);
 
