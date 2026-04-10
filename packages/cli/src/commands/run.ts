@@ -1,5 +1,8 @@
 import type { Command } from "commander";
 import chalk from "chalk";
+import { join, resolve } from "node:path";
+import { writeFile, readFile, unlink } from "node:fs/promises";
+import { unlinkSync } from "node:fs";
 import {
   DiskStorage,
   transition,
@@ -22,7 +25,32 @@ export function registerRun(program: Command): void {
         return;
       }
 
+      const stateDir = resolve(process.cwd(), ".openingday");
+      const pidFile = join(stateDir, "run.pid");
+
       let state = await storage.readProjectState();
+
+      // Stale process detection: if state says "running", check PID file
+      if (state.status === "running") {
+        let alreadyRunning = false;
+        try {
+          const pid = parseInt(await readFile(pidFile, "utf-8"));
+          process.kill(pid, 0); // throws if process doesn't exist
+          alreadyRunning = true;
+          console.error(chalk.yellow(`Already running (PID ${pid}).`));
+          process.exit(1);
+        } catch {
+          if (!alreadyRunning) {
+            // PID file stale or missing — process died, safe to reclaim
+            await unlink(pidFile).catch(() => {});
+            console.log(chalk.yellow("Stale run detected. Reclaiming..."));
+          }
+        }
+      }
+
+      // Write PID file and register cleanup
+      await writeFile(pidFile, String(process.pid));
+      process.on("exit", () => { try { unlinkSync(pidFile); } catch {} });
 
       // Transition based on current state
       if (state.status === "idle") {
@@ -35,7 +63,7 @@ export function registerRun(program: Command): void {
         await storage.writeProjectState(state);
         console.log(chalk.green("Transitioned: paused -> running"));
       } else if (state.status === "running") {
-        console.log(chalk.yellow("Already running."));
+        // Already running state but we passed PID check — continue
       } else {
         console.log(
           chalk.red(`Cannot run from state "${state.status}".`),

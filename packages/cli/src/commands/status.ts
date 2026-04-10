@@ -46,6 +46,10 @@ export function registerStatus(program: Command): void {
       console.log(`  ${statusIcon("failed")} Failed:      ${chalk.red(String(failed))}`);
       console.log(`  Total: ${allTasks.length}`);
 
+      if (failed > 0) {
+        console.log(chalk.yellow("  Tip: Failed tasks may need higher budget. Edit .openingday/project.json budgets.perTask.usd"));
+      }
+
       if (opts.cost) {
         console.log();
         const budget = getProjectBudgetStatus(state, config);
