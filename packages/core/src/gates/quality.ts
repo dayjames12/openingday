@@ -2,6 +2,7 @@ import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { GateResult, GateIssue } from "../types.js";
 import type { GateCheck } from "./pipeline.js";
+import { qualityPrompt } from "../prompts/quality.js";
 
 // === Types ===
 
@@ -21,26 +22,7 @@ export interface QualityReviewResult {
  * Build a review prompt from a diff and coding standards.
  */
 export function buildQualityPrompt(diff: string, standards: string): string {
-  return `You are a code quality reviewer. Review the following diff against the coding standards below.
-
-## Coding Standards
-${standards}
-
-## Diff
-\`\`\`
-${diff}
-\`\`\`
-
-Respond with ONLY a JSON object matching this schema (no markdown fences, no other text):
-{
-  "pass": boolean,
-  "issues": [
-    { "rule": string, "file": string, "note": string, "severity": "high" | "low" }
-  ]
-}
-
-If the code meets all standards, set pass to true and issues to an empty array.
-If there are problems, set pass to false and list each issue.`;
+  return qualityPrompt({ diff, standards, budget: 0.5 });
 }
 
 /**

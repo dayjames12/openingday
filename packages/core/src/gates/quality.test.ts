@@ -32,7 +32,7 @@ describe("quality gate", () => {
 
     it("requests JSON-only output", () => {
       const prompt = buildQualityPrompt("diff", "standards");
-      expect(prompt).toContain("JSON");
+      expect(prompt).toContain("json-only");
       expect(prompt).toContain('"pass"');
       expect(prompt).toContain('"issues"');
     });
