@@ -255,6 +255,7 @@ After migration, all AI-to-AI communication goes through `prompts/*`. No module 
 - Tests for all new modules
 
 **Out of scope:**
+- Model tier selection, skills-enabled workers, quality intelligence (Phase 3.5 — depends on clean architecture from this phase)
 - Storage changes (Phase 4)
 - Wire compression algorithm changes (Phase 4)
 - Performance benchmarks (Phase 4)
