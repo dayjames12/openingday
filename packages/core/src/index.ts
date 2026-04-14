@@ -175,7 +175,7 @@ export type { SpawnOptions, SpawnResult } from "./workers/spawner.js";
 export { inspectWorktreeOutput } from "./workers/inspect.js";
 
 // Seeder (from spec)
-export { seedFromSpec, buildSeederPrompt, parseSeederResponse } from "./seeder/from-spec.js";
+export { seedFromSpec, buildSeederPrompt, parseSeederResponse, backfillCodeTree } from "./seeder/from-spec.js";
 export type { SeederOutput, SeederWarning } from "./seeder/from-spec.js";
 
 // Seeder (from repo)

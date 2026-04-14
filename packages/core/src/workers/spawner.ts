@@ -160,6 +160,6 @@ export async function spawnAgent(options: SpawnOptions): Promise<SpawnResult> {
 
       return parseSpawnResult(resultMsg);
     },
-    { maxAttempts: 2, baseDelayMs: 2000, maxDelayMs: 5000 },
+    { maxAttempts: 3, baseDelayMs: 30000, maxDelayMs: 120000 },
   );
 }

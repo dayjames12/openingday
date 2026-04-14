@@ -68,6 +68,12 @@ export function registerRun(program: Command): void {
 
       if (opts.dryRun) {
         console.log(chalk.gray("Dry run mode — no agents will be spawned."));
+        // Reset state so next run works cleanly
+        const current = await storage.readProjectState();
+        if (current.status === "running") {
+          const paused = transition(current, "paused");
+          await storage.writeProjectState(paused);
+        }
         return;
       }
 
@@ -75,12 +81,12 @@ export function registerRun(program: Command): void {
         repoDir: process.cwd(),
       });
 
-      // Handle SIGINT for graceful shutdown
+      // Handle SIGINT/SIGTERM for graceful shutdown
       let shuttingDown = false;
-      const onSigint = async () => {
+      const gracefulShutdown = async (signal: string) => {
         if (shuttingDown) return;
         shuttingDown = true;
-        console.log(chalk.yellow("\nGraceful shutdown requested..."));
+        console.log(chalk.yellow(`\nGraceful shutdown (${signal})...`));
         const currentState = await storage.readProjectState();
         if (currentState.status === "running") {
           const paused = transition(currentState, "paused");
@@ -89,7 +95,10 @@ export function registerRun(program: Command): void {
         }
         process.exit(0);
       };
+      const onSigint = () => gracefulShutdown("SIGINT");
+      const onSigterm = () => gracefulShutdown("SIGTERM");
       process.on("SIGINT", onSigint);
+      process.on("SIGTERM", onSigterm);
 
       try {
         if (opts.step) {
@@ -147,6 +156,17 @@ export function registerRun(program: Command): void {
         }
       } finally {
         process.removeListener("SIGINT", onSigint);
+        process.removeListener("SIGTERM", onSigterm);
+        // Always clean up state — never leave "running" on exit
+        try {
+          const finalState = await storage.readProjectState();
+          if (finalState.status === "running") {
+            const paused = transition(finalState, "paused");
+            await storage.writeProjectState(paused);
+          }
+        } catch {
+          // Best effort — don't throw in finally
+        }
       }
     });
 }

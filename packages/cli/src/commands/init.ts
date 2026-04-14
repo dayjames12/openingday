@@ -11,6 +11,7 @@ import {
   getAllTasks,
   seedFromSpec,
   scanRepo,
+  backfillCodeTree,
 } from "@openingday/core";
 import { scanRepo as scanRepoMap } from "@openingday/core/scanner/scan";
 import { ensureGitignore } from "@openingday/core/scanner/gitignore";
@@ -90,6 +91,9 @@ export function registerInit(program: Command): void {
         workTree = createWorkTree();
         codeTree = createCodeTree();
       }
+
+      // Backfill code tree with planned new files from task touches/reads
+      codeTree = backfillCodeTree(workTree, codeTree);
 
       await storage.writeWorkTree(workTree);
       await storage.writeCodeTree(codeTree);
