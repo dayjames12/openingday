@@ -28,6 +28,16 @@ Fixes based on running OpeningDay against a brownfield Remix/SST monorepo (17 ta
 - Retry config changed from `{maxAttempts: 2, baseDelayMs: 2000, maxDelayMs: 5000}` to `{maxAttempts: 3, baseDelayMs: 30000, maxDelayMs: 120000}`
 - 3 attempts with 30s base delay, exponential backoff to 120s max — matches Claude API rate limit windows
 
+### 4. RTK integration for stage pipeline compression
+**Problem**: Compile and test stages produce verbose output that gets fed to expensive AI digest calls. Each digest costs ~$0.05, and with retry loops across 18 tasks, digest costs alone can reach $9.
+
+**Fix** (`packages/core/src/utils/rtk.ts`, `packages/core/src/stages/compile.ts`, `packages/core/src/stages/test.ts`):
+- New `utils/rtk.ts` module: `isRtkAvailable()` (cached `which rtk` check), `wrapCommand()`, `rtkPrefix()`
+- Compile stage (`runTsc`) prefixes `npx tsc --noEmit` with `rtk` when available
+- Test stage (`runTests`) prefixes the test command with `rtk` when available
+- Graceful fallback: if RTK is not installed, commands run unchanged
+- Estimated 60-90% token reduction on stage output, reducing AI digest costs proportionally
+
 ## Remaining Issues (not yet fixed)
 
 - **Workers waste tokens on "already done" tasks**: 5/13 workers read files and reported "already fully implemented" — need pre-spawn check

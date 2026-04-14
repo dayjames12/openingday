@@ -2,6 +2,7 @@
 import { execFile } from "node:child_process";
 import type { StageResult, StageFeedback } from "../types.js";
 import { digestCompileErrors } from "./feedback.js";
+import { isRtkAvailable } from "../utils/rtk.js";
 
 export interface TscResult {
   exitCode: number;
@@ -10,26 +11,27 @@ export interface TscResult {
 
 /**
  * Run `tsc --noEmit` in a worktree directory.
+ * When RTK is available, prefixes the command with `rtk` to compress output
+ * before it reaches the AI digest stage (60-90% token reduction).
  * Returns raw exit code and output for further processing.
  */
 export function runTsc(worktreePath: string): Promise<TscResult> {
+  const useRtk = isRtkAvailable();
+  const cmd = useRtk ? "rtk" : "npx";
+  const args = useRtk ? ["npx", "tsc", "--noEmit"] : ["tsc", "--noEmit"];
+
   return new Promise((resolve) => {
-    execFile(
-      "npx",
-      ["tsc", "--noEmit"],
-      { cwd: worktreePath, timeout: 120_000 },
-      (error, stdout, stderr) => {
-        if (error) {
-          const err = error as Error & { code?: number; stdout?: string; stderr?: string };
-          resolve({
-            exitCode: typeof err.code === "number" ? err.code : 1,
-            output: (err.stdout ?? stdout ?? "") + (err.stderr ?? stderr ?? ""),
-          });
-        } else {
-          resolve({ exitCode: 0, output: (stdout ?? "") + (stderr ?? "") });
-        }
-      },
-    );
+    execFile(cmd, args, { cwd: worktreePath, timeout: 120_000 }, (error, stdout, stderr) => {
+      if (error) {
+        const err = error as Error & { code?: number; stdout?: string; stderr?: string };
+        resolve({
+          exitCode: typeof err.code === "number" ? err.code : 1,
+          output: (err.stdout ?? stdout ?? "") + (err.stderr ?? stderr ?? ""),
+        });
+      } else {
+        resolve({ exitCode: 0, output: (stdout ?? "") + (stderr ?? "") });
+      }
+    });
   });
 }
 

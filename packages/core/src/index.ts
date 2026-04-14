@@ -263,6 +263,9 @@ export type { BreakDecision } from "./safety/loops.js";
 export { withRetry, DEFAULT_RETRY } from "./utils/retry.js";
 export type { RetryConfig } from "./utils/retry.js";
 
+// RTK (Real-Time Kit) — command output compression
+export { isRtkAvailable, wrapCommand, rtkPrefix } from "./utils/rtk.js";
+
 // Cache
 export {
   getCachedContext,
