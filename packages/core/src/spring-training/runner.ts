@@ -17,6 +17,7 @@ export async function runSpringTraining(
   repoMap?: RepoMap | null,
   cwd?: string,
   skipAI?: boolean,
+  model?: string,
 ): Promise<SpringTrainingResult> {
   const workTree = await storage.readWorkTree();
   const codeTree = await storage.readCodeTree();
@@ -32,7 +33,7 @@ export async function runSpringTraining(
   // Phase B: Contract generation (AI, one-time)
   let contracts = "";
   if (!skipAI) {
-    contracts = await generateContracts(specText, repoMap, cwd);
+    contracts = await generateContracts(specText, repoMap, cwd, undefined, model);
     if (!contracts) {
       warnings.push("Contract generation returned empty result — workers will lack shared types");
     }

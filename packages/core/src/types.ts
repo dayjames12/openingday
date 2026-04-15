@@ -208,6 +208,7 @@ export type SpawnFn = (options: {
   worktreePath: string;
   context: ContextPackage | EnrichedContextPackage;
   budgetUsd: number;
+  model?: string;
 }) => Promise<import("./workers/spawner.js").SpawnResult>;
 
 // === Safety ===
@@ -250,6 +251,7 @@ export interface CircuitBreakerConfig {
 export interface ProjectConfig {
   name: string;
   specPath: string;
+  model?: string;
   budgets: BudgetConfig;
   limits: LimitsConfig;
   circuitBreakers: CircuitBreakerConfig;

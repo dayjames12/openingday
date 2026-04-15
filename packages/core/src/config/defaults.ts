@@ -1,9 +1,10 @@
 import type { ProjectConfig } from "../types.js";
 
-export function defaultConfig(name: string, specPath: string): ProjectConfig {
+export function defaultConfig(name: string, specPath: string, model?: string): ProjectConfig {
   return {
     name,
     specPath,
+    model,
     budgets: {
       project: { usd: 100, warnPct: 70 },
       perTask: { usd: 5, softPct: 75 },

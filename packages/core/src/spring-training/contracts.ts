@@ -42,13 +42,14 @@ export async function generateContracts(
   repoMap?: RepoMap | null,
   cwd?: string,
   budgetUsd?: number,
+  model?: string,
 ): Promise<string> {
   const prompt = buildContractPrompt(specText, repoMap);
 
   const stream = query({
     prompt,
     options: {
-      model: "claude-opus-4-20250514",
+      model: model ?? "claude-opus-4-20250514",
       permissionMode: "bypassPermissions",
       allowDangerouslySkipPermissions: true,
       maxBudgetUsd: budgetUsd ?? 0.5,

@@ -148,6 +148,8 @@ export class Orchestrator {
           this.options.specText,
           repoMap,
           this.options.repoDir,
+          undefined,
+          config.model,
         );
         if (!stResult.valid) {
           await this.storage.appendMemory(
@@ -272,6 +274,7 @@ export class Orchestrator {
           spawn: this.spawn,
           contracts,
           specExcerpt: this.options.specText ?? "",
+          model: config.model,
         });
 
         state = addTokenSpend(state, pipeline.workerOutput.tokensUsed);

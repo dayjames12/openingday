@@ -50,7 +50,7 @@ export async function digestCompileErrors(
     const stream = query({
       prompt,
       options: {
-        model: "claude-opus-4-20250514",
+        model: "claude-sonnet-4-20250514",
         permissionMode: "bypassPermissions",
         allowDangerouslySkipPermissions: true,
         maxBudgetUsd: budget,
@@ -105,7 +105,7 @@ export async function digestTestFailures(
     const stream = query({
       prompt,
       options: {
-        model: "claude-opus-4-20250514",
+        model: "claude-sonnet-4-20250514",
         permissionMode: "bypassPermissions",
         allowDangerouslySkipPermissions: true,
         maxBudgetUsd: budget,
