@@ -8,6 +8,7 @@ import type {
 } from "../types.js";
 import { createQualityGateCheck } from "./quality.js";
 import { realTestGate, realDiffGate, realSecurityGate } from "./verification.js";
+import { validateContracts } from "./contracts-gate.js";
 import type { EnvConfig } from "../scanner/types.js";
 
 // === Gate Layer Definition ===
@@ -203,13 +204,21 @@ export function countIssuesBySeverity(results: GateResult[]): Record<GateSeverit
 export function createDefaultPipeline(
   taskTouches: string[],
   standards?: string,
-  opts?: { worktreePath?: string; env?: EnvConfig },
+  opts?: { worktreePath?: string; env?: EnvConfig; contracts?: string },
 ): AnyGateCheck[] {
   const pipeline: AnyGateCheck[] = [
     automatedTestGate(),
     treeCheckGate(taskTouches),
     securityGate(),
   ];
+  if (opts?.contracts) {
+    pipeline.push({
+      layer: "automated" as const,
+      run(): GateResult {
+        return validateContracts(opts.contracts!, taskTouches);
+      },
+    });
+  }
   if (standards) {
     pipeline.push(createQualityGateCheck(standards));
   }
