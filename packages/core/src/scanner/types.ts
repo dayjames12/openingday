@@ -37,6 +37,12 @@ export interface RepoModule {
   files: RepoFile[];
 }
 
+export interface PackageBuildConfig {
+  tscCompatible: boolean;
+  bundler?: "vite" | "webpack" | "esbuild" | "rollup";
+  moduleResolution?: string;
+}
+
 export interface RepoMap {
   v: number; // version
   scannedAt: string;
@@ -44,6 +50,7 @@ export interface RepoMap {
   env: EnvConfig;
   deps: string[];
   modules: RepoModule[];
+  packageConfigs?: Record<string, PackageBuildConfig>;
 }
 
 // Landscape = compressed index for worker context (~200 tokens)
