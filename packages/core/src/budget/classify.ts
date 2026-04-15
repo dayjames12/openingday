@@ -1,7 +1,9 @@
 import type { StageResult } from "../types.js";
 
+export type FailureStage = "implement" | "compile" | "test" | "review" | "gate" | "merge" | "unknown";
+
 export interface FailureClassification {
-  stage: string;
+  stage: FailureStage;
   kind: "infra" | "code" | "budget" | "timeout";
   message: string;
 }
@@ -30,14 +32,14 @@ export function classifyFailure(
   if (stageResults.length === 0) {
     if (spawnError) {
       if (/rate_limit|429/.test(spawnError)) {
-        return { stage: "spawn", kind: "timeout", message: spawnError };
+        return { stage: "implement", kind: "timeout", message: spawnError };
       }
       if (/budget/.test(spawnError)) {
-        return { stage: "spawn", kind: "budget", message: spawnError };
+        return { stage: "implement", kind: "budget", message: spawnError };
       }
     }
     return {
-      stage: "spawn",
+      stage: "implement",
       kind: "timeout",
       message: spawnError ?? "No stage results — worker did not start or timed out",
     };

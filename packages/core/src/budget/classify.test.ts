@@ -143,7 +143,7 @@ describe("classifyFailure", () => {
     it("returns timeout for empty stage results with no spawn error", () => {
       const result = classifyFailure([]);
       expect(result.kind).toBe("timeout");
-      expect(result.stage).toBe("spawn");
+      expect(result.stage).toBe("implement");
     });
 
     it("returns timeout for empty stage results with rate_limit spawn error", () => {

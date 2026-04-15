@@ -19,7 +19,7 @@ export interface WorkTask {
   attemptCount: number;
   gateResults: GateResult[];
   parentSliceId: string;
-  failureStage?: "implement" | "compile" | "test" | "review" | "gate" | "merge";
+  failureStage?: "implement" | "compile" | "test" | "review" | "gate" | "merge" | "unknown";
   failureKind?: "infra" | "code" | "budget" | "timeout";
   failureMessage?: string;
 }

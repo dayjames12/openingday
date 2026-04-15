@@ -28,6 +28,7 @@ import type { Watchdog } from "./safety/watchdog.js";
 import { getCachedContext, setCachedContext, invalidateContext } from "./cache/context-cache.js";
 import { runSpringTraining } from "./spring-training/runner.js";
 import { readFileContents } from "./pipeline/file-reader.js";
+import { classifyFailure } from "./budget/classify.js";
 import { runStagedPipeline } from "./pipeline/stage-runner.js";
 
 // === Types ===
@@ -275,6 +276,7 @@ export class Orchestrator {
           contracts,
           specExcerpt: this.options.specText ?? "",
           model: config.model,
+          packageConfigs: repoMap?.packageConfigs,
         });
 
         state = addTokenSpend(state, pipeline.workerOutput.tokensUsed);
@@ -351,25 +353,35 @@ export class Orchestrator {
           // Reset watchdog on successful completion
           this.watchdog.reset();
         } else {
+          const classification = classifyFailure(pipeline.stageResults);
           workTree = updateTaskStatus(workTree, task.id, "failed");
           workTree = updateTask(workTree, task.id, {
             attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+            failureStage: classification.stage,
+            failureKind: classification.kind,
+            failureMessage: classification.message,
           });
           this.pool = completeWorker(this.pool, sessionId, "failed");
           failed++;
           await this.storage.appendMemory(
-            `Task ${task.id} failed staged pipeline at ${new Date().toISOString()}`,
+            `Task ${task.id} failed [${classification.kind}] at ${classification.stage}: ${classification.message}`,
           );
         }
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const classification = classifyFailure([], message);
         workTree = updateTaskStatus(workTree, task.id, "failed");
         workTree = updateTask(workTree, task.id, {
           attemptCount: (getTask(workTree, task.id)?.attemptCount ?? 0) + 1,
+          failureStage: classification.stage,
+          failureKind: classification.kind,
+          failureMessage: classification.message,
         });
         this.pool = completeWorker(this.pool, sessionId, "failed");
         failed++;
-        const message = err instanceof Error ? err.message : String(err);
-        await this.storage.appendMemory(`Task ${task.id} spawn error: ${message}`);
+        await this.storage.appendMemory(
+          `Task ${task.id} spawn error [${classification.kind}]: ${message}`,
+        );
       } finally {
         if (this.options.repoDir && worktreePath !== ".") {
           try {
