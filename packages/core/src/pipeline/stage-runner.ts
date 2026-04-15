@@ -201,13 +201,23 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     diff = "(could not generate diff)";
   }
 
+  // Create tracker and history BEFORE first review for proper accumulation
+  let reviewTracker = createLoopTracker(taskId);
+  const reviewErrorHistory: StageFeedback[] = [];
+  const reviewDiffHistory: string[] = [diff];
+
   let reviewResult = await runReviewStage(worktreePath, diff, specExcerpt, taskBudget, model);
   stageResults.push(reviewResult);
 
   if (!reviewResult.passed) {
-    // Give worker one chance to fix review issues
-    const tracker = recordLoop(createLoopTracker(taskId), "review");
-    const breakCheck = shouldBreak(tracker, "review", reviewResult.feedback, []);
+    // Record the loop and accumulate feedback
+    reviewTracker = recordLoop(reviewTracker, "review");
+    for (const fb of reviewResult.feedback) {
+      reviewErrorHistory.push(fb);
+    }
+
+    // Check safety caps with accumulated state
+    const breakCheck = shouldBreak(reviewTracker, "review", reviewErrorHistory, reviewDiffHistory);
 
     if (breakCheck.break) {
       stages.push({
@@ -239,8 +249,9 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     } catch {
       diff = "(could not generate diff)";
     }
+    reviewDiffHistory.push(diff);
 
-    // Re-run review with fresh diff
+    // Re-run review
     reviewResult = await runReviewStage(worktreePath, diff, specExcerpt, taskBudget, model);
     stageResults.push(reviewResult);
 
@@ -253,7 +264,7 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     stage: "review",
     passed: reviewResult.passed,
     feedback: reviewResult.feedback,
-    loopCount: reviewResult.passed ? 0 : 1,
+    loopCount: reviewDiffHistory.length - 1,
   });
 
   return { workerOutput, spawnResult, stages, allPassed, stageResults };
