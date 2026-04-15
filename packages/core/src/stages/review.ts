@@ -7,8 +7,8 @@ import { reviewPrompt } from "../prompts/review.js";
 /**
  * Build a prompt for the AI reviewer.
  */
-export function buildReviewPrompt(diff: string, contracts: string, specExcerpt: string): string {
-  return reviewPrompt({ diff, contracts, specExcerpt, budget: 0.5 });
+export function buildReviewPrompt(diff: string, specExcerpt: string): string {
+  return reviewPrompt({ diff, specExcerpt, budget: 0.5 });
 }
 
 /**
@@ -72,16 +72,16 @@ export function parseReviewResponse(text: string): { passed: boolean; feedback: 
 export async function runReviewStage(
   worktreePath: string,
   diff: string,
-  contracts: string,
   specExcerpt: string,
   taskBudget: number,
+  model?: string,
 ): Promise<StageResult> {
-  const prompt = buildReviewPrompt(diff, contracts, specExcerpt);
+  const prompt = buildReviewPrompt(diff, specExcerpt);
 
   const stream = query({
     prompt,
     options: {
-      model: "claude-opus-4-20250514",
+      model: model ?? "claude-opus-4-20250514",
       permissionMode: "bypassPermissions",
       allowDangerouslySkipPermissions: true,
       maxBudgetUsd: taskBudget / 4,
