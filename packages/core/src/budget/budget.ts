@@ -51,6 +51,7 @@ export interface CircuitBreakerStatus {
   sliceTripped: boolean;
   projectTripped: boolean;
   efficiencyTripped: boolean;
+  infraTripped: boolean;
   reason: string | null;
 }
 
@@ -66,9 +67,14 @@ export function checkCircuitBreakers(
   const sliceTripped = checkSliceBreaker(allTasks, config);
   const projectTripped = checkProjectBreaker(allTasks, config);
   const efficiencyTripped = checkEfficiencyBreaker(allTasks, state, config);
+  const infraTripped = checkInfraBreaker(allTasks);
 
   let reason: string | null = null;
-  if (sliceTripped) {
+  if (infraTripped) {
+    const infraTasks = allTasks.filter((t) => t.failureKind === "infra");
+    const msg = infraTasks[0]?.failureMessage ?? "unknown";
+    reason = `Infrastructure issue detected: ${msg}. Fix and resume.`;
+  } else if (sliceTripped) {
     reason = "Too many consecutive failures in a slice";
   } else if (projectTripped) {
     reason = "Too many consecutive failures across project";
@@ -76,7 +82,7 @@ export function checkCircuitBreakers(
     reason = "Budget efficiency below threshold";
   }
 
-  return { sliceTripped, projectTripped, efficiencyTripped, reason };
+  return { sliceTripped, projectTripped, efficiencyTripped, infraTripped, reason };
 }
 
 /**
@@ -123,12 +129,27 @@ function checkEfficiencyBreaker(
   if (state.totalTokenSpend === 0) return false;
 
   const completedTasks = allTasks.filter((t) => t.status === "complete");
-  const totalTasks = allTasks.filter((t) => t.status === "complete" || t.status === "failed");
+  const codeFailedTasks = allTasks.filter(
+    (t) => t.status === "failed" && (t.failureKind === "code" || t.failureKind === undefined),
+  );
 
-  if (totalTasks.length === 0) return false;
+  const total = completedTasks.length + codeFailedTasks.length;
+  if (total === 0) return false;
 
-  const efficiency = completedTasks.length / totalTasks.length;
+  const efficiency = completedTasks.length / total;
   return efficiency < config.circuitBreakers.budgetEfficiencyThreshold;
+}
+
+function checkInfraBreaker(allTasks: WorkTask[]): boolean {
+  const infraTasks = allTasks.filter((t) => t.status === "failed" && t.failureKind === "infra");
+  if (infraTasks.length < 2) return false;
+
+  const msgCounts = new Map<string, number>();
+  for (const t of infraTasks) {
+    const msg = t.failureMessage ?? "";
+    msgCounts.set(msg, (msgCounts.get(msg) ?? 0) + 1);
+  }
+  return [...msgCounts.values()].some((count) => count >= 2);
 }
 
 /**

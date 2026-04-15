@@ -19,6 +19,9 @@ export interface WorkTask {
   attemptCount: number;
   gateResults: GateResult[];
   parentSliceId: string;
+  failureStage?: "implement" | "compile" | "test" | "review" | "gate" | "merge";
+  failureKind?: "infra" | "code" | "budget" | "timeout";
+  failureMessage?: string;
 }
 
 export interface WorkSlice {
