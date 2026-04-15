@@ -5,7 +5,7 @@ import type {
   StageResult,
   StageFeedback,
 } from "../types.js";
-import type { EnvConfig } from "../scanner/types.js";
+import type { EnvConfig, PackageBuildConfig } from "../scanner/types.js";
 import type { SpawnResult } from "../workers/spawner.js";
 import { inspectWorktreeOutput } from "../workers/inspect.js";
 import { runCompileStage } from "../stages/compile.js";
@@ -40,6 +40,8 @@ export interface PipelineOptions {
   spawn: SpawnFn;
   contracts: string;
   specExcerpt: string;
+  model?: string;
+  packageConfigs?: Record<string, PackageBuildConfig>;
 }
 
 export interface PipelineResult {
@@ -62,8 +64,9 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     env,
     repoDir,
     spawn,
-    contracts,
     specExcerpt,
+    model,
+    packageConfigs,
   } = options;
 
   const stages: StageOutcome[] = [];
@@ -75,6 +78,7 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     worktreePath,
     context,
     budgetUsd: taskBudget,
+    model,
   });
 
   let workerOutput = spawnResult.output;
@@ -94,7 +98,15 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     return { workerOutput, spawnResult, stages, allPassed: true, stageResults };
   }
 
-  // Ensure worktree has node_modules (symlink from main repo)
+  // Commit worker changes before stages so code survives stage failures
+  try {
+    await exec("git", ["add", "-A"], { cwd: worktreePath });
+    await exec("git", ["commit", "-m", `wip: ${taskId} worker output`], { cwd: worktreePath });
+  } catch {
+    /* no changes to commit — fine */
+  }
+
+  // Ensure worktree has node_modules and dist/ dirs (symlink from main repo)
   if (repoDir) {
     try {
       const { stdout: lsOut } = await exec("ls", ["-d", join(worktreePath, "node_modules")]).catch(
@@ -102,6 +114,26 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
       );
       if (!lsOut.trim()) {
         await exec("ln", ["-s", join(repoDir, "node_modules"), join(worktreePath, "node_modules")]);
+      }
+    } catch {
+      /* non-fatal */
+    }
+    // Symlink dist/ directories for each package (needed for tsc project references)
+    try {
+      const { stdout: pkgDirs } = await exec("ls", [join(repoDir, "packages")]).catch(() => ({
+        stdout: "",
+      }));
+      for (const pkg of pkgDirs.trim().split("\n").filter(Boolean)) {
+        const srcDist = join(repoDir, "packages", pkg, "dist");
+        const wtDist = join(worktreePath, "packages", pkg, "dist");
+        try {
+          await exec("ls", ["-d", srcDist]);
+          await exec("ls", ["-d", wtDist]).catch(async () => {
+            await exec("ln", ["-s", srcDist, wtDist]);
+          });
+        } catch {
+          /* package has no dist — fine */
+        }
       }
     } catch {
       /* non-fatal */
@@ -114,13 +146,14 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
   if (env?.ts) {
     const compileLoop = await runFeedbackLoop({
       stage: "compile",
-      runStage: () => runCompileStage(worktreePath, taskBudget),
+      runStage: () => runCompileStage(worktreePath, taskBudget, taskTouches, packageConfigs),
       spawn,
       taskId,
       worktreePath,
       context,
       taskBudget,
       maxIterations: 5,
+      model,
     });
     stageResults.push(compileLoop.stageResult);
     stages.push({
@@ -145,6 +178,7 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
       context,
       taskBudget,
       maxIterations: 5,
+      model,
     });
     stageResults.push(testLoop.stageResult);
     stages.push({
@@ -167,13 +201,23 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     diff = "(could not generate diff)";
   }
 
-  let reviewResult = await runReviewStage(worktreePath, diff, contracts, specExcerpt, taskBudget);
+  // Create tracker and history BEFORE first review for proper accumulation
+  let reviewTracker = createLoopTracker(taskId);
+  const reviewErrorHistory: StageFeedback[] = [];
+  const reviewDiffHistory: string[] = [diff];
+
+  let reviewResult = await runReviewStage(worktreePath, diff, specExcerpt, taskBudget, model);
   stageResults.push(reviewResult);
 
   if (!reviewResult.passed) {
-    // Give worker one chance to fix review issues
-    const tracker = recordLoop(createLoopTracker(taskId), "review");
-    const breakCheck = shouldBreak(tracker, "review", reviewResult.feedback, []);
+    // Record the loop and accumulate feedback
+    reviewTracker = recordLoop(reviewTracker, "review");
+    for (const fb of reviewResult.feedback) {
+      reviewErrorHistory.push(fb);
+    }
+
+    // Check safety caps with accumulated state
+    const breakCheck = shouldBreak(reviewTracker, "review", reviewErrorHistory, reviewDiffHistory);
 
     if (breakCheck.break) {
       stages.push({
@@ -195,6 +239,7 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
       worktreePath,
       context: feedbackContext,
       budgetUsd: taskBudget / 4,
+      model,
     });
 
     // Re-capture diff after worker fix attempt
@@ -204,9 +249,10 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     } catch {
       diff = "(could not generate diff)";
     }
+    reviewDiffHistory.push(diff);
 
-    // Re-run review with fresh diff
-    reviewResult = await runReviewStage(worktreePath, diff, contracts, specExcerpt, taskBudget);
+    // Re-run review
+    reviewResult = await runReviewStage(worktreePath, diff, specExcerpt, taskBudget, model);
     stageResults.push(reviewResult);
 
     if (!reviewResult.passed) {
@@ -218,7 +264,7 @@ export async function runStagedPipeline(options: PipelineOptions): Promise<Pipel
     stage: "review",
     passed: reviewResult.passed,
     feedback: reviewResult.feedback,
-    loopCount: reviewResult.passed ? 0 : 1,
+    loopCount: reviewDiffHistory.length - 1,
   });
 
   return { workerOutput, spawnResult, stages, allPassed, stageResults };

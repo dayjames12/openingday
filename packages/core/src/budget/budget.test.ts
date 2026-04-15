@@ -11,6 +11,7 @@ import {
   addSlice,
   addTask,
   updateTaskStatus,
+  updateTask,
 } from "../trees/work-tree.js";
 import { defaultConfig } from "../config/defaults.js";
 import type { ProjectState, WorkTask } from "../types.js";
@@ -278,6 +279,76 @@ describe("budget", () => {
 
       const status = checkCircuitBreakers(tree, state, config);
       expect(status.efficiencyTripped).toBe(false);
+    });
+  });
+
+  describe("checkCircuitBreakers with failure classification", () => {
+    function buildTreeWithTasks(taskOverrides: Partial<WorkTask>[]) {
+      let tree = createWorkTree();
+      tree = addMilestone(tree, { id: "m1", name: "M1", description: "", dependencies: [] });
+      tree = addSlice(tree, "m1", { id: "s1", name: "S1", description: "" });
+      for (let i = 0; i < taskOverrides.length; i++) {
+        const o = taskOverrides[i]!;
+        const id = `t${i + 1}`;
+        tree = addTask(tree, "s1", {
+          id,
+          name: `T${i + 1}`,
+          description: "",
+          dependencies: [],
+          touches: [],
+          reads: [],
+        });
+        if (o.status === "complete") tree = updateTaskStatus(tree, id, "complete");
+        if (o.status === "failed") {
+          tree = updateTaskStatus(tree, id, "failed");
+          tree = updateTask(tree, id, {
+            failureKind: o.failureKind,
+            failureMessage: o.failureMessage,
+          });
+        }
+      }
+      return tree;
+    }
+
+    it("excludes infra failures from efficiency calculation", () => {
+      const tree = buildTreeWithTasks([
+        { status: "complete" },
+        { status: "failed", failureKind: "infra", failureMessage: "AWS outage" },
+        { status: "failed", failureKind: "infra", failureMessage: "AWS outage" },
+        { status: "failed", failureKind: "infra", failureMessage: "AWS outage" },
+      ]);
+      const config = defaultConfig("test", "spec.md");
+      const state = makeState({ totalTokenSpend: 10000 });
+      const status = checkCircuitBreakers(tree, state, config);
+
+      expect(status.efficiencyTripped).toBe(false);
+    });
+
+    it("counts code failures in efficiency calculation", () => {
+      const tree = buildTreeWithTasks([
+        { status: "complete" },
+        { status: "failed", failureKind: "code", failureMessage: "type error" },
+        { status: "failed", failureKind: "code", failureMessage: "type error" },
+        { status: "failed", failureKind: "code", failureMessage: "type error" },
+      ]);
+      const config = defaultConfig("test", "spec.md");
+      const state = makeState({ totalTokenSpend: 10000 });
+      const status = checkCircuitBreakers(tree, state, config);
+
+      expect(status.efficiencyTripped).toBe(true);
+    });
+
+    it("detects infra breaker on repeated same-message infra failures", () => {
+      const tree = buildTreeWithTasks([
+        { status: "failed", failureKind: "infra", failureMessage: "connection refused" },
+        { status: "failed", failureKind: "infra", failureMessage: "connection refused" },
+      ]);
+      const config = defaultConfig("test", "spec.md");
+      const state = makeState({ totalTokenSpend: 10000 });
+      const status = checkCircuitBreakers(tree, state, config);
+
+      expect(status.infraTripped).toBe(true);
+      expect(status.reason).toContain("Infrastructure issue");
     });
   });
 });

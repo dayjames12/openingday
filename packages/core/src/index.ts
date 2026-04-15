@@ -175,7 +175,7 @@ export type { SpawnOptions, SpawnResult } from "./workers/spawner.js";
 export { inspectWorktreeOutput } from "./workers/inspect.js";
 
 // Seeder (from spec)
-export { seedFromSpec, buildSeederPrompt, parseSeederResponse } from "./seeder/from-spec.js";
+export { seedFromSpec, buildSeederPrompt, parseSeederResponse, backfillCodeTree } from "./seeder/from-spec.js";
 export type { SeederOutput, SeederWarning } from "./seeder/from-spec.js";
 
 // Seeder (from repo)
@@ -262,6 +262,9 @@ export type { BreakDecision } from "./safety/loops.js";
 // Retry
 export { withRetry, DEFAULT_RETRY } from "./utils/retry.js";
 export type { RetryConfig } from "./utils/retry.js";
+
+// RTK (Real-Time Kit) — command output compression
+export { isRtkAvailable, wrapCommand, rtkPrefix } from "./utils/rtk.js";
 
 // Cache
 export {

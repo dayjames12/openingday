@@ -7,11 +7,9 @@ describe("review stage", () => {
     it("includes diff in prompt", () => {
       const prompt = buildReviewPrompt(
         "diff --git a/src/index.ts\n+export const x = 1;",
-        "export interface Player { name: string; }",
-        "Build a players API",
+        "Build a players API with Player interface",
       );
       expect(prompt).toContain("diff --git");
-      expect(prompt).toContain("Player");
       expect(prompt).toContain("players API");
     });
   });

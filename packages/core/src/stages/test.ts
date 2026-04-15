@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import type { StageResult, StageFeedback } from "../types.js";
 import type { EnvConfig } from "../scanner/types.js";
 import { digestTestFailures } from "./feedback.js";
+import { isRtkAvailable } from "../utils/rtk.js";
 
 export interface TestRunResult {
   exitCode: number;
@@ -11,10 +12,13 @@ export interface TestRunResult {
 
 /**
  * Run the test command for the detected package manager.
+ * When RTK is available, prefixes the command with `rtk` to compress output
+ * before it reaches the AI digest stage (60-90% token reduction).
  */
 export function runTests(worktreePath: string, env: EnvConfig): Promise<TestRunResult> {
-  const cmd = env.pm;
-  const args = ["test"];
+  const useRtk = isRtkAvailable();
+  const cmd = useRtk ? "rtk" : env.pm;
+  const args = useRtk ? [env.pm, "test"] : ["test"];
 
   return new Promise((resolve) => {
     execFile(cmd, args, { cwd: worktreePath, timeout: 300_000 }, (error, stdout, stderr) => {

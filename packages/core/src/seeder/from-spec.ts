@@ -279,6 +279,81 @@ export function parseSeederResponse(text: string): {
   }
 }
 
+// === Code Tree Backfill ===
+
+/**
+ * Ensure all files referenced in task touches/reads exist in the code tree.
+ * For files not already in the code tree or repo map, adds stub entries
+ * to the best-matching module (by path prefix).
+ */
+export function backfillCodeTree(workTree: WorkTree, codeTree: CodeTree): CodeTree {
+  // Collect all file paths from touches and reads
+  const referencedPaths = new Set<string>();
+  for (const m of workTree.milestones) {
+    for (const s of m.slices) {
+      for (const t of s.tasks) {
+        for (const f of t.touches) referencedPaths.add(f);
+        for (const f of t.reads) referencedPaths.add(f);
+      }
+    }
+  }
+
+  // Build set of existing paths in code tree
+  const existingPaths = new Set<string>();
+  for (const mod of codeTree.modules) {
+    for (const file of mod.files) {
+      existingPaths.add(file.path);
+    }
+  }
+
+  // Find missing paths
+  const missingPaths = [...referencedPaths].filter((p) => !existingPaths.has(p));
+  if (missingPaths.length === 0) return codeTree;
+
+  // For each missing path, find best-matching module by longest directory prefix
+  for (const filePath of missingPaths) {
+    const fileDir = filePath.includes("/")
+      ? filePath.substring(0, filePath.lastIndexOf("/"))
+      : "";
+
+    let bestModule = codeTree.modules[codeTree.modules.length - 1];
+    let bestMatchLen = -1;
+
+    for (const mod of codeTree.modules) {
+      // Check if any existing file in this module shares a directory prefix
+      for (const file of mod.files) {
+        const existingDir = file.path.includes("/")
+          ? file.path.substring(0, file.path.lastIndexOf("/"))
+          : "";
+        // Find common prefix length
+        const commonLen = commonPrefixLength(fileDir, existingDir);
+        if (commonLen > bestMatchLen) {
+          bestMatchLen = commonLen;
+          bestModule = mod;
+        }
+      }
+    }
+
+    if (bestModule) {
+      bestModule.files.push({
+        path: filePath,
+        description: "",
+        exports: [],
+        imports: [],
+        lastModifiedBy: null,
+      });
+    }
+  }
+
+  return codeTree;
+}
+
+function commonPrefixLength(a: string, b: string): number {
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  return i;
+}
+
 // === SDK Call ===
 
 /**

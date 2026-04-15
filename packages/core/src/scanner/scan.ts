@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import type { RepoMap, RepoModule, RepoFile, ScanDepth, EnvConfig } from "./types.js";
+import type { RepoMap, RepoModule, RepoFile, ScanDepth, EnvConfig, PackageBuildConfig } from "./types.js";
 import { detectEnv, detectDeps } from "./detect.js";
 import { extractExports, extractImports } from "../seeder/from-repo.js";
 
@@ -32,9 +32,13 @@ export async function scanRepo(dir: string, depth: ScanDepth = "standard"): Prom
   };
   let deps: string[] = [];
 
+  let packageConfigs: Record<string, PackageBuildConfig> | undefined;
+
   if (depth !== "lite") {
     env = await detectEnv(dir);
     deps = await detectDeps(dir);
+    const configs = await detectPackageBuildConfigs(dir);
+    if (Object.keys(configs).length > 0) packageConfigs = configs;
   }
 
   // Scan files
@@ -86,7 +90,66 @@ export async function scanRepo(dir: string, depth: ScanDepth = "standard"): Prom
     env,
     deps,
     modules,
+    ...(packageConfigs ? { packageConfigs } : {}),
   };
+}
+
+export async function detectPackageBuildConfigs(
+  repoDir: string,
+): Promise<Record<string, PackageBuildConfig>> {
+  const packagesDir = join(repoDir, "packages");
+  let entries;
+  try {
+    entries = await readdir(packagesDir, { withFileTypes: true });
+  } catch {
+    return {};
+  }
+
+  const configs: Record<string, PackageBuildConfig> = {};
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const pkgName = entry.name;
+    const pkgDir = join(packagesDir, pkgName);
+
+    // Read tsconfig.json
+    let moduleResolution: string | undefined;
+    let tscCompatible = false;
+    try {
+      const tsconfigRaw = await readFile(join(pkgDir, "tsconfig.json"), "utf-8");
+      const tsconfig = JSON.parse(tsconfigRaw) as {
+        compilerOptions?: { moduleResolution?: string };
+      };
+      moduleResolution = tsconfig.compilerOptions?.moduleResolution?.toLowerCase();
+      // "bundler" is not compatible with tsc --noEmit; node/node16/nodenext/classic are
+      tscCompatible = moduleResolution !== "bundler";
+    } catch {
+      // No tsconfig → not tsc-compatible
+      tscCompatible = false;
+    }
+
+    // Read package.json for bundler detection
+    let bundler: PackageBuildConfig["bundler"] | undefined;
+    try {
+      const pkgJsonRaw = await readFile(join(pkgDir, "package.json"), "utf-8");
+      const pkgJson = JSON.parse(pkgJsonRaw) as { scripts?: Record<string, string> };
+      const buildScript = pkgJson.scripts?.build ?? "";
+      if (/\bvite\b/.test(buildScript)) bundler = "vite";
+      else if (/\bwebpack\b/.test(buildScript)) bundler = "webpack";
+      else if (/\besbuild\b/.test(buildScript)) bundler = "esbuild";
+      else if (/\brollup\b/.test(buildScript)) bundler = "rollup";
+    } catch {
+      // No package.json — skip bundler detection
+    }
+
+    const config: PackageBuildConfig = { tscCompatible };
+    if (bundler) config.bundler = bundler;
+    if (moduleResolution) config.moduleResolution = moduleResolution;
+
+    configs[pkgName] = config;
+  }
+
+  return configs;
 }
 
 async function walkDir(

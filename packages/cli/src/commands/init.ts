@@ -11,6 +11,7 @@ import {
   getAllTasks,
   seedFromSpec,
   scanRepo,
+  backfillCodeTree,
 } from "@openingday/core";
 import { scanRepo as scanRepoMap } from "@openingday/core/scanner/scan";
 import { ensureGitignore } from "@openingday/core/scanner/gitignore";
@@ -25,7 +26,8 @@ export function registerInit(program: Command): void {
     .requiredOption("--from <path>", "Path to specification file or repo directory")
     .option("--name <name>", "Project name", "my-project")
     .option("--spec <specPath>", "Path to spec file (used with directory --from)")
-    .action(async (opts: { from: string; name: string; spec?: string }) => {
+    .option("--model <model>", "AI model to use (e.g. claude-sonnet-4-20250514)")
+    .action(async (opts: { from: string; name: string; spec?: string; model?: string }) => {
       const storage = new DiskStorage(".openingday");
       if (await storage.exists()) {
         console.log(chalk.yellow("Project already initialized in .openingday/"));
@@ -34,7 +36,7 @@ export function registerInit(program: Command): void {
 
       await storage.initialize();
       await ensureGitignore(process.cwd());
-      const config = defaultConfig(opts.name, opts.from);
+      const config = defaultConfig(opts.name, opts.from, opts.model);
       await storage.writeProjectConfig(config);
       await storage.writeProjectState(createProjectState());
 
@@ -91,6 +93,9 @@ export function registerInit(program: Command): void {
         codeTree = createCodeTree();
       }
 
+      // Backfill code tree with planned new files from task touches/reads
+      codeTree = backfillCodeTree(workTree, codeTree);
+
       await storage.writeWorkTree(workTree);
       await storage.writeCodeTree(codeTree);
       if (repoMap) await storage.writeRepoMap(repoMap);
@@ -105,7 +110,7 @@ export function registerInit(program: Command): void {
           } else if (opts.spec) {
             specText = await readFile(resolve(opts.spec), "utf-8");
           }
-          const stResult = await runSpringTraining(storage, specText, repoMap, process.cwd());
+          const stResult = await runSpringTraining(storage, specText, repoMap, process.cwd(), undefined, opts.model);
           if (stResult.blockers.length > 0) {
             console.log(chalk.yellow(`  Spring training blockers: ${stResult.blockers.length}`));
             for (const b of stResult.blockers) {

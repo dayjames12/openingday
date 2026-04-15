@@ -20,6 +20,7 @@ export interface FeedbackLoopOptions {
   context: EnrichedContextPackage;
   taskBudget: number;
   maxIterations: number;
+  model?: string;
 }
 
 export interface FeedbackLoopResult {
@@ -31,7 +32,7 @@ export interface FeedbackLoopResult {
 }
 
 export async function runFeedbackLoop(options: FeedbackLoopOptions): Promise<FeedbackLoopResult> {
-  const { stage, runStage, spawn, taskId, worktreePath, context, taskBudget, maxIterations } =
+  const { stage, runStage, spawn, taskId, worktreePath, context, taskBudget, maxIterations, model } =
     options;
 
   let tracker = createLoopTracker(taskId);
@@ -91,6 +92,7 @@ export async function runFeedbackLoop(options: FeedbackLoopOptions): Promise<Fee
       worktreePath,
       context: feedbackContext,
       budgetUsd: taskBudget / 4,
+      model,
     });
 
     // Capture git diff for stuck detection
